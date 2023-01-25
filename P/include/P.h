@@ -3,6 +3,8 @@
 
 #include <QtGui>
 #include <QtWidgets>
+#include <QPrinter>
+#include <QPrintDialog>
 
 namespace P 
 {

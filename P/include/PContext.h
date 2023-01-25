@@ -1,7 +1,7 @@
 #ifndef H_PContext
 #define H_PContext
 
-#include <QtGui>
+#include "P.h"
 
 class PContext : public QObject 
 {

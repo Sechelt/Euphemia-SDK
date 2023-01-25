@@ -1,9 +1,6 @@
 #include "LibInfo.h"
 #include "PCanvas.h"
 
-#include <QPrinter>
-#include <QPrintDialog>
-
 #include "PContext.h"
 
 PCanvas::PCanvas( QWidget *parent, const QSize &size )
@@ -29,14 +26,7 @@ void PCanvas::setZoom( WZoomWidget::FitTypes nFit, int nZoom )
 
 void PCanvas::setTool( Tools n )
 {
-    if ( isDrawing() ) doDrawCancel();
     nTool = n;
-}
-
-void PCanvas::setAutoCommit( bool b )
-{
-    if ( isDrawing() ) doDrawCancel();
-    bAutoCommit = b;
 }
 
 /*!
@@ -133,8 +123,6 @@ bool PCanvas::doSaveAs()
 
 bool PCanvas::doClose()
 {
-    if ( isDrawing() ) doDrawCancel();
-
     // save any changes
     if ( isModified() )
     {
@@ -179,51 +167,6 @@ void PCanvas::doRedo()
     image = stackRedo.pop();
     update();
     emit signalStateChanged();
-}
-
-void PCanvas::doDrawCommit()
-{
-    Q_ASSERT( isDrawing() );
-
-    if ( nTool == ToolShape )
-    {
-        PiShape *pShape = g_Palette->shape.getCurrent();
-        pShape->doCommit();
-        setModified( true );
-    }
-
-    nState = StateInactive; // move to inactive
-}
-
-void PCanvas::doDrawCancel()
-{
-    Q_ASSERT( isDrawing() );
-
-    if ( nTool == ToolSelection )
-    {
-        PiSelection *pSelection = g_Palette->selection.getCurrent();
-        pSelection->doFini();
-        emit signalStateChanged();
-    }
-    else if ( nTool == ToolShape )
-    {
-        PiShape *pShape = g_Palette->shape.getCurrent();
-        pShape->doCancel();
-    }
-    nState = StateInactive;
-}
-
-bool PCanvas::isDrawing()
-{
-    switch ( nState ) 
-    {
-        case StateActive:
-        case StateManipulate:
-            return true;
-        case StateInactive:
-            break;
-    }
-    return false;
 }
 
 bool PCanvas::canCut()

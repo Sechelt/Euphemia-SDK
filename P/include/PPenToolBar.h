@@ -1,6 +1,8 @@
 #ifndef H_PPenToolBar
 #define H_PPenToolBar
 
+#include "P.h"
+
 #include <WColorButton.h>
 #include <WLineStyleComboBox.h>
 

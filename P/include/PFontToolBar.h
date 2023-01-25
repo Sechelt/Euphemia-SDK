@@ -1,7 +1,7 @@
 #ifndef H_PFontToolBar
 #define H_PFontToolBar
 
-#include <W.h>
+#include "P.h"
 
 class PFontToolBar : public QWidget
 {

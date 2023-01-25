@@ -1,6 +1,8 @@
 #ifndef H_PCanvas
 #define H_PCanvas
 
+#include "P.h"
+
 #include <W.h>
 #include <WZoomWidget.h>
 
@@ -15,31 +17,27 @@ class PCanvas : public QWidget
 public:
     enum Tools
     {
-        ToolSelectRectangle,            /*!< Default                */
-        ToolSelectEllipse,              /*!< Default                */
-        ToolSelectPolygon,              /*!< Default                */
-        ToolDraw,                       /*!< Default                */
-        ToolDrawLine,                   /*!< Default                */
-        ToolDrawRectangle,              /*!< Default                */
-        ToolDrawEllipse,                /*!< Default                */
-        ToolDrawPolygon,                /*!< Default                */
-        ToolDrawRectangleFilled,        /*!< Default                */
-        ToolDrawEllipseFilled,          /*!< Default                */
-        ToolDrawPolygonFilled,          /*!< Default                */
-        ToolFillFlood,                  /*!< Default                */
-        ToolFillGradient,               /*!< Default                */
-        ToolSelection,                  /*!< PlugIn - UseCurrent    */
-        ToolPen,                        /*!< PlugIn - UseCurrent    */
-        ToolBrush,                      /*!< PlugIn - UseCurrent    */
-        ToolShape,                      /*!< PlugIn - UseCurrent    */
-        ToolFill                        /*!< PlugIn - UseCurrent    */
+        ToolSelectRectangle,            /*!< shape: select using a rectangle                         */ 
+        ToolSelectEllipse,              /*!< shape: select using an ellipse                          */ 
+        ToolSelectPolygon,              /*!< shape: select using a polygon                           */ 
+        ToolDrawFreeHand,               /*!< free: scribble                                          */ 
+        ToolDrawSpray,                  /*!< free: emulate a spray can                               */ 
+        ToolDrawLine,                   /*!< shape: draw a straight line                             */ 
+        ToolDrawRectangle,              /*!< shape: draw an empty rectangle                          */ 
+        ToolDrawEllipse,                /*!< shape: draw an empty ellipse                            */ 
+        ToolDrawPolygon,                /*!< shape: draw an empty polygon                            */ 
+        ToolDrawRectangleFilled,        /*!< shape: draw a filled rectangle                          */ 
+        ToolDrawEllipseFilled,          /*!< shape: draw a filled ellipse                            */ 
+        ToolDrawPolygonFilled,          /*!< shape: draw a filled polygon                            */ 
+        ToolDrawText,                   /*!< shape: draw a text                                      */ 
+        ToolFillFlood,                  /*!< fill: flood fill with; solid color, pattern or texture  */ 
+        ToolFillGradient                /*!< fill: fill with gradient                                */ 
     };
 
     enum States
     {
         StateInactive,
         StateActive,
-        StateManipulate
     };
 
     PCanvas( QWidget *parent, const QSize &size = QSize( 1024, 768 ) );
@@ -47,7 +45,6 @@ public:
 
     void setZoom( WZoomWidget::FitTypes nFit, int nZoom );
     void setTool( Tools n );
-    void setAutoCommit( bool ); 
 
     int getZoom() { return nZoom; }
     WZoomWidget::FitTypes getFit() { return nFit; }
@@ -63,11 +60,7 @@ public:
     void doUndo();
     void doRedo();
 
-    void doDrawCommit();
-    void doDrawCancel();
-
     bool isModified() { return bModified; }
-    bool isDrawing();
 
     bool canCut(); 
     bool canCopy(); 
@@ -105,7 +98,6 @@ private:
     void resizeImage( QImage *image, const QSize &newSize );
 
     Tools       nTool           = ToolSelection;
-    bool        bAutoCommit     = false;
     QString     stringFileName;
     bool        bModified       = false;
 
@@ -118,13 +110,6 @@ private:
     QStack<QImage>  stackUndo;
     QStack<QImage>  stackRedo;
     QPoint          pointLast;
-
-    // active draw object
-    // 0-1 will be active
-//    PSelection *    pSelection  = nullptr;
-//    PLine *         pLine       = nullptr;
-//    PEllipse *      pEllipse    = nullptr;
-//    PRectangle *    pRectangle  = nullptr;
 
     States  nState = StateInactive;
     QPoint  pointBegin;

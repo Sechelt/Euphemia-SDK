@@ -1,6 +1,8 @@
 #ifndef H_PBrushToolBar
 #define H_PBrushToolBar
 
+#include "P.h"
+
 #include <WColorButton.h>
 #include <WBrushStyleComboBox.h>
 #include <WImageButton.h>
