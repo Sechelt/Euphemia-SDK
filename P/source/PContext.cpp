@@ -7,6 +7,12 @@ PContext* PContext::instance()
     return &instance;
 }
 
+void PContext::setImage( QImage *p )
+{
+    if ( pImage == p ) return;
+    pImage = p;
+}
+
 void PContext::setPen( const QPen &t )
 {
     if ( pen == t ) return;

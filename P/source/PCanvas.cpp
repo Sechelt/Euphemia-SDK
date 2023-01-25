@@ -29,6 +29,12 @@ void PCanvas::setTool( Tools n )
     nTool = n;
 }
 
+void PCanvas::setAutoCommit( bool b )
+{
+    if ( isDrawing() ) doDrawCancel();
+    bAutoCommit = b;
+}
+
 /*!
  * \brief Open/load an image from a file. 
  *  
@@ -169,16 +175,57 @@ void PCanvas::doRedo()
     emit signalStateChanged();
 }
 
+void PCanvas::doDrawCommit()
+{
+    Q_ASSERT( isDrawing() );
+
+    if ( pShapeBase )
+    {
+        pShapeBase->doCommit();
+        delete pShapeBase;
+        pShapeBase = nullptr;
+        setModified( true );
+    }
+}
+
+void PCanvas::doDrawCancel()
+{
+    Q_ASSERT( isDrawing() );
+
+/*
+    if ( nTool == ToolSelection )                                   
+    {                                                               
+        PiSelection *pSelection = g_Palette->selection.getCurrent();
+        pSelection->doFini();                                       
+        emit signalStateChanged();                                  
+    }                                                               
+*/
+    if ( pShapeBase )
+    {
+        pShapeBase->doCancel();
+        delete pShapeBase;
+        pShapeBase = nullptr;
+    }
+}
+
+bool PCanvas::isDrawing()
+{
+    if ( pShapeBase ) return true;
+    return false;
+}
+
 bool PCanvas::canCut()
 {
-    PiSelection *pSelection = g_Palette->selection.getCurrent();
-    return ( pSelection->getState() == PiSelection::StateManipulating );
+//    PiSelection *pSelection = g_Palette->selection.getCurrent();
+//    return ( pSelection->getState() == PiSelection::StateManipulating );
+    return false;
 }
 
 bool PCanvas::canCopy() 
 {
-    PiSelection *pSelection = g_Palette->selection.getCurrent();
-    return ( pSelection->getState() == PiSelection::StateManipulating );
+//    PiSelection *pSelection = g_Palette->selection.getCurrent();
+//    return ( pSelection->getState() == PiSelection::StateManipulating );
+    return false;
 }
 
 bool PCanvas::canPaste() 
@@ -201,17 +248,55 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
     emit signalPos( pEvent->pos() );
     if ( pEvent->button() != Qt::LeftButton ) return;
 
-    switch ( nState )
+    // init drawing
+    if ( !isDrawing() ) 
     {
-        case StateInactive:
-            doMousePressDraw( pEvent );
-            break;
-        case StateActive:
-            Q_ASSERT( 1==0 );
-            break;
-        case StateManipulate:
-            doMousePressManipulate( pEvent );
-            break;
+        switch ( nTool )
+        {
+            case ToolSelectRectangle:    
+                break;
+            case ToolSelectEllipse:      
+                break;
+            case ToolSelectPolygon:      
+                break;
+            case ToolDrawFreeHand:               
+                break;
+            case ToolDrawSpray:               
+                break;
+            case ToolDrawLine:
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawLine( this, pEvent->pos() );           
+                break;
+            case ToolDrawRectangle:      
+                break;
+            case ToolDrawEllipse:        
+                break;
+            case ToolDrawPolygon:        
+                break;
+            case ToolDrawRectangleFilled:
+                break;
+            case ToolDrawEllipseFilled:  
+                break;
+            case ToolDrawPolygonFilled:  
+                break;
+            case ToolDrawText:  
+                break;
+            case ToolFillFlood:          
+                break;
+            case ToolFillGradient:       
+                break;
+        }
+    }
+
+    // press
+    if ( pShapeBase ) 
+    {
+        if ( !pShapeBase->doPress( pEvent ) )
+        {
+            pShapeBase->doCancel();
+            delete pShapeBase;
+            pShapeBase = nullptr;
+        }
     }
 }
 
@@ -219,16 +304,10 @@ void PCanvas::mouseMoveEvent( QMouseEvent *pEvent )
 {
     emit signalPos( pEvent->pos() );
 
-    switch ( nState )
+    // move
+    if ( pShapeBase ) 
     {
-        case StateInactive:
-            break;
-        case StateActive:
-            doMouseMoveDraw( pEvent );
-            break;
-        case StateManipulate:
-            doMouseMoveManipulate( pEvent );
-            break;
+        pShapeBase->doMove( pEvent );
     }
 }
 
@@ -237,16 +316,24 @@ void PCanvas::mouseReleaseEvent( QMouseEvent *pEvent )
     emit signalPos( pEvent->pos() );
     if ( pEvent->button() != Qt::LeftButton ) return;
 
-    switch ( nState )
+    // release
+    if ( pShapeBase ) 
     {
-        case StateInactive:
-            break;
-        case StateActive:
-            doMouseReleaseDraw( pEvent );
-            break;
-        case StateManipulate:
-            doMouseReleaseManipulate( pEvent );
-            break;
+        pShapeBase->doRelease( pEvent );
+        if ( bAutoCommit )
+        {
+            // update undo/redo
+            stackRedo.clear();
+            stackUndo.push( image );
+            if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
+            // draw to image
+            pShapeBase->doCommit();
+            // get rid temp shape widget
+            delete pShapeBase;
+            pShapeBase = nullptr;
+            // let app know we changed undo/redo
+            emit signalStateChanged();
+        }
     }
 }
 
@@ -267,427 +354,6 @@ void PCanvas::resizeEvent( QResizeEvent *pEvent )
         update();
     }
     QWidget::resizeEvent( pEvent );
-}
-
-void PCanvas::doMousePressDraw( QMouseEvent *pEvent )
-{
-    Q_ASSERT( nState == StateInactive );
-
-    switch ( nTool )
-    {
-        case ToolSelectRectangle:    
-            break;
-        case ToolSelectEllipse:      
-            break;
-        case ToolSelectPolygon:      
-            break;
-        case ToolDraw:               
-            break;
-        case ToolDrawLine:           
-            break;
-        case ToolDrawRectangle:      
-            break;
-        case ToolDrawEllipse:        
-            break;
-        case ToolDrawPolygon:        
-            break;
-        case ToolDrawRectangleFilled:
-            break;
-        case ToolDrawEllipseFilled:  
-            break;
-        case ToolDrawPolygonFilled:  
-            break;
-        case ToolFillFlood:          
-            break;
-        case ToolFillGradient:       
-            break;
-        case ToolSelection:
-            {
-                PiSelection *pSelection = g_Palette->selection.getCurrent();
-                if ( pSelection )
-                {
-                    pSelection->doInit( this );
-                    pSelection->doPress( pEvent );
-                    nState = StateActive;
-                }
-            }
-            break;
-        case ToolPen:
-            {
-                PiPen *pPen = g_Palette->pen.getCurrent();
-                if ( pPen )
-                {
-                    stackRedo.clear();
-                    stackUndo.push( image );
-                    if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
-                    update( pPen->doPaintInit( &image, pEvent->position().toPoint() ) );
-                    nState = StateActive;
-                    setModified( true );
-                }
-            }
-            break;
-        case ToolBrush:
-            {
-                PiBrush *pBrush = g_Palette->brush.getCurrent();
-                if ( pBrush )
-                {
-                    stackRedo.clear();
-                    stackUndo.push( image );
-                    if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
-                    update( pBrush->doPaintInit( &image, pEvent->position().toPoint() ) );
-                    nState = StateActive;
-                    setModified( true );
-                }
-            }
-            break;
-        case ToolShape:
-            {
-                PiShape *pShape = g_Palette->shape.getCurrent();
-                if ( pShape )
-                {
-                    stackRedo.clear();
-                    stackUndo.push( image );
-                    if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
-                    emit signalStateChanged();
-                    PiContext context;
-                    context.pCanvasWidget   = this; 
-                    context.pCanvasImage    = &image;
-                    context.pen             = g_Context->getPen();
-                    context.brush           = g_Context->getBrush();
-                    context.font            = g_Context->getFont();
-                    pShape->doInit( context );
-                    pShape->doPress( pEvent );
-                    nState = StateActive;
-                }
-            }
-            break;
-        case ToolFill:
-            {
-                PiFill *pFill = g_Palette->fill.getCurrent();
-                if ( pFill )
-                {
-                    stackRedo.clear();
-                    stackUndo.push( image );
-                    if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
-                    pFill->doFill( &image, pEvent->position().toPoint() );
-                    update();
-                    setModified( true );
-                }
-            }
-            break;
-    }
-}
-
-void PCanvas::doMouseMoveDraw( QMouseEvent *pEvent )
-{
-    Q_ASSERT( nState == StateActive );
-
-    switch ( nTool )
-    {
-        case ToolSelectRectangle:    
-            break;
-        case ToolSelectEllipse:      
-            break;
-        case ToolSelectPolygon:      
-            break;
-        case ToolDraw:               
-            break;
-        case ToolDrawLine:           
-            break;
-        case ToolDrawRectangle:      
-            break;
-        case ToolDrawEllipse:        
-            break;
-        case ToolDrawPolygon:        
-            break;
-        case ToolDrawRectangleFilled:
-            break;
-        case ToolDrawEllipseFilled:  
-            break;
-        case ToolDrawPolygonFilled:  
-            break;
-        case ToolFillFlood:          
-            break;
-        case ToolFillGradient:       
-            break;
-        case ToolSelection:
-            {
-                PiSelection *pSelection = g_Palette->selection.getCurrent();
-                pSelection->doMove( pEvent );
-            }
-            break;
-        case ToolPen:
-            {
-                PiPen *pPen = g_Palette->pen.getCurrent();
-                Q_ASSERT( pPen );
-                update( pPen->doPaintMove( &image, pEvent->position().toPoint() ) );
-                setModified( true );
-            }
-            break;
-        case ToolBrush:
-            {
-                PiBrush *pBrush = g_Palette->brush.getCurrent();
-                Q_ASSERT( pBrush );
-                update( pBrush->doPaintMove( &image, pEvent->position().toPoint() ) );
-                setModified( true );
-            }
-            break;
-        case ToolShape:
-            {
-                PiShape *pShape = g_Palette->shape.getCurrent();
-                pShape->doMove( pEvent );
-            }
-            break;
-        case ToolFill:
-            break;
-    }
-}
-
-void PCanvas::doMouseReleaseDraw( QMouseEvent *pEvent )
-{
-    Q_ASSERT( nState == StateActive );
-
-    switch ( nTool )
-    {
-        case ToolSelectRectangle:    
-            break;
-        case ToolSelectEllipse:      
-            break;
-        case ToolSelectPolygon:      
-            break;
-        case ToolDraw:               
-            break;
-        case ToolDrawLine:           
-            break;
-        case ToolDrawRectangle:      
-            break;
-        case ToolDrawEllipse:        
-            break;
-        case ToolDrawPolygon:        
-            break;
-        case ToolDrawRectangleFilled:
-            break;
-        case ToolDrawEllipseFilled:  
-            break;
-        case ToolDrawPolygonFilled:  
-            break;
-        case ToolFillFlood:          
-            break;
-        case ToolFillGradient:       
-            break;
-        case ToolSelection:
-            {
-                PiSelection *pSelection = g_Palette->selection.getCurrent();
-                pSelection->doRelease( pEvent );
-                nState = StateManipulate;
-                emit signalStateChanged();
-            }
-            break;
-        case ToolPen:
-            {
-                PiPen *pPen = g_Palette->pen.getCurrent();
-                Q_ASSERT( pPen );
-                update( pPen->doPaintMove( &image, pEvent->position().toPoint() ) );
-                nState = StateInactive;
-                setModified( true );
-            }
-            break;
-        case ToolBrush:
-            {
-                PiBrush *pBrush = g_Palette->brush.getCurrent();
-                Q_ASSERT( pBrush );
-                update( pBrush->doPaintMove( &image, pEvent->position().toPoint() ) );
-                nState = StateInactive;
-                setModified( true );
-            }
-            break;
-        case ToolShape:
-            {
-                PiShape *pShape = g_Palette->shape.getCurrent();
-                pShape->doRelease( pEvent );
-                if ( bAutoCommit )
-                {
-                    pShape->doCommit();
-                    nState = StateInactive;
-                }
-                else
-                    nState = StateManipulate;
-            }
-            break;
-        case ToolFill:
-            break;
-    }
-}
-
-void PCanvas::doMousePressManipulate( QMouseEvent *pEvent )
-{
-    Q_UNUSED(pEvent);
-    Q_ASSERT( nState == StateManipulate );
-
-    switch ( nTool )
-    {
-        case ToolSelectRectangle:    
-            break;
-        case ToolSelectEllipse:      
-            break;
-        case ToolSelectPolygon:      
-            break;
-        case ToolDraw:               
-            break;
-        case ToolDrawLine:           
-            break;
-        case ToolDrawRectangle:      
-            break;
-        case ToolDrawEllipse:        
-            break;
-        case ToolDrawPolygon:        
-            break;
-        case ToolDrawRectangleFilled:
-            break;
-        case ToolDrawEllipseFilled:  
-            break;
-        case ToolDrawPolygonFilled:  
-            break;
-        case ToolFillFlood:          
-            break;
-        case ToolFillGradient:       
-            break;
-        case ToolSelection:
-            {
-                PiSelection *pSelection = g_Palette->selection.getCurrent();
-                if ( !pSelection->doPress( pEvent ) )
-                {
-                    doDrawCancel();
-                    nState = StateInactive;
-                    emit signalStateChanged();
-                }
-            }
-            break;
-        case ToolPen:
-            break;
-        case ToolBrush:
-            break;
-        case ToolShape:
-            {
-                PiShape *pShape = g_Palette->shape.getCurrent();
-                if ( !pShape->doPress( pEvent ) )
-                {
-                    doDrawCommit();
-                    nState = StateInactive;
-                }
-            }
-            break;
-        case ToolFill:
-            break;
-    }
-}
-
-void PCanvas::doMouseMoveManipulate( QMouseEvent *pEvent )
-{
-    Q_UNUSED(pEvent);
-    Q_ASSERT( nState == StateManipulate );
-
-    switch ( nTool )
-    {
-        case ToolSelectRectangle:    
-            break;
-        case ToolSelectEllipse:      
-            break;
-        case ToolSelectPolygon:      
-            break;
-        case ToolDraw:               
-            break;
-        case ToolDrawLine:           
-            break;
-        case ToolDrawRectangle:      
-            break;
-        case ToolDrawEllipse:        
-            break;
-        case ToolDrawPolygon:        
-            break;
-        case ToolDrawRectangleFilled:
-            break;
-        case ToolDrawEllipseFilled:  
-            break;
-        case ToolDrawPolygonFilled:  
-            break;
-        case ToolFillFlood:          
-            break;
-        case ToolFillGradient:       
-            break;
-        case ToolSelection:
-            {
-                PiSelection *pSelection = g_Palette->selection.getCurrent();
-                pSelection->doMove( pEvent );
-            }
-            break;
-        case ToolPen:
-            break;
-        case ToolBrush:
-            break;
-        case ToolShape:
-            {
-                PiShape *pShape = g_Palette->shape.getCurrent();
-                pShape->doMove( pEvent );
-            }
-            break;
-        case ToolFill:
-            break;
-    }
-}
-
-void PCanvas::doMouseReleaseManipulate( QMouseEvent *pEvent )
-{
-    Q_UNUSED(pEvent);
-    Q_ASSERT( nState == StateManipulate );
-
-    switch ( nTool )
-    {
-        case ToolSelectRectangle:    
-            break;
-        case ToolSelectEllipse:      
-            break;
-        case ToolSelectPolygon:      
-            break;
-        case ToolDraw:               
-            break;
-        case ToolDrawLine:           
-            break;
-        case ToolDrawRectangle:      
-            break;
-        case ToolDrawEllipse:        
-            break;
-        case ToolDrawPolygon:        
-            break;
-        case ToolDrawRectangleFilled:
-            break;
-        case ToolDrawEllipseFilled:  
-            break;
-        case ToolDrawPolygonFilled:  
-            break;
-        case ToolFillFlood:          
-            break;
-        case ToolFillGradient:       
-            break;
-        case ToolSelection:
-            {
-                PiSelection *pSelection = g_Palette->selection.getCurrent();
-                pSelection->doRelease( pEvent );
-            }
-            break;
-        case ToolPen:
-            break;
-        case ToolBrush:
-            break;
-        case ToolShape:
-            {
-                PiShape *pShape = g_Palette->shape.getCurrent();
-                pShape->doRelease( pEvent );
-            }
-            break;
-        case ToolFill:
-            break;
-    }
 }
 
 void PCanvas::setModified( bool b )

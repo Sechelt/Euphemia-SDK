@@ -1,10 +1,9 @@
 #ifndef H_PCanvas
 #define H_PCanvas
 
-#include "P.h"
-
-#include <W.h>
 #include <WZoomWidget.h>
+
+#include "PDrawLine.h"
 
 class PCanvasView;
 
@@ -34,17 +33,12 @@ public:
         ToolFillGradient                /*!< fill: fill with gradient                                */ 
     };
 
-    enum States
-    {
-        StateInactive,
-        StateActive,
-    };
-
     PCanvas( QWidget *parent, const QSize &size = QSize( 1024, 768 ) );
     PCanvas( QWidget *parent, const QImage &image );
 
     void setZoom( WZoomWidget::FitTypes nFit, int nZoom );
     void setTool( Tools n );
+    void setAutoCommit( bool ); 
 
     int getZoom() { return nZoom; }
     WZoomWidget::FitTypes getFit() { return nFit; }
@@ -60,7 +54,11 @@ public:
     void doUndo();
     void doRedo();
 
+    void doDrawCommit();
+    void doDrawCancel();
+
     bool isModified() { return bModified; }
+    bool isDrawing();
 
     bool canCut(); 
     bool canCopy(); 
@@ -82,14 +80,6 @@ protected:
     void paintEvent( QPaintEvent *pEvent ) override;
     void resizeEvent( QResizeEvent *pEvent ) override;
 
-    void doMousePressDraw( QMouseEvent *pEvent );
-    void doMouseMoveDraw( QMouseEvent *pEvent );
-    void doMouseReleaseDraw( QMouseEvent *pEvent );
-
-    void doMousePressManipulate( QMouseEvent *pEvent );
-    void doMouseMoveManipulate( QMouseEvent *pEvent );
-    void doMouseReleaseManipulate( QMouseEvent *pEvent );
-
 private:
     void setModified( bool );
         
@@ -97,7 +87,8 @@ private:
 
     void resizeImage( QImage *image, const QSize &newSize );
 
-    Tools       nTool           = ToolSelection;
+    Tools       nTool           = ToolDrawLine;
+    bool        bAutoCommit     = false;
     QString     stringFileName;
     bool        bModified       = false;
 
@@ -109,11 +100,9 @@ private:
     int             nMaxUndo = 10;
     QStack<QImage>  stackUndo;
     QStack<QImage>  stackRedo;
-    QPoint          pointLast;
 
-    States  nState = StateInactive;
-    QPoint  pointBegin;
-    QPoint  pointEnd;
+    // active tool (or not)
+    PShapeBase *    pShapeBase = nullptr;
 };
 
 #endif
