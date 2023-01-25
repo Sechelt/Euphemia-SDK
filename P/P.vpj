@@ -1,0 +1,166 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+    Version="10.0"
+    VendorName="SlickEdit"
+    TemplateName="(Other)"
+    WorkingDir=".">
+    <Config
+        Name="Release"
+        OutputFile=""
+        CompilerConfigName="">
+        <Menu>
+            <Target
+                Name="Compile"
+                MenuCaption="&amp;Compile"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveCurrent"
+                RunFromDir="%rw">
+                <Exec/>
+            </Target>
+            <Target
+                Name="Build"
+                MenuCaption="&amp;Build"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine="make"/>
+            </Target>
+            <Target
+                Name="Rebuild"
+                MenuCaption="&amp;Rebuild"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec/>
+            </Target>
+            <Target
+                Name="Debug"
+                MenuCaption="&amp;Debug"
+                SaveOption="SaveNone"
+                RunFromDir="%rw">
+                <Exec/>
+            </Target>
+            <Target
+                Name="Execute"
+                MenuCaption="E&amp;xecute"
+                SaveOption="SaveNone"
+                RunFromDir="%rw">
+                <Exec CmdLine='"P.exe"'/>
+            </Target>
+        </Menu>
+    </Config>
+    <Files>
+        <Folder
+            Name="Source Files"
+            Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.scala;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm;*.go;*.groovy;*.gsh"
+            GUID="{509BF71A-C21F-4E3F-B639-6794BDAAB831}">
+            <F N="source/LibInfo.h"/>
+            <F N="source/PBrushToolBar.cpp"/>
+            <F N="source/PCanvas.cpp"/>
+            <F N="source/PCanvasView.cpp"/>
+            <F N="source/PContext.cpp"/>
+            <F N="source/PFontToolBar.cpp"/>
+            <F N="source/PPenToolBar.cpp"/>
+        </Folder>
+        <Folder
+            Name="Header Files"
+            Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.h++;*.inc;*.sh;*.cpy;*.if"
+            GUID="{CDE37B1B-3496-4DC3-84F9-669D82A961FD}">
+            <F N="include/P.h"/>
+            <F N="include/PBrushToolBar.h"/>
+            <F N="include/PCanvas.h"/>
+            <F N="include/PCanvasView.h"/>
+            <F N="include/PContext.h"/>
+            <F N="include/PFontToolBar.h"/>
+            <F N="include/PPenToolBar.h"/>
+        </Folder>
+        <Folder
+            Name="Resource Files"
+            Filters="*.ico;*.cur;*.dlg"
+            GUID="{B347B4FA-E76E-4011-889E-A6AE763B0060}">
+            <F N="P.qrc"/>
+        </Folder>
+        <Folder
+            Name="Bitmaps"
+            Filters="*.bmp"
+            GUID="{95AEF4EF-350C-4452-BE99-B6350B26685B}">
+            <F N="images/anchor.svg"/>
+            <F N="images/Arc16x16.png"/>
+            <F N="images/Arc16x16.xpm"/>
+            <F N="images/Arc200x200.png"/>
+            <F N="images/Blank48x48.png"/>
+            <F N="images/Brush.png"/>
+            <F N="images/Brush2.png"/>
+            <F N="images/CallOut.png"/>
+            <F N="images/Diagram16x16.png"/>
+            <F N="images/Diagram16x16.xpm"/>
+            <F N="images/Diagram22x22.png"/>
+            <F N="images/Diagram22x22.xpm"/>
+            <F N="images/Diagram32x32.png"/>
+            <F N="images/Diagram32x32.xpm"/>
+            <F N="images/Diagram48x48.png"/>
+            <F N="images/Diagram48x48.xpm"/>
+            <F N="images/Dynamic48x48.png"/>
+            <F N="images/Ellipse.png"/>
+            <F N="images/Ellipse16x16.png"/>
+            <F N="images/Ellipse16x16.xpm"/>
+            <F N="images/Ellipse48x48.png"/>
+            <F N="images/Ellipse48x48.xpm"/>
+            <F N="images/EllipseManipulate.png"/>
+            <F N="images/Flow16x16.png"/>
+            <F N="images/Flow48x48.png"/>
+            <F N="images/GLayout.png"/>
+            <F N="images/GLayout.xpm"/>
+            <F N="images/GroupLayout.png"/>
+            <F N="images/GroupLayout.xpm"/>
+            <F N="images/HLayout.png"/>
+            <F N="images/HLayout.xpm"/>
+            <F N="images/HSpacer.png"/>
+            <F N="images/Image16x16.png"/>
+            <F N="images/Image16x16.xpm"/>
+            <F N="images/Image200x200.png"/>
+            <F N="images/Line.png"/>
+            <F N="images/Line16x16.png"/>
+            <F N="images/Line16x16.xpm"/>
+            <F N="images/Line48x48.png"/>
+            <F N="images/Line48x48.xpm"/>
+            <F N="images/Line90Auto48x48.png"/>
+            <F N="images/Line90H.png"/>
+            <F N="images/Line90V.png"/>
+            <F N="images/LineManipulate.png"/>
+            <F N="images/OptimizeSize.png"/>
+            <F N="images/OptimizeSize.xpm"/>
+            <F N="images/Pen.png"/>
+            <F N="images/Polyline48x48.png"/>
+            <F N="images/Rectangle.png"/>
+            <F N="images/Rectangle16x16.png"/>
+            <F N="images/Rectangle16x16.xpm"/>
+            <F N="images/Rectangle48x48-A.png"/>
+            <F N="images/Rectangle48x48.png"/>
+            <F N="images/Rectangle48x48.xpm"/>
+            <F N="images/RectangleManipulate.png"/>
+            <F N="images/SelectionRectangle.png"/>
+            <F N="images/Text16x16.png"/>
+            <F N="images/Text16x16.xpm"/>
+            <F N="images/Text2.png"/>
+            <F N="images/Text48x48.png"/>
+            <F N="images/Text48x48.xpm"/>
+            <F N="images/TextManipulate.png"/>
+            <F N="images/Title16x16.png"/>
+            <F N="images/Title16x16.xpm"/>
+            <F N="images/Title48x48.png"/>
+            <F N="images/Title48x48.xpm"/>
+            <F N="images/VLayout.png"/>
+            <F N="images/VLayout.xpm"/>
+            <F N="images/VSpacer.png"/>
+        </Folder>
+        <Folder
+            Name="Other Files"
+            Filters=""
+            GUID="{94BD0B81-8432-4F4D-80CA-31A64C1FC8DE}">
+            <F N="P.pro"/>
+        </Folder>
+    </Files>
+    <List Name="RTE">
+    </List>
+</Project>
