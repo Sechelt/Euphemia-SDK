@@ -181,9 +181,16 @@ void PCanvas::doDrawCommit()
 
     if ( pShapeBase )
     {
+        // update undo/redo
+        stackRedo.clear();
+        stackUndo.push( image );
+        if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
+        // draw to image
         pShapeBase->doCommit();
+        // get rid temp shape widget
         delete pShapeBase;
         pShapeBase = nullptr;
+        // we have been modified so...
         setModified( true );
     }
 }
@@ -268,8 +275,12 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
                 pShapeBase = new PDrawLine( this, pEvent->pos() );           
                 break;
             case ToolDrawRectangle:      
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawRectangle( this, pEvent->pos() );           
                 break;
             case ToolDrawEllipse:        
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawEllipse( this, pEvent->pos() );           
                 break;
             case ToolDrawPolygon:        
                 break;
@@ -291,12 +302,9 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
     // press
     if ( pShapeBase ) 
     {
+        // let shape decide what to do - returns false when its done
         if ( !pShapeBase->doPress( pEvent ) )
-        {
-            pShapeBase->doCancel();
-            delete pShapeBase;
-            pShapeBase = nullptr;
-        }
+            doDrawCommit();
     }
 }
 
@@ -321,19 +329,7 @@ void PCanvas::mouseReleaseEvent( QMouseEvent *pEvent )
     {
         pShapeBase->doRelease( pEvent );
         if ( bAutoCommit )
-        {
-            // update undo/redo
-            stackRedo.clear();
-            stackUndo.push( image );
-            if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
-            // draw to image
-            pShapeBase->doCommit();
-            // get rid temp shape widget
-            delete pShapeBase;
-            pShapeBase = nullptr;
-            // let app know we changed undo/redo
-            emit signalStateChanged();
-        }
+            doDrawCommit();
     }
 }
 

@@ -27,8 +27,13 @@ HEADERS += \
         include/PCanvas.h \
         include/PCanvasView.h \
         include/PContext.h \
+        include/PDrawEllipse.h \
+        include/PDrawLine.h \
+        include/PDrawRectangle.h \
         include/PFontToolBar.h \
-        include/PPenToolBar.h
+        include/PHandle.h \
+        include/PPenToolBar.h \
+        include/PShapeBase.h
 
 SOURCES += \
         source/LibInfo.h \
@@ -36,7 +41,12 @@ SOURCES += \
         source/PCanvas.cpp \
         source/PCanvasView.cpp \
         source/PContext.cpp \
+        source/PDrawEllipse.cpp \
+        source/PDrawLine.cpp \
+        source/PDrawRectangle.cpp \
         source/PFontToolBar.cpp \
-        source/PPenToolBar.cpp
+        source/PHandle.cpp \
+        source/PPenToolBar.cpp \
+        source/PShapeBase.cpp
 
 

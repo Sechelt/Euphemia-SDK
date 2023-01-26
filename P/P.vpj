@@ -59,8 +59,26 @@
             <F N="source/PCanvas.cpp"/>
             <F N="source/PCanvasView.cpp"/>
             <F N="source/PContext.cpp"/>
+            <F N="source/PDrawEllipse.cpp"/>
+            <F N="source/PDrawEllipseFilled.cpp"/>
+            <F N="source/PDrawFreeHand.cpp"/>
+            <F N="source/PDrawLine.cpp"/>
+            <F N="source/PDrawPolygon.cpp"/>
+            <F N="source/PDrawPolygonFilled.cpp"/>
+            <F N="source/PDrawRectangle.cpp"/>
+            <F N="source/PDrawRectangleFilled.cpp"/>
+            <F N="source/PDrawSpray.cpp"/>
+            <F N="source/PFillBase.cpp"/>
+            <F N="source/PFillFlood.cpp"/>
+            <F N="source/PFillGradient.cpp"/>
             <F N="source/PFontToolBar.cpp"/>
+            <F N="source/PFreeBase.cpp"/>
+            <F N="source/PHandle.cpp"/>
             <F N="source/PPenToolBar.cpp"/>
+            <F N="source/PSelectEllipse.cpp"/>
+            <F N="source/PSelectPolygon.cpp"/>
+            <F N="source/PSelectRectangle.cpp"/>
+            <F N="source/PShapeBase.cpp"/>
         </Folder>
         <Folder
             Name="Header Files"
@@ -71,8 +89,26 @@
             <F N="include/PCanvas.h"/>
             <F N="include/PCanvasView.h"/>
             <F N="include/PContext.h"/>
+            <F N="include/PDrawEllipse.h"/>
+            <F N="include/PDrawEllipseFilled.h"/>
+            <F N="include/PDrawFreeHand.h"/>
+            <F N="include/PDrawLine.h"/>
+            <F N="include/PDrawPolygon.h"/>
+            <F N="include/PDrawPolygonFilled.h"/>
+            <F N="include/PDrawRectangle.h"/>
+            <F N="include/PDrawRectangleFilled.h"/>
+            <F N="include/PDrawSpray.h"/>
+            <F N="include/PFillBase.h"/>
+            <F N="include/PFillFlood.h"/>
+            <F N="include/PFillGradient.h"/>
             <F N="include/PFontToolBar.h"/>
+            <F N="include/PFreeBase.h"/>
+            <F N="include/PHandle.h"/>
             <F N="include/PPenToolBar.h"/>
+            <F N="include/PSelectEllipse.h"/>
+            <F N="include/PSelectPolygon.h"/>
+            <F N="include/PSelectRectangle.h"/>
+            <F N="include/PShapeBase.h"/>
         </Folder>
         <Folder
             Name="Resource Files"

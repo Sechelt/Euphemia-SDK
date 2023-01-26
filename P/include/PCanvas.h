@@ -4,6 +4,8 @@
 #include <WZoomWidget.h>
 
 #include "PDrawLine.h"
+#include "PDrawRectangle.h"
+#include "PDrawEllipse.h"
 
 class PCanvasView;
 
