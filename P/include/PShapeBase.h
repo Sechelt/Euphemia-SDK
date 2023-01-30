@@ -27,7 +27,9 @@ protected:
     QVector<PHandle*>  vectorHandles;              /*!< Handles are children of canvas widget and are shown on top of shape due to z-order. */
     PHandle *          pHandle = nullptr;          /*!< Handle being moved.                                */
 
-    virtual PHandle *getHandle( const QPoint &pointPos );
+    virtual PHandle *   getHandle( const QPoint &pointPos );
+    virtual QRect       getGeometry( const QRect &r, int nPenWidth );
+
     virtual void doCreateHandles() = 0;
     virtual void doDeleteHandles();
     virtual void doShowHandles( bool b = true );

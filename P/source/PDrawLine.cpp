@@ -131,7 +131,7 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         r.setTopLeft( pointBegin );
         r.setBottomRight( pointEnd );
         r = r.normalized();
-        setGeometry( r );
+        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust move handle
         vectorHandles[PDrawLineMove]->setCenter( r.center() );
     }
@@ -150,7 +150,7 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         r.setTopLeft( pointBegin );
         r.setBottomRight( pointEnd );
         r = r.normalized();
-        setGeometry( r );
+        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust all handles
         vectorHandles[PDrawLineBegin]->setCenter( pointBegin );
         vectorHandles[PDrawLineMove]->setCenter( pointPos );
@@ -166,7 +166,7 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         r.setTopLeft( pointBegin );
         r.setBottomRight( pointEnd );
         r = r.normalized();
-        setGeometry( r );
+        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust move handle
         vectorHandles[PDrawLineMove]->setCenter( r.center() );
     }

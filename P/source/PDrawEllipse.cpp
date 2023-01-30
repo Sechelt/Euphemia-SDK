@@ -82,7 +82,6 @@ void PDrawEllipse::doPaint( QPainter *pPainter, const QPoint &pointBegin, const 
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
-    pPainter->setBrush( g_Context->getBrush() );
     pPainter->setFont( g_Context->getFont() );
     // paint
     QRect r( pointBegin, pointEnd );
@@ -128,7 +127,7 @@ void PDrawEllipse::doMoveHandle( const QPoint &pointPos )
         // set canvas geometry
         QRect r( pointBegin, pointEnd );
         r = r.normalized();
-        setGeometry( r );
+        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust move handle
         vectorHandles[PDrawEllipseMove]->setCenter( r.center() );
     }
@@ -145,7 +144,7 @@ void PDrawEllipse::doMoveHandle( const QPoint &pointPos )
         r.setTopLeft( pointBegin );
         r.setBottomRight( pointEnd );
         r = r.normalized();
-        setGeometry( r );
+        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust all handles
         vectorHandles[PDrawEllipseBegin]->setCenter( pointBegin );
         vectorHandles[PDrawEllipseMove]->setCenter( pointPos );
@@ -159,7 +158,7 @@ void PDrawEllipse::doMoveHandle( const QPoint &pointPos )
         // set canvas geometry
         QRect r( pointBegin, pointEnd );
         r = r.normalized();
-        setGeometry( r );
+        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust move handle
         vectorHandles[PDrawEllipseMove]->setCenter( r.center() );
     }

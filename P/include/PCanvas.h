@@ -3,9 +3,13 @@
 
 #include <WZoomWidget.h>
 
+#include "PSelectEllipse.h"
+#include "PSelectRectangle.h"
 #include "PDrawLine.h"
 #include "PDrawRectangle.h"
+#include "PDrawRectangleFilled.h"
 #include "PDrawEllipse.h"
+#include "PDrawEllipseFilled.h"
 
 class PCanvasView;
 
@@ -84,7 +88,15 @@ protected:
 
 private:
     void setModified( bool );
-        
+    
+    void doFillFlood( const QPoint &pointSeed );    
+    void doFillFloodColor( const QPoint &pointSeed );    
+    void doFillFloodColor2( const QPoint &pointSeed );    
+    void doFillFloodPattern( const QPoint &pointSeed );
+    void doFillFloodPattern2( const QPoint &pointSeed );
+    void doFillFloodTexture( const QPoint &pointSeed );    
+    void doFillFloodTexture2( const QPoint &pointSeed );    
+    void doFillGradient( const QPoint &pointSeed );    
     void doClear();
 
     void resizeImage( QImage *image, const QSize &newSize );
