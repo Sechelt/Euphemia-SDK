@@ -28,11 +28,15 @@ HEADERS += \
         include/PCanvasView.h \
         include/PContext.h \
         include/PDrawEllipse.h \
+        include/PDrawEllipseFilled.h \
         include/PDrawLine.h \
         include/PDrawRectangle.h \
+        include/PDrawRectangleFilled.h \
         include/PFontToolBar.h \
         include/PHandle.h \
         include/PPenToolBar.h \
+        include/PSelectEllipse.h \
+        include/PSelectRectangle.h \
         include/PShapeBase.h
 
 SOURCES += \
@@ -42,11 +46,15 @@ SOURCES += \
         source/PCanvasView.cpp \
         source/PContext.cpp \
         source/PDrawEllipse.cpp \
+        source/PDrawEllipseFilled.cpp \
         source/PDrawLine.cpp \
         source/PDrawRectangle.cpp \
+        source/PDrawRectangleFilled.cpp \
         source/PFontToolBar.cpp \
         source/PHandle.cpp \
         source/PPenToolBar.cpp \
+        source/PSelectEllipse.cpp \
+        source/PSelectRectangle.cpp \
         source/PShapeBase.cpp
 
 
