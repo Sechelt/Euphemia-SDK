@@ -217,6 +217,7 @@ void PCanvas::doDrawCancel()
 
 bool PCanvas::isDrawing()
 {
+    if ( pFreeBase ) return true;
     if ( pShapeBase ) return true;
     return false;
 }
@@ -250,6 +251,21 @@ bool PCanvas::canRedo()
     return !stackRedo.isEmpty();
 }
 
+void PCanvas::mouseDoubleClickEvent( QMouseEvent *pEvent )
+{
+    if ( !isDrawing() ) 
+    {
+        if ( pShapeBase ) 
+        {
+            // IF shape is done THEN consider commit
+            if ( !pShapeBase->doDoubleClick( pEvent ) )
+            {
+                if ( bAutoCommit ) doDrawCommit();
+            }
+        }
+    }
+}
+
 void PCanvas::mousePressEvent( QMouseEvent *pEvent )
 {
     emit signalPos( pEvent->pos() );
@@ -271,6 +287,8 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
             case ToolSelectPolygon:      
                 break;
             case ToolDrawFreeHand:               
+                g_Context->setImage( &image );
+                pFreeBase = new PDrawFreeHand( this );           
                 break;
             case ToolDrawSpray:               
                 break;
@@ -287,6 +305,8 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
                 pShapeBase = new PDrawEllipse( this, pEvent->pos() );           
                 break;
             case ToolDrawPolygon:        
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawPolygon( this, pEvent->pos() );           
                 break;
             case ToolDrawRectangleFilled:
                 g_Context->setImage( &image );
@@ -309,10 +329,15 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
         }
     }
 
-    // IF shape THEN pass press event to shape
-    if ( pShapeBase ) 
+    // IF free THEN pass press event to free
+    if ( pFreeBase )
     {
-        // IF not used by shape THEN cancel/commit
+        update( pFreeBase->doPress( pEvent ) );
+    }
+    // IF shape THEN pass press event to shape
+    else if ( pShapeBase ) 
+    {
+        // IF shape done THEN consider commit
         if ( !pShapeBase->doPress( pEvent ) )
         {
             // IF selection THEN cancel ELSE commit
@@ -336,7 +361,11 @@ void PCanvas::mouseMoveEvent( QMouseEvent *pEvent )
     emit signalPos( pEvent->pos() );
 
     // move
-    if ( pShapeBase ) 
+    if ( pFreeBase )
+    {
+        update( pFreeBase->doMove( pEvent ) );
+    }
+    else if (pShapeBase)
     {
         pShapeBase->doMove( pEvent );
     }
@@ -347,8 +376,14 @@ void PCanvas::mouseReleaseEvent( QMouseEvent *pEvent )
     emit signalPos( pEvent->pos() );
     if ( pEvent->button() != Qt::LeftButton ) return;
 
+    if ( pFreeBase )
+    {
+        update( pFreeBase->doRelease( pEvent ) );
+        delete pFreeBase;
+        pFreeBase = nullptr;
+    }
     // shapes can be manipulated after draw when !bAutoCommit
-    if ( pShapeBase ) 
+    else if ( pShapeBase ) 
     {
         pShapeBase->doRelease( pEvent );
         // a commit does not make sense for selection shapes  
@@ -391,13 +426,14 @@ void PCanvas::setModified( bool b )
 
 void PCanvas::doFillFlood( const QPoint &pointSeed )
 {
-    if ( !g_Context->getBrush().textureImage().isNull() )
-        doFillFloodTexture2( pointSeed );
-    else if ( g_Context->getBrush().style() == Qt::SolidPattern )
+    if ( g_Context->getBrush().style() == Qt::SolidPattern )
         doFillFloodColor( pointSeed );
+    else if ( !g_Context->getBrush().textureImage().isNull() )
+        doFillFloodTiled( pointSeed );
     else if ( g_Context->getBrush().style() != Qt::NoBrush )
-        doFillFloodPattern2( pointSeed );
-
+        doFillFloodTiled( pointSeed );
+    else
+        QMessageBox::warning( this, tr("Flood Fill"), tr("Please select a brush.") );
     update();
 }
 
@@ -415,191 +451,83 @@ void PCanvas::doFillFlood( const QPoint &pointSeed )
  */
 void PCanvas::doFillFloodColor( const QPoint &pointSeed )
 {
-    QColor colorNew = g_Context->getBrush().color();            // fill color
-    QColor colorOld = image.pixelColor( pointSeed );            // color at seed point - color we are replacing
+    int nWidth          = image.size().width();
+    int nHeight         = image.size().height();
+    QColor colorNew     = g_Context->getBrush().color();            // fill color
+    QColor colorSeed    = image.pixelColor( pointSeed );            // color at seed point - color we are replacing
     QStack<QPoint> stackPointsToProcess;
 
-    // nothing to do if new color is same as color at seed point
-    if ( colorNew == colorOld ) return;
     // prime stack with seed point
     stackPointsToProcess.push( pointSeed );
     // process until stack is empty
     while ( !stackPointsToProcess.isEmpty() )
     {
         QPoint point = stackPointsToProcess.pop();
-        if ( image.pixelColor( point ) == colorNew ) continue;
-        if ( image.pixelColor( point ) != colorOld ) continue;
-        image.setPixelColor( point, colorNew );
+        int nX = point.x();
+        int nY = point.y();
+        if ( image.pixelColor( point ) == colorNew ) continue;      // we already changed this pixel or we have hit a boundary (which happens to be fill color) so do nothing
+        if ( image.pixelColor( point ) != colorSeed ) continue;     // not the color we want to fill over so do nothing
+        image.setPixelColor( point, colorNew );                     // fill
         // check N
-        if ( point.y() - 1 >= 0 )
+        if ( nY - 1 >= 0 )
         {
-            stackPointsToProcess.push( QPoint( point.x(), point.y() - 1 ) );
+            stackPointsToProcess.push( QPoint( nX, nY - 1 ) );
         }
         // check S
-        if ( point.y() + 1 < image.height() )
+        if ( nY + 1 < nHeight )
         {
-            stackPointsToProcess.push( QPoint( point.x(), point.y() + 1 ) );
+            stackPointsToProcess.push( QPoint( nX, nY + 1 ) );
         }
         // check E
-        if ( point.x() + 1 < image.width() )
+        if ( nX + 1 < nWidth )
         {
-            stackPointsToProcess.push( QPoint( point.x() + 1, point.y() ) );
+            stackPointsToProcess.push( QPoint( nX + 1, nY ) );
         }
         // check W
-        if ( point.x() - 1 >= 0 )
+        if ( nX - 1 >= 0 )
         {
-            stackPointsToProcess.push( QPoint( point.x() - 1, point.y() ) );
+            stackPointsToProcess.push( QPoint( nX - 1, nY ) );
         }
     }
 }
 
 /*!
- * \brief Flood fill with current brush color.
+ * \brief Flood fill with current brush pattern or texture.
  *  
- * Code inspired but public code. 
+ * This is based upon doFillFloodColor() but addresses the fact that 
+ * a pattern/texture fill does not always result in a target pixel being 
+ * changed. 
  *  
- * Colors need to be RGB and does not factor in alpha channel. 
+ * So just checking the color of the pixel does not tell us if 
+ * that pixel has already been processed. 
  *  
- * \author pharvey (1/27/23)
- * 
- * \param point 
- */
-void PCanvas::doFillFloodColor2( const QPoint &point )
-{
-    int     XPos        = point.x();
-    int     YPos        = point.y();
-    int     NewR, NewG, NewB;
-
-    QColor color = g_Context->getBrush().color();
-
-    // sanity check
-    if ( color == image.pixelColor( point ) ) return;
-
-    color.getRgb( &NewR, &NewG, &NewB );
-
-    image = image.convertToFormat(QImage::Format_RGBA8888);
-
-    uchar *bits = image.bits();
-
-    int origR, origG, origB;
-    int begPixel = XPos * 4 + YPos * 4 * image.width();
-
-    origR = bits[ begPixel ];
-    origG = bits[ begPixel + 1 ];
-    origB = bits[ begPixel + 2 ];
-
-    bool reachLeft( false );
-    bool reachRight( false );
-
-    QList< QPair<int, int> > pixelStack;
-    pixelStack.push_back( QPair< int, int>( XPos, YPos ) );
-    while( pixelStack.length() > 0 )
-    {
-        reachLeft = false;
-        reachRight = false;
-
-        QPair<int, int> currentPixel = pixelStack[0];
-        pixelStack.pop_front();
-        begPixel = currentPixel.first * 4 + currentPixel.second * 4 * image.width();
-
-        while( currentPixel.second - 1 >= 0 )
-        {
-            begPixel = currentPixel.first * 4 + currentPixel.second * 4 * image.width();
-            if( !( ( bits[ begPixel ] == origR ) && ( bits[ begPixel + 1 ] == origG ) && ( bits[ begPixel + 2] == origB) ) )
-            {
-                break;
-            }
-            currentPixel.second--;
-        }
-
-        currentPixel.second++;
-        begPixel = currentPixel.first * 4 + currentPixel.second * 4 * image.width();
-        bits[ begPixel ] = NewR;
-        bits[ begPixel + 1 ] = NewG;
-        bits[ begPixel + 2 ] = NewB;
-        bits[ begPixel + 3 ] = 255;
-
-        while( currentPixel.second + 1 < image.height() )
-        {
-            currentPixel.second++;
-            begPixel = currentPixel.first * 4 + currentPixel.second * 4 * image.width();
-            if( ( ( bits[ begPixel ] == origR ) && ( bits[ begPixel + 1 ] == origG ) && ( bits[ begPixel + 2] == origB) ) )
-            {
-                bits[ begPixel ] = NewR;
-                bits[ begPixel + 1 ] = NewG;
-                bits[ begPixel + 2 ] = NewB;
-                bits[ begPixel + 3 ] = 255;
-
-                if( currentPixel.first > 1 )
-                {
-                    int leftPixel = ( currentPixel.first - 1 ) * 4 + currentPixel.second * 4 * image.width();
-                    if( ( ( bits[ leftPixel ] == origR ) && ( bits[ leftPixel + 1 ] == origG ) && ( bits[ leftPixel + 2] == origB) ) )
-                    {
-                        if( !reachLeft )
-                        {
-                            pixelStack.push_back(QPair< int, int> ( currentPixel.first - 1, currentPixel.second ) );
-                            reachLeft = true;
-                        }
-                    }
-                    else
-                    {
-                        reachLeft = false;
-                    }
-                }
-
-                if ( currentPixel.first < image.width() )
-                {
-                    int rightPixel = ( currentPixel.first + 1 ) * 4 + currentPixel.second * 4 * image.width();
-                    if( ( ( bits[ rightPixel ] == origR ) && ( bits[ rightPixel + 1 ] == origG ) && ( bits[ rightPixel + 2] == origB) ) )
-                    {
-                        if( !reachRight )
-                        {
-                            pixelStack.push_back(QPair< int, int> ( currentPixel.first + 1, currentPixel.second ) );
-                            reachRight = true;
-                        }
-                    }
-                    else
-                    {
-                        reachRight = false;
-                    }
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-}
-
-/*!
- * \brief Flood fill with current brush pattern.
+ * We add a 2d array indicating whether or not a pixel has been 
+ * processed. 
  *  
- * Uses three images; 
- *          1) original image(to be modified) 
- *          2) copy of image to be used to determine fill boundary
- *          3) patterned filled as source for new pixel color
- *  
- * Fill is otherwise based upon doFillFloodColor().
+ * This also; 
+ *  - reduces use of the stack
+ *  - reduces full checks for a given point to 0-1
  *  
  * \author pharvey (1/27/23)
  * 
  * \param point 
  */
-void PCanvas::doFillFloodPattern( const QPoint &pointSeed )
+void PCanvas::doFillFloodTiled( const QPoint &pointSeed )
 {
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ <<"]";
-    // fill entire image to get our new pixel colors 
-    QImage imageFilled = QImage( image.size(), image.format() );   // we will use to get our new pixel colors
-    {
-        QPainter painter( &imageFilled );
-        // painter.setPen( g_Context->getPen() /* Qt::NoPen */ );
-        // painter.setBrush( g_Context->getBrush() );
-        painter.fillRect( 0, 0, image.size().width(), image.size().height(), g_Context->getBrush() );
-    }
+    int nWidth              = image.size().width();
+    int nHeight             = image.size().height();
+    bool tableProcessed[nWidth][nHeight];                               // cell == true if point processed (auto inits to 0)
+    QColor colorSeed        = image.pixelColor( pointSeed );            // we will use to determine the boundary
+    QImage imageSource      = QImage( image.size(), image.format() );   // we will use to get our new pixel colors
 
-    // get the color we are filling over
-    QColor colorOld = image.pixelColor( pointSeed );
+    // Initialize the source image.
+    {
+        // We will use a pattern with a transparent background so fill with the seed color.
+        imageSource.fill( colorSeed );
+        // Fill with pattern.
+        QPainter painter( &imageSource );
+        painter.fillRect( 0, 0, nWidth, nHeight, g_Context->getBrush() );
+    }
 
     // prime stack with seed point
     QStack<QPoint> stackPointsToProcess;
@@ -608,291 +536,32 @@ qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ <<"]";
     while ( !stackPointsToProcess.isEmpty() )
     {
         QPoint point = stackPointsToProcess.pop();
-        if ( image.pixelColor( point ) != colorOld ) continue;
-        image.setPixelColor( point, imageFilled.pixelColor( point ) );
-        // check N
-        if ( point.y() - 1 >= 0 )
+        int nX = point.x();
+        int nY = point.y();
+        tableProcessed[nX][nY] = true;                                      // first and last time we will process this point 
+        if ( image.pixelColor( point ) != colorSeed ) continue;             // not the color we want to fill over so do nothing
+        image.setPixelColor( point, imageSource.pixelColor( point ) );      // fill
+        // look N
+        if ( nY - 1 >= 0 && tableProcessed[nX][nY-1] == false )
         {
-            stackPointsToProcess.push( QPoint( point.x(), point.y() - 1 ) );
+            stackPointsToProcess.push( QPoint( nX, nY - 1 ) );
         }
-        // check S
-        if ( point.y() + 1 < image.height() )
+        // look S
+        if ( nY + 1 < nHeight && tableProcessed[nX][nY+1] == false )
         {
-            stackPointsToProcess.push( QPoint( point.x(), point.y() + 1 ) );
+            stackPointsToProcess.push( QPoint( nX, nY + 1 ) );
         }
-        // check E
-        if ( point.x() + 1 < image.width() )
+        // look E
+        if ( nX + 1 < nWidth && tableProcessed[nX+1][nY] == false )
         {
-            stackPointsToProcess.push( QPoint( point.x() + 1, point.y() ) );
+            stackPointsToProcess.push( QPoint( nX + 1, nY ) );
         }
-        // check W
-        if ( point.x() - 1 >= 0 )
+        // look W
+        if ( nX - 1 >= 0 && tableProcessed[nX-1][nY] == false )
         {
-            stackPointsToProcess.push( QPoint( point.x() - 1, point.y() ) );
-        }
-    }
-}
-
-/*!
- * \brief Flood fill with current brush pattern.
- *  
- * Uses three images; 
- *          1) original image(to be modified) 
- *          2) copy of image to be used to determine fill boundary
- *          3) patterned filled as source for new pixel color
- *  
- * Fill is otherwise based upon doFillFloodColor2().
- *  
- * \author pharvey (1/27/23)
- * 
- * \param point 
- */
-void PCanvas::doFillFloodPattern2( const QPoint &point )
-{
-    QPair<int,int> pointSeed( point.x(), point.y() );                           // seed point (QPair works as a map key - QPoint does not)
-    QColor colorSeed        = image.pixel( point );                           // seed color (color clicked on for fill)
-    QImage imageOriginal    = image;                                          // we will use to determine the boundary
-    QImage imageFilled      = QImage( image.size(), image.format() );       // we will use to get our new pixel colors
-    bool bReachWest         = false;                                            // we do not always need to process point to the West
-    bool bReachEast         = false;                                            // we do not always need to process point to the East
-    QList<QPair<int,int>>       stackPointsToProcess;                           // points to process (based upon peeking East and West)
-    QMap<QPair<int,int>,int>    mapPointsChanged;                               // points to ignore because we have already processed them
-
-    QBrush brush = g_Context->getBrush();
-
-    // fill entire image to get our new pixel colors 
-    // - for now; fill is just a brush (color/pattern/texture) but this could be an algo in the future
-    {
-        QPainter painter( &imageFilled );
-        painter.setPen( Qt::NoPen );
-        painter.setBrush( brush );
-        painter.fillRect( 0, 0, image.size().width(), image.size().height(), brush );
-    }
-
-    // start with seed point
-    stackPointsToProcess.push_back( pointSeed );
-
-    // process until point stack is empty
-    // - we fill by working our way down the y-axis
-    // - we move along the x-axis by alternating between West and East
-    while ( stackPointsToProcess.length() > 0 )
-    {
-        bReachWest = false;
-        bReachEast = false;
-
-        // process first point on stack
-        QPair<int,int> pointCurrent = stackPointsToProcess[0];
-        stackPointsToProcess.pop_front();
-
-        // go North until we hit; edge of image, fill boundary, or processed point
-        // - no processing - just move
-        while ( pointCurrent.second - 1 >= 0 )
-        {
-            // have we hit the boundary?
-            QColor colorOriginal = imageOriginal.pixel( pointCurrent.first, pointCurrent.second );
-            if ( colorOriginal != colorSeed || mapPointsChanged.contains( pointCurrent )) break;
-            pointCurrent.second--;
-        }
-//        pointCurrent.second++;
-
-        // work our way South until we hit edge of image or fill boundary
-        // - process each point along the way
-        while ( pointCurrent.second + 1 < image.height() )
-        {
-            pointCurrent.second++;
-
-            // have we hit the boundary?
-            QColor colorOriginal = imageOriginal.pixel( pointCurrent.first, pointCurrent.second );
-            if ( colorOriginal != colorSeed || mapPointsChanged.contains( pointCurrent ) ) break;
-
-            // apply fill at current point
-            image.setPixelColor( pointCurrent.first, pointCurrent.second, imageFilled.pixel( pointCurrent.first, pointCurrent.second ) );
-            mapPointsChanged.insert( pointCurrent, 0 );
-
-            // is there a point to the West?
-            if ( pointCurrent.first > 1 )
-            {
-                // does the point need to be processed?
-                QPair<int, int> pointWest( pointCurrent.first - 1, pointCurrent.second );
-                QColor colorOriginal = imageOriginal.pixel( pointWest.first, pointWest.second );
-                if ( colorOriginal == colorSeed && !mapPointsChanged.contains( pointWest ) )
-                {
-                    if ( !bReachWest )
-                    {
-                        stackPointsToProcess.push_back( pointWest );
-                        bReachWest = true;
-                    }
-                }
-                else
-                    bReachWest = false;
-            }
-
-            // is there a point to the East?
-            if ( pointCurrent.first < image.width() )
-            {
-                // does the point need to be processed?
-                QPair<int, int> pointEast( pointCurrent.first + 1, pointCurrent.second );
-                QColor colorOriginal = imageOriginal.pixel( pointEast.first, pointEast.second );
-                if ( colorOriginal == colorSeed && !mapPointsChanged.contains( pointEast ) )
-                {
-                    if ( !bReachEast )
-                    {
-                        stackPointsToProcess.push_back( pointEast );
-                        bReachEast = true;
-                    }
-                }
-                else
-                    bReachEast = false;
-            }
-        } // while
-    } // while
-}
-
-void PCanvas::doFillFloodTexture( const QPoint &pointSeed )
-{
-    // fill entire image to get our new pixel colors 
-    QImage imageFilled = QImage( image.size(), image.format() );   // we will use to get our new pixel colors
-    {
-        QPainter painter( &imageFilled );
-        painter.setPen( Qt::NoPen );
-        painter.setBrush( g_Context->getBrush() );
-        painter.fillRect( 0, 0, image.size().width(), image.size().height(), g_Context->getBrush() );
-    }
-
-    // get the color we are filling over
-    QColor colorOld = image.pixelColor( pointSeed );
-
-    // prime stack with seed point
-    QStack<QPoint> stackPointsToProcess;
-    stackPointsToProcess.push( pointSeed );
-    // process until stack is empty
-    while ( !stackPointsToProcess.isEmpty() )
-    {
-        QPoint point = stackPointsToProcess.pop();
-        if ( image.pixelColor( point ) != colorOld ) continue;
-        image.setPixelColor( point, imageFilled.pixelColor( point ) );
-        // check N
-        if ( point.y() - 1 >= 0 )
-        {
-            stackPointsToProcess.push( QPoint( point.x(), point.y() - 1 ) );
-        }
-        // check S
-        if ( point.y() + 1 < image.height() )
-        {
-            stackPointsToProcess.push( QPoint( point.x(), point.y() + 1 ) );
-        }
-        // check E
-        if ( point.x() + 1 < image.width() )
-        {
-            stackPointsToProcess.push( QPoint( point.x() + 1, point.y() ) );
-        }
-        // check W
-        if ( point.x() - 1 >= 0 )
-        {
-            stackPointsToProcess.push( QPoint( point.x() - 1, point.y() ) );
+            stackPointsToProcess.push( QPoint( nX - 1, nY ) );
         }
     }
-}
-
-void PCanvas::doFillFloodTexture2( const QPoint &point )
-{
-    QPair<int,int> pointSeed( point.x(), point.y() );                           // seed point (QPair works as a map key - QPoint does not)
-    QColor colorSeed        = image.pixel( point );                           // seed color (color clicked on for fill)
-    QImage imageOriginal    = image;                                            // we will use to determine the boundary
-    QImage imageFilled      = QImage( image.size(), image.format() );       // we will use to get our new pixel colors
-    bool bReachWest         = false;                                            // we do not always need to process point to the West
-    bool bReachEast         = false;                                            // we do not always need to process point to the East
-    QList<QPair<int,int>>       stackPointsToProcess;                           // points to process (based upon peeking East and West)
-    QMap<QPair<int,int>,int>    mapPointsChanged;                               // points to ignore because we have already processed them
-
-    QBrush brush = g_Context->getBrush();
-
-    // fill entire image to get our new pixel colors 
-    // - for now; fill is just a brush (color/pattern/texture) but this could be an algo in the future
-    {
-        QPainter painter( &imageFilled );
-        painter.setPen( Qt::NoPen );
-        painter.setBrush( brush );
-        painter.fillRect( 0, 0, image.size().width(), image.size().height(), brush );
-    }
-
-    // start with seed point
-    stackPointsToProcess.push_back( pointSeed );
-
-    // process until point stack is empty
-    // - we fill by working our way down the y-axis
-    // - we move along the x-axis by alternating between West and East
-    while ( stackPointsToProcess.length() > 0 )
-    {
-        bReachWest = false;
-        bReachEast = false;
-
-        // process first point on stack
-        QPair<int,int> pointCurrent = stackPointsToProcess[0];
-        stackPointsToProcess.pop_front();
-
-        // go North until we hit; edge of image, fill boundary, or processed point
-        // - no processing - just move
-        while ( pointCurrent.second - 1 >= 0 )
-        {
-            // have we hit the boundary?
-            QColor colorOriginal = imageOriginal.pixel( pointCurrent.first, pointCurrent.second );
-            if ( colorOriginal != colorSeed || mapPointsChanged.contains( pointCurrent )) break;
-            pointCurrent.second--;
-        }
-//        pointCurrent.second++;
-
-        // work our way South until we hit edge of image or fill boundary
-        // - process each point along the way
-        while ( pointCurrent.second + 1 < image.height() )
-        {
-            pointCurrent.second++;
-
-            // have we hit the boundary?
-            QColor colorOriginal = imageOriginal.pixel( pointCurrent.first, pointCurrent.second );
-            if ( colorOriginal != colorSeed || mapPointsChanged.contains( pointCurrent ) ) break;
-
-            // apply fill at current point
-            image.setPixelColor( pointCurrent.first, pointCurrent.second, imageFilled.pixel( pointCurrent.first, pointCurrent.second ) );
-            mapPointsChanged.insert( pointCurrent, 0 );
-
-            // is there a point to the West?
-            if ( pointCurrent.first > 1 )
-            {
-                // does the point need to be processed?
-                QPair<int, int> pointWest( pointCurrent.first - 1, pointCurrent.second );
-                QColor colorOriginal = imageOriginal.pixel( pointWest.first, pointWest.second );
-                if ( colorOriginal == colorSeed && !mapPointsChanged.contains( pointWest ) )
-                {
-                    if ( !bReachWest )
-                    {
-                        stackPointsToProcess.push_back( pointWest );
-                        bReachWest = true;
-                    }
-                }
-                else
-                    bReachWest = false;
-            }
-
-            // is there a point to the East?
-            if ( pointCurrent.first < image.width() )
-            {
-                // does the point need to be processed?
-                QPair<int, int> pointEast( pointCurrent.first + 1, pointCurrent.second );
-                QColor colorOriginal = imageOriginal.pixel( pointEast.first, pointEast.second );
-                if ( colorOriginal == colorSeed && !mapPointsChanged.contains( pointEast ) )
-                {
-                    if ( !bReachEast )
-                    {
-                        stackPointsToProcess.push_back( pointEast );
-                        bReachEast = true;
-                    }
-                }
-                else
-                    bReachEast = false;
-            }
-        } // while
-    } // while
 }
 
 void PCanvas::doFillGradient( const QPoint &pointSeed )

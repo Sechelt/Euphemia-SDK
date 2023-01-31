@@ -9,6 +9,7 @@ class PDrawLine : public PShapeBase
 public:
     PDrawLine( PCanvas *pCanvas, const QPoint &pointBegin );
 
+    virtual bool doDoubleClick( QMouseEvent * ) override { return true; }
     virtual bool doPress( QMouseEvent *pEvent ) override;
     virtual bool doMove( QMouseEvent *pEvent ) override; 
     virtual bool doRelease( QMouseEvent *pEvent ) override;

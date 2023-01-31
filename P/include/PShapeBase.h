@@ -13,6 +13,7 @@ public:
     PShapeBase( PCanvas *pCanvas );
     virtual ~PShapeBase();
 
+    virtual bool doDoubleClick( QMouseEvent *pEvent ) = 0;                      /*!< mouse press from canvas - return false when done   */
     virtual bool doPress( QMouseEvent *pEvent ) = 0;                            /*!< mouse press from canvas - return false when done   */
     virtual bool doMove( QMouseEvent *pEvent ) = 0;                             /*!< mouse move from canvas - return false when done    */
     virtual bool doRelease( QMouseEvent *pEvent ) = 0;                          /*!< mouse release from canvas - return false when done */

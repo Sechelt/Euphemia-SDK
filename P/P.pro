@@ -29,10 +29,13 @@ HEADERS += \
         include/PContext.h \
         include/PDrawEllipse.h \
         include/PDrawEllipseFilled.h \
+        include/PDrawFreeHand.h \
         include/PDrawLine.h \
+        include/PDrawPolygon.h \
         include/PDrawRectangle.h \
         include/PDrawRectangleFilled.h \
         include/PFontToolBar.h \
+        include/PFreeBase.h \
         include/PHandle.h \
         include/PPenToolBar.h \
         include/PSelectEllipse.h \
@@ -47,10 +50,13 @@ SOURCES += \
         source/PContext.cpp \
         source/PDrawEllipse.cpp \
         source/PDrawEllipseFilled.cpp \
+        source/PDrawFreeHand.cpp \
         source/PDrawLine.cpp \
+        source/PDrawPolygon.cpp \
         source/PDrawRectangle.cpp \
         source/PDrawRectangleFilled.cpp \
         source/PFontToolBar.cpp \
+        source/PFreeBase.cpp \
         source/PHandle.cpp \
         source/PPenToolBar.cpp \
         source/PSelectEllipse.cpp \

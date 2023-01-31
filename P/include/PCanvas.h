@@ -5,7 +5,9 @@
 
 #include "PSelectEllipse.h"
 #include "PSelectRectangle.h"
+#include "PDrawFreeHand.h"
 #include "PDrawLine.h"
+#include "PDrawPolygon.h"
 #include "PDrawRectangle.h"
 #include "PDrawRectangleFilled.h"
 #include "PDrawEllipse.h"
@@ -80,6 +82,7 @@ signals:
     void signalStateChanged();
 
 protected:
+    void mouseDoubleClickEvent(QMouseEvent *pEvent ) override;
     void mousePressEvent( QMouseEvent *pEvent ) override;
     void mouseMoveEvent( QMouseEvent *pEvent ) override;
     void mouseReleaseEvent( QMouseEvent *pEvent ) override;
@@ -91,11 +94,7 @@ private:
     
     void doFillFlood( const QPoint &pointSeed );    
     void doFillFloodColor( const QPoint &pointSeed );    
-    void doFillFloodColor2( const QPoint &pointSeed );    
-    void doFillFloodPattern( const QPoint &pointSeed );
-    void doFillFloodPattern2( const QPoint &pointSeed );
-    void doFillFloodTexture( const QPoint &pointSeed );    
-    void doFillFloodTexture2( const QPoint &pointSeed );    
+    void doFillFloodTiled( const QPoint &pointSeed );
     void doFillGradient( const QPoint &pointSeed );    
     void doClear();
 
@@ -116,7 +115,8 @@ private:
     QStack<QImage>  stackRedo;
 
     // active tool (or not)
-    PShapeBase *    pShapeBase = nullptr;
+    PFreeBase *     pFreeBase   = nullptr;
+    PShapeBase *    pShapeBase  = nullptr;
 };
 
 #endif

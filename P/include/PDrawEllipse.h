@@ -9,10 +9,11 @@ class PDrawEllipse : public PShapeBase
 public:
     PDrawEllipse( PCanvas *pCanvas, const QPoint &pointBegin );
 
-    virtual bool    doPress( QMouseEvent *pEvent ) override;
-    virtual bool    doMove( QMouseEvent *pEvent ) override; 
-    virtual bool    doRelease( QMouseEvent *pEvent ) override;
-    virtual void    doCommit() override;
+    virtual bool doDoubleClick( QMouseEvent * ) override { return true; }
+    virtual bool doPress( QMouseEvent *pEvent ) override;
+    virtual bool doMove( QMouseEvent *pEvent ) override; 
+    virtual bool doRelease( QMouseEvent *pEvent ) override;
+    virtual void doCommit() override;
 
 protected:
     QPoint pointBegin;
