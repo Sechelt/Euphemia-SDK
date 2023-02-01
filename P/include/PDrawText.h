@@ -1,29 +1,47 @@
-#ifndef H_PDrawRectangle
-#define H_PDrawRectangle
+#ifndef H_PDrawText
+#define H_PDrawText
 
-#include "PShapeBase.h"
+#include "PDrawRectangle.h"
 
-class PDrawRectangle : public PShapeBase
+class WColorButton;
+class WTextHAlignComboBox;
+class WTextVAlignComboBox;
+
+class PDrawText : public PDrawRectangle
 {
     Q_OBJECT
 public:
-    PDrawRectangle( PCanvas *pCanvas, const QPoint &pointBegin );
+    PDrawText( PCanvas *pCanvas, const QPoint &pointBegin );
 
-    virtual bool doDoubleClick( QMouseEvent * ) override { return true; }
-    virtual bool doPress( QMouseEvent *pEvent ) override;
-    virtual bool doMove( QMouseEvent *pEvent ) override; 
-    virtual bool doRelease( QMouseEvent *pEvent ) override;
     virtual void doCommit() override;
 
 protected:
-    QPoint pointBegin;
-    QPoint pointEnd;
-
-    virtual void paintEvent( QPaintEvent *pEvent ) override;
-
     virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd );
-    virtual void doCreateHandles();
-    virtual void doMoveHandle( const QPoint &pointPos );
+};
+
+class PTextToolBar : public QWidget
+{
+    Q_OBJECT
+public:
+    PTextToolBar( QWidget *p );
+
+public slots:
+    void slotRefresh( const QPen & );
+    void slotRefresh( const PContextText & );
+
+protected slots:
+    void slotColor( const QColor & );
+    void slotText( const QString & );
+    void slotHAlign( Qt::AlignmentFlag n );
+    void slotVAlign( Qt::AlignmentFlag n );
+    void slotMore();
+
+protected:
+    WColorButton *          pColor;
+    QLineEdit *             pLineEdit;
+    WTextHAlignComboBox *   pHAlign;
+    WTextVAlignComboBox *   pVAlign;
+    QToolButton *           pMore;
 };
 
 #endif

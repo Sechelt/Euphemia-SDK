@@ -291,6 +291,8 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
                 pFreeBase = new PDrawFreeHand( this );           
                 break;
             case ToolDrawSpray:               
+                g_Context->setImage( &image );
+                pFreeBase = new PDrawSpray( this );           
                 break;
             case ToolDrawLine:
                 g_Context->setImage( &image );
@@ -319,6 +321,8 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
             case ToolDrawPolygonFilled:  
                 break;
             case ToolDrawText:  
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawText( this, pEvent->pos() );           
                 break;
             case ToolFillFlood:          
                 doFillFlood( pEvent->pos() );
@@ -386,11 +390,13 @@ void PCanvas::mouseReleaseEvent( QMouseEvent *pEvent )
     else if ( pShapeBase ) 
     {
         pShapeBase->doRelease( pEvent );
-        // a commit does not make sense for selection shapes  
+        // auto commit?
+        // - selections and draw text never auto commit
         if ( bAutoCommit && 
              !( pShapeBase->inherits( "PSelectRectangle" ) ||
                 pShapeBase->inherits( "PSelectEllipse" ) ||
-                pShapeBase->inherits( "PSelectPolygon" ) ) )
+                pShapeBase->inherits( "PSelectPolygon" ) ||
+                pShapeBase->inherits( "PDrawText" ) ) )
         {
             doDrawCommit();
         }

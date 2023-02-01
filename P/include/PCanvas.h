@@ -12,6 +12,8 @@
 #include "PDrawRectangleFilled.h"
 #include "PDrawEllipse.h"
 #include "PDrawEllipseFilled.h"
+#include "PDrawSpray.h"
+#include "PDrawText.h"
 
 class PCanvasView;
 

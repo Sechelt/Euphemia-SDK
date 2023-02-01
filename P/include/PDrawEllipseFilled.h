@@ -13,4 +13,10 @@ protected:
     virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd ) override;
 };
 
+class PEllipseFilledToolBar : public QWidget
+{
+public:
+    PEllipseFilledToolBar( QWidget *p );
+};
+
 #endif

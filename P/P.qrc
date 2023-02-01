@@ -29,6 +29,13 @@
 	<file alias="VLayout">images/VLayout.png</file>
 	<file alias="GLayout">images/GLayout.png</file>
 	<file alias="GroupLayout">images/GroupLayout.png</file>
+
+	<file alias="Drag">images/drag.png</file>
+	<file alias="ResizeTopRight">images/resize-topright.png</file>
+	<file alias="ResizeTopLeft">images/resize-topleft.png</file>
+	<file alias="ResizeVert">images/resize-vert.png</file>
+	<file alias="ResizeHoriz">images/resize-horiz.png</file>
+
 </qresource>
 </RCC>
 

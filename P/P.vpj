@@ -68,6 +68,7 @@
             <F N="source/PDrawRectangle.cpp"/>
             <F N="source/PDrawRectangleFilled.cpp"/>
             <F N="source/PDrawSpray.cpp"/>
+            <F N="source/PDrawText.cpp"/>
             <F N="source/PFillBase.cpp"/>
             <F N="source/PFillFlood.cpp"/>
             <F N="source/PFillGradient.cpp"/>
@@ -98,6 +99,7 @@
             <F N="include/PDrawRectangle.h"/>
             <F N="include/PDrawRectangleFilled.h"/>
             <F N="include/PDrawSpray.h"/>
+            <F N="include/PDrawText.h"/>
             <F N="include/PFillBase.h"/>
             <F N="include/PFillFlood.h"/>
             <F N="include/PFillGradient.h"/>

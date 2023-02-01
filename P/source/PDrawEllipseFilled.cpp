@@ -1,6 +1,9 @@
 #include "LibInfo.h"
 #include "PDrawEllipseFilled.h"
 
+#include "PPenToolBar.h"
+#include "PBrushToolBar.h"
+
 PDrawEllipseFilled::PDrawEllipseFilled( PCanvas *pCanvas, const QPoint &pointBegin )
     : PDrawEllipse( pCanvas, pointBegin )
 {
@@ -18,4 +21,15 @@ void PDrawEllipseFilled::doPaint( QPainter *pPainter, const QPoint &pointBegin, 
     pPainter->drawEllipse( r );                         
 }
 
+//
+// PEllipseFilledToolBar
+//
+PEllipseFilledToolBar::PEllipseFilledToolBar( QWidget *p )
+    : QWidget( p )
+{
+    QHBoxLayout *pLayout = new QHBoxLayout( this );
+    pLayout->addWidget( new PPenToolBar( this ) );
+    pLayout->addWidget( new PBrushToolBar( this ) );
+    pLayout->addStretch( 10 );
+}
 

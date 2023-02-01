@@ -1,7 +1,8 @@
 #include "LibInfo.h"
-
 #include "PDrawFreeHand.h"
+
 #include "PCanvas.h"
+#include "PPenToolBar.h"
 
 PDrawFreeHand::PDrawFreeHand( PCanvas *pCanvas )
     : PFreeBase( pCanvas )
@@ -42,5 +43,16 @@ QRect PDrawFreeHand::doDrawLine( const QPoint &point )
     pointLast = point;
 
     return r;
+}
+
+//
+// PFreeHandToolBar
+//
+PFreeHandToolBar::PFreeHandToolBar( QWidget *p )
+    : QWidget( p )
+{
+    QHBoxLayout *pLayout = new QHBoxLayout( this );
+    pLayout->addWidget( new PPenToolBar( this ) );
+    pLayout->addStretch( 10 );
 }
 

@@ -9,19 +9,21 @@ class PHandle : public QWidget
 public:
     enum Type
     {
-        TypeMove,
+        TypeDrag,
         TypeMovePoint,
-        TypeTopLeft,
-        TypeTopRight,
-        TypeBottomLeft,
-        TypeBottomRight,
-        TypeSizeH,
-        TypeSizeV,
-        TypeSizeHV
+        TypeSizeLeft,
+        TypeSizeRight,
+        TypeSizeTop,
+        TypeSizeBottom,
+        TypeSizeTopRight,
+        TypeSizeTopLeft,
+        TypeSizeBottomRight,
+        TypeSizeBottomLeft
     };
 
     PHandle( QWidget *pParent, Type nType, const QPoint &pointCenter );
 
+    void setType( Type );
     void setCenter( const QPoint & );
 
     Type    getType()   { return nType; }

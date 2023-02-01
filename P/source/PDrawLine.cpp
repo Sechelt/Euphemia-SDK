@@ -2,6 +2,7 @@
 #include "PDrawLine.h"
 
 #include "PCanvas.h"
+#include "PPenToolBar.h"
 
 #define PDrawLineBegin 0
 #define PDrawLineMove 1
@@ -107,7 +108,7 @@ void PDrawLine::doCreateHandles()
     pHandle->show();
 
     // PDrawLineMove
-    pHandle = new PHandle( pCanvas, PHandle::TypeMove, r.center() );
+    pHandle = new PHandle( pCanvas, PHandle::TypeDrag, r.center() );
     vectorHandles.append( pHandle );
     pHandle->show();
 
@@ -172,5 +173,14 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
     }
 }
 
-
+//
+// PLineToolBar
+//
+PLineToolBar::PLineToolBar( QWidget *p )
+    : QWidget( p )
+{
+    QHBoxLayout *pLayout = new QHBoxLayout( this );
+    pLayout->addWidget( new PPenToolBar( this ) );
+    pLayout->addStretch( 10 );
+}
 

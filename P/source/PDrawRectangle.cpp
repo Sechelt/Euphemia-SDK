@@ -2,6 +2,7 @@
 #include "PDrawRectangle.h"
 
 #include "PCanvas.h"
+#include "PPenToolBar.h"
 
 #define PDrawRectangleBegin 0
 #define PDrawRectangleMove 1
@@ -100,17 +101,17 @@ void PDrawRectangle::doCreateHandles()
     // Order matters when handles share a position. Last handle will be found first.
 
     // PDrawRectangleBegin
-    pHandle = new PHandle( pCanvas, PHandle::TypeMovePoint, pointBegin );
+    pHandle = new PHandle( pCanvas, PHandle::TypeSizeTopLeft, pointBegin );
     vectorHandles.append( pHandle );
     pHandle->show();
 
     // PDrawRectangleMove
-    pHandle = new PHandle( pCanvas, PHandle::TypeMove, r.center() );
+    pHandle = new PHandle( pCanvas, PHandle::TypeDrag, r.center() );
     vectorHandles.append( pHandle );
     pHandle->show();
 
     // PDrawRectangleEnd
-    pHandle = new PHandle( pCanvas, PHandle::TypeMovePoint, pointEnd );
+    pHandle = new PHandle( pCanvas, PHandle::TypeSizeBottomRight, pointEnd );
     vectorHandles.append( pHandle );
     pHandle->show();
 }
@@ -130,6 +131,7 @@ void PDrawRectangle::doMoveHandle( const QPoint &pointPos )
         setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust move handle
         vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
+        doSyncHandleTypes( r );
     }
     else if ( pHandle == vectorHandles[PDrawRectangleMove] )
     {
@@ -161,8 +163,31 @@ void PDrawRectangle::doMoveHandle( const QPoint &pointPos )
         setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust move handle
         vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
+        doSyncHandleTypes( r );
     }
 }
 
+void PDrawRectangle::doSyncHandleTypes( const QRect &r )
+{
+    if ( vectorHandles[PDrawRectangleBegin]->getCenter() == r.topLeft() ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopLeft );
+    else if ( vectorHandles[PDrawRectangleBegin]->getCenter() == r.topRight() ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopRight );
+    else if ( vectorHandles[PDrawRectangleBegin]->getCenter() == r.bottomLeft() ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomLeft );
+    else if ( vectorHandles[PDrawRectangleBegin]->getCenter() == r.bottomRight() ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomRight );
 
+    if ( vectorHandles[PDrawRectangleEnd]->getCenter() == r.topLeft() ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopLeft );
+    else if ( vectorHandles[PDrawRectangleEnd]->getCenter() == r.topRight() ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopRight );
+    else if ( vectorHandles[PDrawRectangleEnd]->getCenter() == r.bottomLeft() ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomLeft );
+    else if ( vectorHandles[PDrawRectangleEnd]->getCenter() == r.bottomRight() ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomRight );
+}
+
+//
+// PRectangleToolBar
+//
+PRectangleToolBar::PRectangleToolBar( QWidget *p )
+    : QWidget( p )
+{
+    QHBoxLayout *pLayout = new QHBoxLayout( this );
+    pLayout->addWidget( new PPenToolBar( this ) );
+    pLayout->addStretch( 10 );
+}
 

@@ -2,6 +2,7 @@
 #include "PDrawPolygon.h"
 
 #include "PCanvas.h"
+#include "PPenToolBar.h"
 
 #define PDrawPolygonBegin 0
 #define PDrawPolygonMove 1
@@ -107,7 +108,7 @@ void PDrawPolygon::doCreateHandles()
     pHandle->show();
 
     // PDrawPolygonMove
-    pHandle = new PHandle( pCanvas, PHandle::TypeMove, r.center() );
+    pHandle = new PHandle( pCanvas, PHandle::TypeDrag, r.center() );
     vectorHandles.append( pHandle );
     pHandle->show();
 
@@ -172,6 +173,14 @@ void PDrawPolygon::doMoveHandle( const QPoint &pointPos )
     }
 }
 
-
-
+//
+// PPolygonToolBar
+//
+PPolygonToolBar::PPolygonToolBar( QWidget *p )
+    : QWidget( p )
+{
+    QHBoxLayout *pLayout = new QHBoxLayout( this );
+    pLayout->addWidget( new PPenToolBar( this ) );
+    pLayout->addStretch( 10 );
+}
 

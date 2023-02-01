@@ -26,4 +26,10 @@ protected:
     virtual void doMoveHandle( const QPoint &pointPos );
 };
 
+class PPolygonToolBar : public QWidget
+{
+public:
+    PPolygonToolBar( QWidget *p );
+};
+
 #endif

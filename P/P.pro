@@ -32,8 +32,12 @@ HEADERS += \
         include/PDrawFreeHand.h \
         include/PDrawLine.h \
         include/PDrawPolygon.h \
+        include/PDrawPolygonFilled.h \
         include/PDrawRectangle.h \
         include/PDrawRectangleFilled.h \
+        include/PDrawSpray.h \
+        include/PDrawText.h \
+        include/PFillFlood.h \
         include/PFontToolBar.h \
         include/PFreeBase.h \
         include/PHandle.h \
@@ -53,8 +57,12 @@ SOURCES += \
         source/PDrawFreeHand.cpp \
         source/PDrawLine.cpp \
         source/PDrawPolygon.cpp \
+        source/PDrawPolygonFilled.cpp \
         source/PDrawRectangle.cpp \
         source/PDrawRectangleFilled.cpp \
+        source/PDrawSpray.cpp \
+        source/PDrawText.cpp \
+        source/PFillFlood.cpp \
         source/PFontToolBar.cpp \
         source/PFreeBase.cpp \
         source/PHandle.cpp \

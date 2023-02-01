@@ -26,4 +26,10 @@ protected:
     virtual void doMoveHandle( const QPoint &pointPos );
 };
 
+class PLineToolBar : public QWidget
+{
+public:
+    PLineToolBar( QWidget *p );
+};
+
 #endif

@@ -1,167 +1,133 @@
 #include "LibInfo.h"
-#include "PDrawRectangle.h"
+#include "PDrawText.h"
+
+#include <WColorButton.h>
+#include <WTextHAlignComboBox.h>
+#include <WTextVAlignComboBox.h>
 
 #include "PCanvas.h"
+#include "PFontToolBar.h"
 
-#define PDrawRectangleBegin 0
-#define PDrawRectangleMove 1
-#define PDrawRectangleEnd 2
-
-PDrawRectangle::PDrawRectangle( PCanvas *pCanvas, const QPoint &pointBegin )
-    : PShapeBase( pCanvas )
+PDrawText::PDrawText( PCanvas *pCanvas, const QPoint &pointBegin )
+    : PDrawRectangle( pCanvas, pointBegin )
 {
-    // init begin
-    this->pointBegin = pointBegin;
-    pointEnd = pointBegin;
-    // init handles
-    QRect r;
-    r.setTopLeft( pointBegin );
-    r.setBottomRight( pointEnd );
-    setGeometry( r.normalized() );
-    setVisible( true );
-    doCreateHandles();
 }
 
-bool PDrawRectangle::doPress( QMouseEvent *pEvent )
-{
-    // IF handle pressed on THEN start manipulation
-    pHandle = getHandle( pEvent->pos() );
-    if ( pHandle )
-    {
-        // hide handles during manipulation
-        // doShowHandles( false );
-        return true;
-    }
-
-    // pressed on the shape (but not a handle)
-    if ( geometry().contains( pEvent->pos() ) ) return true;
-
-    // nothing to do here so return false
-    // app will probably tell this to doCommit() then delete this
-    return false;
-}
-
-bool PDrawRectangle::doMove( QMouseEvent *pEvent ) 
-{
-    // IF no handle moving THEN no manipulation
-    if ( !pHandle ) return true;
-
-    doMoveHandle( pEvent->pos() );
-
-    return true;
-}
-
-bool PDrawRectangle::doRelease( QMouseEvent *pEvent )
-{
-    Q_UNUSED( pEvent );
-    // IF no handle moving THEN no manipulation
-    if ( !pHandle ) return true;
-
-    // show handles in case we are going to do more manipulation
-    doShowHandles();
-
-    return true;
-}
-
-void PDrawRectangle::doCommit()
+void PDrawText::doCommit()
 {
     QPainter painter( g_Context->getImage() );
-    doPaint( &painter, pointBegin, pointEnd );
+
+    QRect r( pointBegin, pointEnd );
+    r = r.normalized();
+
+    // apply context
+    painter.setPen( g_Context->getPen() );
+    painter.setFont( g_Context->getFont() );
+
+    // paint
+    painter.drawText( r, g_Context->getText().nHAlign | g_Context->getText().nVAlign, g_Context->getText().stringText );
 
     doDeleteHandles();
 }
 
-void PDrawRectangle::paintEvent( QPaintEvent *pEvent )
+void PDrawText::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
 {
-    Q_UNUSED( pEvent );
-    QPainter painter( this );
-    doPaint( &painter, mapFromParent( pointBegin ), mapFromParent( pointEnd ) );
-}
+    QRect r( pointBegin, pointEnd );
+    r = r.normalized();
 
-void PDrawRectangle::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
-{
+    // temp outline of rect area
+    pPainter->setPen( QPen( Qt::DotLine ) );
+    pPainter->drawRect( r );
+
     // apply context
     pPainter->setPen( g_Context->getPen() );
+    pPainter->setFont( g_Context->getFont() );
 
     // paint
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
-    pPainter->drawRect( r );                         
+    pPainter->drawText( r, g_Context->getText().nHAlign | g_Context->getText().nVAlign, g_Context->getText().stringText );
 }
 
-void PDrawRectangle::doCreateHandles()
+//
+// PTextToolBar
+//
+PTextToolBar::PTextToolBar( QWidget *p )
+    : QWidget( p )
 {
-    Q_ASSERT( vectorHandles.count() == 0 );
+    QHBoxLayout *pLayout = new QHBoxLayout( this );
 
-    PHandle *pHandle;
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
+    // we only want the pen (foreground) color - not the entire pen
+    pColor = new WColorButton( g_Context->getPen().color(), this, WColorButton::Pen );
+    pLayout->addWidget( pColor );
+    connect( pColor, SIGNAL(signalChanged(const QColor &)), SLOT(slotColor(const QColor &)) );
+    connect( g_Context, SIGNAL(signalModified(const QPen &)), SLOT(slotRefresh(const QPen &)) );
+    // font - of course
+    pLayout->addWidget( new PFontToolBar( this ) );
+    // text
+    pLineEdit = new QLineEdit( g_Context->getText().stringText, this );
+    pLayout->addWidget( pLineEdit );
+    connect( pLineEdit, SIGNAL(textChanged(const QString &)), SLOT(slotText(const QString &)) );
+    //
+    pHAlign = new WTextHAlignComboBox( g_Context->getText().nHAlign, this );
+    pLayout->addWidget( pHAlign );
+    connect( pHAlign, SIGNAL(signalChanged(Qt::AlignmentFlag)), SLOT(slotHAlign(Qt::AlignmentFlag)) );
+    //
+    pVAlign = new WTextVAlignComboBox( g_Context->getText().nVAlign, this );
+    pLayout->addWidget( pVAlign );
+    connect( pVAlign, SIGNAL(signalChanged(Qt::AlignmentFlag)), SLOT(slotVAlign(Qt::AlignmentFlag)) );
+    //
+    pMore = new QToolButton( this );
+    pMore->setText( ":" );
+    pLayout->addWidget( pMore );
+    connect( pMore, SIGNAL(clicked()), SLOT(slotMore()) );
+    //
+    pLayout->addStretch( 10 );
 
-    // Order matters when handles share a position. Last handle will be found first.
-
-    // PDrawRectangleBegin
-    pHandle = new PHandle( pCanvas, PHandle::TypeMovePoint, pointBegin );
-    vectorHandles.append( pHandle );
-    pHandle->show();
-
-    // PDrawRectangleMove
-    pHandle = new PHandle( pCanvas, PHandle::TypeMove, r.center() );
-    vectorHandles.append( pHandle );
-    pHandle->show();
-
-    // PDrawRectangleEnd
-    pHandle = new PHandle( pCanvas, PHandle::TypeMovePoint, pointEnd );
-    vectorHandles.append( pHandle );
-    pHandle->show();
+    connect( g_Context, SIGNAL(signalModified(const PContextText &)), SLOT(slotRefresh(const PContextText &)) );
 }
 
-void PDrawRectangle::doMoveHandle( const QPoint &pointPos )
+void PTextToolBar::slotRefresh( const QPen &t )
 {
-    Q_ASSERT( pHandle );
+    pColor->setValue( t.color() );
+}
 
-    if ( pHandle == vectorHandles[PDrawRectangleBegin] )
-    {
-        // move the begin 
-        pointBegin = pointPos;
-        pHandle->setCenter( pointBegin );
-        // set canvas geometry
-        QRect r( pointBegin, pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
-        // adjust move handle
-        vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
-    }
-    else if ( pHandle == vectorHandles[PDrawRectangleMove] )
-    {
-        // get diff
-        QRect r( pointBegin, pointEnd );
-        r = r.normalized();
-        QPoint pointDiff = pointPos - r.center();
-        // update points
-        pointBegin += pointDiff;
-        pointEnd += pointDiff;
-        // set canvas geometry
-        r.setTopLeft( pointBegin );
-        r.setBottomRight( pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
-        // adjust all handles
-        vectorHandles[PDrawRectangleBegin]->setCenter( pointBegin );
-        vectorHandles[PDrawRectangleMove]->setCenter( pointPos );
-        vectorHandles[PDrawRectangleEnd]->setCenter( pointEnd );
-    }
-    else if ( pHandle == vectorHandles[PDrawRectangleEnd] )
-    {
-        // move the end 
-        pointEnd = pointPos;
-        pHandle->setCenter( pointEnd );
-        // set canvas geometry
-        QRect r( pointBegin, pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
-        // adjust move handle
-        vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
-    }
+void PTextToolBar::slotRefresh( const PContextText &t )
+{
+    pLineEdit->setText( t.stringText );
+    pHAlign->setValue( t.nHAlign );
+    pVAlign->setValue( t.nVAlign );
+}
+
+void PTextToolBar::slotColor( const QColor &t )
+{
+    QPen pen = g_Context->getPen();
+    pen.setColor( t );
+    g_Context->setPen( pen );
+}
+
+void PTextToolBar::slotText( const QString &t )
+{
+    PContextText text = g_Context->getText();
+    text.stringText = t;
+    g_Context->setText( text );
+}
+
+void PTextToolBar::slotHAlign( Qt::AlignmentFlag n )
+{
+    PContextText text = g_Context->getText();
+    text.nHAlign = n;
+    g_Context->setText( text );
+}
+
+void PTextToolBar::slotVAlign( Qt::AlignmentFlag n )
+{
+    PContextText text = g_Context->getText();
+    text.nVAlign = n;
+    g_Context->setText( text );
+}
+
+void PTextToolBar::slotMore()
+{
+    // shadow effects etc
 }
 
 

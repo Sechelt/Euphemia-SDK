@@ -19,4 +19,10 @@ protected:
     QRect doDrawLine( const QPoint & );
 };
 
+class PFreeHandToolBar : public QWidget
+{
+public:
+    PFreeHandToolBar( QWidget *p );
+};
+
 #endif

@@ -5,6 +5,7 @@
 #include <QtWidgets>
 #include <QPrinter>
 #include <QPrintDialog>
+#include <QtMath>
 
 namespace P 
 {

@@ -24,6 +24,13 @@ protected:
     virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd );
     virtual void doCreateHandles();
     virtual void doMoveHandle( const QPoint &pointPos );
+    virtual void doSyncHandleTypes( const QRect &r );
+};
+
+class PRectangleToolBar : public QWidget
+{
+public:
+    PRectangleToolBar( QWidget *p );
 };
 
 #endif
