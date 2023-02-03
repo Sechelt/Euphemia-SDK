@@ -8,6 +8,7 @@ PCanvas::PCanvas( QWidget *parent, const QSize &size )
 {
     setAttribute( Qt::WA_StaticContents );
     resize( size );
+    setMouseTracking( true );
 }
 
 PCanvas::PCanvas( QWidget *parent, const QImage &image )
@@ -16,6 +17,7 @@ PCanvas::PCanvas( QWidget *parent, const QImage &image )
     setAttribute( Qt::WA_StaticContents );
     resize( image.size() );
     this->image = image;
+    setMouseTracking( true );
 }
 
 void PCanvas::setZoom( WZoomWidget::FitTypes nFit, int nZoom )
@@ -31,7 +33,7 @@ void PCanvas::setTool( Tools n )
 
 void PCanvas::setAutoCommit( bool b )
 {
-    if ( isDrawing() ) doDrawCancel();
+    if ( isDrawing() ) doCancel();
     bAutoCommit = b;
 }
 
@@ -163,7 +165,7 @@ void PCanvas::doUndo()
     stackRedo.push( image );
     image = stackUndo.pop();
     update();
-    emit signalStateChanged();
+    emit signalChangedState();
 }
 
 void PCanvas::doRedo()
@@ -172,47 +174,32 @@ void PCanvas::doRedo()
     stackUndo.push( image );
     image = stackRedo.pop();
     update();
-    emit signalStateChanged();
+    emit signalChangedState();
 }
 
-void PCanvas::doDrawCommit()
+void PCanvas::doCommit()
 {
-    Q_ASSERT( isDrawing() );
+    if ( !pShapeBase ) return;
 
-    if ( pShapeBase )
-    {
-        // update undo/redo
-        stackRedo.clear();
-        stackUndo.push( image );
-        if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
-        // draw to image
-        pShapeBase->doCommit();
-        // get rid temp shape widget
-        delete pShapeBase;
-        pShapeBase = nullptr;
-        // we have been modified so...
-        setModified( true );
-    }
+    if ( pShapeBase->canCommit() ) 
+        pShapeBase->doCommit(); // this should trigger PCanvas::slotCommitted()
+
+    delete pShapeBase;
+    pShapeBase = nullptr;
+    imagePreCommit = QImage();
 }
 
-void PCanvas::doDrawCancel()
+void PCanvas::doCancel()
 {
-    Q_ASSERT( isDrawing() );
+    if ( !pShapeBase ) return;
 
-/*
-    if ( nTool == ToolSelection )                                   
-    {                                                               
-        PiSelection *pSelection = g_Palette->selection.getCurrent();
-        pSelection->doFini();                                       
-        emit signalStateChanged();                                  
-    }                                                               
-*/
-    if ( pShapeBase )
-    {
+    if ( pShapeBase->canCancel() ) 
         pShapeBase->doCancel();
-        delete pShapeBase;
-        pShapeBase = nullptr;
-    }
+
+    delete pShapeBase;
+    pShapeBase = nullptr;
+    imagePreCommit = QImage();
+    emit signalChangedState();
 }
 
 bool PCanvas::isDrawing()
@@ -251,38 +238,57 @@ bool PCanvas::canRedo()
     return !stackRedo.isEmpty();
 }
 
+bool PCanvas::canCommit() 
+{
+    if ( pShapeBase ) return pShapeBase->canCommit();
+    return false;
+}
+
+bool PCanvas::canCancel() 
+{
+    if ( pShapeBase ) return pShapeBase->canCancel();
+    return false;
+}
+
+void PCanvas::slotCommitted()
+{
+    // undo/redo
+    stackRedo.clear();
+    stackUndo.push( imagePreCommit );
+    if ( stackUndo.count() >= nMaxUndo ) stackUndo.removeFirst();
+    imagePreCommit = image;
+    // we have been modified
+    setModified();
+    // setModified may - or may not - have done this so we do it here to ensure it happens
+    emit signalChangedState(); 
+}
+
 void PCanvas::mouseDoubleClickEvent( QMouseEvent *pEvent )
 {
-    if ( !isDrawing() ) 
-    {
-        if ( pShapeBase ) 
-        {
-            // IF shape is done THEN consider commit
-            if ( !pShapeBase->doDoubleClick( pEvent ) )
-            {
-                if ( bAutoCommit ) doDrawCommit();
-            }
-        }
-    }
+    // only makes sense if we are drawing because we need a 'tool' to pass the event to
+    if ( !isDrawing() ) return; 
+
+    if ( pFreeBase )
+        ;
+    else if ( pShapeBase )
+        update( pShapeBase->doDoubleClick( pEvent ) );
 }
 
 void PCanvas::mousePressEvent( QMouseEvent *pEvent )
 {
-    emit signalPos( pEvent->pos() );
-    if ( pEvent->button() != Qt::LeftButton ) return;
-
-    // init drawing
+    // is a 'tool' active?
     if ( !isDrawing() ) 
     {
+        // init 'tool'
         switch ( nTool )
         {
             case ToolSelectRectangle:    
                 g_Context->setImage( &image );
-                pShapeBase = new PSelectRectangle( this, pEvent->pos() );           
+                pShapeBase = new PSelectRectangle( this );           
                 break;
             case ToolSelectEllipse:      
                 g_Context->setImage( &image );
-                pShapeBase = new PSelectEllipse( this, pEvent->pos() );           
+                pShapeBase = new PSelectEllipse( this );           
                 break;
             case ToolSelectPolygon:      
                 break;
@@ -296,33 +302,39 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
                 break;
             case ToolDrawLine:
                 g_Context->setImage( &image );
-                pShapeBase = new PDrawLine( this, pEvent->pos() );           
+                pShapeBase = new PDrawLine( this );
                 break;
             case ToolDrawRectangle:      
                 g_Context->setImage( &image );
-                pShapeBase = new PDrawRectangle( this, pEvent->pos() );           
+                pShapeBase = new PDrawRectangle( this );           
                 break;
             case ToolDrawEllipse:        
                 g_Context->setImage( &image );
-                pShapeBase = new PDrawEllipse( this, pEvent->pos() );           
+                pShapeBase = new PDrawEllipse( this );           
                 break;
             case ToolDrawPolygon:        
                 g_Context->setImage( &image );
-                pShapeBase = new PDrawPolygon( this, pEvent->pos() );           
+                pShapeBase = new PDrawPolygon( this );           
+                break;
+            case ToolDrawPolyline:        
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawPolyline( this );           
                 break;
             case ToolDrawRectangleFilled:
                 g_Context->setImage( &image );
-                pShapeBase = new PDrawRectangleFilled( this, pEvent->pos() );           
+                pShapeBase = new PDrawRectangleFilled( this );           
                 break;
             case ToolDrawEllipseFilled:  
                 g_Context->setImage( &image );
-                pShapeBase = new PDrawEllipseFilled( this, pEvent->pos() );           
+                pShapeBase = new PDrawEllipseFilled( this );           
                 break;
             case ToolDrawPolygonFilled:  
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawPolygonFilled( this );           
                 break;
             case ToolDrawText:  
                 g_Context->setImage( &image );
-                pShapeBase = new PDrawText( this, pEvent->pos() );           
+                pShapeBase = new PDrawText( this );           
                 break;
             case ToolFillFlood:          
                 doFillFlood( pEvent->pos() );
@@ -331,75 +343,50 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
                 doFillGradient( pEvent->pos() );
                 break;
         }
+        if ( pShapeBase ) 
+        {
+            imagePreCommit = image;
+            connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
+            connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
+        }
+        emit signalChangedState();
     }
 
-    // IF free THEN pass press event to free
+    // pass event to 'tool'
     if ( pFreeBase )
-    {
         update( pFreeBase->doPress( pEvent ) );
-    }
-    // IF shape THEN pass press event to shape
     else if ( pShapeBase ) 
-    {
-        // IF shape done THEN consider commit
-        if ( !pShapeBase->doPress( pEvent ) )
-        {
-            // IF selection THEN cancel ELSE commit
-            // - in both cases the shape is deleted
-            if ( pShapeBase->inherits( "PSelectRectangle" ) ||
-                 pShapeBase->inherits( "PSelectEllipse" ) ||
-                 pShapeBase->inherits( "PSelectPolygon" ) )
-            {
-                doDrawCancel();
-            }
-            else
-            {
-                doDrawCommit();
-            }
-        }
-    }
+        update( pShapeBase->doPress( pEvent ) );
 }
 
 void PCanvas::mouseMoveEvent( QMouseEvent *pEvent )
 {
+    // setMouseTracking has been set true so we are tracking the mouse
+    // - so we get here whether a button is pressed or not
     emit signalPos( pEvent->pos() );
 
     // move
     if ( pFreeBase )
-    {
         update( pFreeBase->doMove( pEvent ) );
-    }
-    else if (pShapeBase)
-    {
-        pShapeBase->doMove( pEvent );
-    }
+    else if ( pShapeBase )
+        update( pShapeBase->doMove( pEvent ) );
 }
 
 void PCanvas::mouseReleaseEvent( QMouseEvent *pEvent )
 {
-    emit signalPos( pEvent->pos() );
-    if ( pEvent->button() != Qt::LeftButton ) return;
-
+    // pass event to 'tool'
     if ( pFreeBase )
     {
         update( pFreeBase->doRelease( pEvent ) );
+        // tools based upon PFreeBase can not be manipulated after drawn so we are done here
         delete pFreeBase;
         pFreeBase = nullptr;
+        setModified();
+        emit signalChangedState(); // setModified may - or may not - have done this so we do it here to ensure it happens
     }
-    // shapes can be manipulated after draw when !bAutoCommit
     else if ( pShapeBase ) 
     {
-        pShapeBase->doRelease( pEvent );
-        // auto commit?
-        // - selections and draw text never auto commit
-        if ( bAutoCommit && 
-             !( pShapeBase->inherits( "PSelectRectangle" ) ||
-                pShapeBase->inherits( "PSelectEllipse" ) ||
-                pShapeBase->inherits( "PSelectPolygon" ) ||
-                pShapeBase->inherits( "PDrawText" ) ) )
-        {
-            doDrawCommit();
-        }
+        update( pShapeBase->doRelease( pEvent ) );
     }
 }
 
@@ -427,7 +414,7 @@ void PCanvas::setModified( bool b )
     if ( b == bModified ) return;
 
     bModified = b;
-    emit signalStateChanged();
+    emit signalChangedState();
 }
 
 void PCanvas::doFillFlood( const QPoint &pointSeed )

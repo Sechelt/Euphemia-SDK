@@ -42,6 +42,18 @@ public:
     }
 };
 
+class PContextPolygonFilled
+{
+public:
+    Qt::FillRule nFillRule = Qt::OddEvenFill;
+
+    inline bool operator==( const PContextPolygonFilled &t ) 
+    {
+        if ( t.nFillRule != nFillRule ) return false;
+        return true;
+    }
+};
+
 class PContextText
 {
 public:
@@ -71,14 +83,16 @@ public:
     void setFreeHand( const PContextFreeHand & );
     void setSpray( const PContextSpray & );
     void setText( const PContextText & );
+    void setPolygonFilled( const PContextPolygonFilled & );
 
-    QImage *            getImage()      { return pImage;        }
-    QPen                getPen()        { return pen;           }
-    QBrush              getBrush()      { return brush;         }
-    QFont               getFont()       { return font;          }
-    PContextFreeHand    getFreeHand()   { return freehand;      }
-    PContextSpray       getSpray()      { return spray;         }
-    PContextText        getText()       { return text;          }
+    QImage *                getImage()          { return pImage;        }
+    QPen                    getPen()            { return pen;           }
+    QBrush                  getBrush()          { return brush;         }
+    QFont                   getFont()           { return font;          }
+    PContextFreeHand        getFreeHand()       { return freehand;      }
+    PContextSpray           getSpray()          { return spray;         }
+    PContextText            getText()           { return text;          }
+    PContextPolygonFilled   getPolygonFilled()  { return polygonfilled; }
 
 signals:
     void signalModified( const QPen & );
@@ -87,6 +101,7 @@ signals:
     void signalModified( const PContextFreeHand & );
     void signalModified( const PContextSpray & );
     void signalModified( const PContextText & );
+    void signalModified( const PContextPolygonFilled & );
 
 public slots:
     void slotImage( QImage *p );
@@ -96,15 +111,17 @@ public slots:
     void slotFreeHand( const PContextFreeHand &t );
     void slotSpray( const PContextSpray &t );
     void slotText( const PContextText &t );
+    void slotPolygonFilled( const PContextPolygonFilled &t );
 
 protected:
-    QImage *            pImage = nullptr;           /*!< tool draws on this image               */
-    QPen                pen;                        /*!< defines lines and outlines             */
-    QBrush              brush;                      /*!< defines fill details                   */
-    QFont               font;                       /*!< defines font details for drawing text  */
-    PContextFreeHand    freehand;                   /*!< used by free hand tool                 */
-    PContextSpray       spray;                      /*!< used by spray tool                     */
-    PContextText        text;                       /*!< used by text tool                      */
+    QImage *                pImage = nullptr;           /*!< tool draws on this image               */
+    QPen                    pen;                        /*!< defines lines and outlines             */
+    QBrush                  brush;                      /*!< defines fill details                   */
+    QFont                   font;                       /*!< defines font details for drawing text  */
+    PContextFreeHand        freehand;                   /*!< used by free hand tool                 */
+    PContextSpray           spray;                      /*!< used by spray tool                     */
+    PContextText            text;                       /*!< used by text tool                      */
+    PContextPolygonFilled   polygonfilled;              /*!< used by polygon tool                   */
 };
 
 #define g_Context PContext::instance()

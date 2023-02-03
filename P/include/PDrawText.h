@@ -11,12 +11,12 @@ class PDrawText : public PDrawRectangle
 {
     Q_OBJECT
 public:
-    PDrawText( PCanvas *pCanvas, const QPoint &pointBegin );
+    PDrawText( PCanvas *pCanvas );
 
-    virtual void doCommit() override;
+    virtual QRect doCommit() override;
 
 protected:
-    virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd );
+    virtual void doPaint( QPainter * );
 };
 
 class PTextToolBar : public QWidget

@@ -30,13 +30,13 @@ public:
     QPoint  getCenter() { return geometry().center(); }
 
     void doMoveBy( int nX, int nY );
+    void doMoveBy( const QPoint & );
 
 protected:
+    Type nType;
+
     void paintEvent( QPaintEvent *pEvent ) override;
 
-    Type    nType;
-    QPen    pen;
-    QBrush  brush;
 };
 
 #endif

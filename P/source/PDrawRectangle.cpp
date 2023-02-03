@@ -8,100 +8,165 @@
 #define PDrawRectangleMove 1
 #define PDrawRectangleEnd 2
 
-PDrawRectangle::PDrawRectangle( PCanvas *pCanvas, const QPoint &pointBegin )
+PDrawRectangle::PDrawRectangle( PCanvas *pCanvas )
     : PShapeBase( pCanvas )
 {
-    // init begin
-    this->pointBegin = pointBegin;
-    pointEnd = pointBegin;
-    // init handles
-    QRect r;
-    r.setTopLeft( pointBegin );
-    r.setBottomRight( pointEnd );
-    setGeometry( r.normalized() );
-    setVisible( true );
-    doCreateHandles();
 }
 
-bool PDrawRectangle::doPress( QMouseEvent *pEvent )
+PDrawRectangle::~PDrawRectangle()
 {
-    // IF handle pressed on THEN start manipulation
-    pHandle = getHandle( pEvent->pos() );
-    if ( pHandle )
+    doCancel();
+}
+
+QRect PDrawRectangle::doDoubleClick( QMouseEvent *pEvent )
+{ 
+    Q_UNUSED( pEvent );
+    return QRect();
+}
+
+QRect PDrawRectangle::doPress( QMouseEvent *pEvent )
+{
+    QRect rectUpdate;
+
+    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+
+    switch ( nState )
     {
-        // hide handles during manipulation
-        // doShowHandles( false );
-        return true;
+    case StateIdle:
+        doDraw( pEvent->pos() );
+        break;
+    case StateDraw:
+        break;
+    case StateManipulate:
+        pHandle = getHandle( pEvent->pos() );
+        if ( !pHandle )
+        {
+            rectUpdate = doCommit();
+        }
+        break;
     }
 
-    // pressed on the shape (but not a handle)
-    if ( geometry().contains( pEvent->pos() ) ) return true;
-
-    // nothing to do here so return false
-    // app will probably tell this to doCommit() then delete this
-    return false;
+    return rectUpdate;
 }
 
-bool PDrawRectangle::doMove( QMouseEvent *pEvent ) 
+QRect PDrawRectangle::doMove( QMouseEvent *pEvent ) 
 {
-    // IF no handle moving THEN no manipulation
-    if ( !pHandle ) return true;
+    QRect rectUpdate;
 
-    doMoveHandle( pEvent->pos() );
+    // We only get here when a button is down but button is always none. Odd.
+    // if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
 
-    return true;
+    switch ( nState )
+    {
+    case StateIdle:
+        break;
+    case StateDraw:
+        r.setBottomRight( pEvent->pos() );
+        rectUpdate = r;
+        update();
+        break;
+    case StateManipulate:
+        doMoveHandle( pEvent->pos() );
+        break;
+    }
+
+    return rectUpdate;
 }
 
-bool PDrawRectangle::doRelease( QMouseEvent *pEvent )
+QRect PDrawRectangle::doRelease( QMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
-    // IF no handle moving THEN no manipulation
-    if ( !pHandle ) return true;
 
-    // show handles in case we are going to do more manipulation
-    doShowHandles();
+    QRect rectUpdate;
 
-    return true;
+    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+
+    switch ( nState )
+    {
+    case StateIdle:
+        break;
+    case StateDraw:
+        doManipulate();
+        break;
+    case StateManipulate:
+        break;
+    }
+
+    return rectUpdate;
 }
 
-void PDrawRectangle::doCommit()
+QRect PDrawRectangle::doCommit()
 {
-    QPainter painter( g_Context->getImage() );
-    doPaint( &painter, pointBegin, pointEnd );
+    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
-    doDeleteHandles();
+    QRect rectUpdate = r;
+    QPainter painter( g_Context->getImage());
+    doPaint( &painter );
+    emit signalCommitted();
+    doIdle();
+    return rectUpdate;
 }
 
 void PDrawRectangle::paintEvent( QPaintEvent *pEvent )
 {
     Q_UNUSED( pEvent );
+    if ( nState != StateDraw && nState != StateManipulate ) return;
     QPainter painter( this );
-    doPaint( &painter, mapFromParent( pointBegin ), mapFromParent( pointEnd ) );
+    doPaint( &painter );
 }
 
-void PDrawRectangle::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
+void PDrawRectangle::doPaint( QPainter *pPainter )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
 
     // paint
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
-    pPainter->drawRect( r );                         
+    pPainter->drawRect( r.normalized() );                         
+}
+
+void PDrawRectangle::doDraw( const QPoint &point )
+{
+    Q_ASSERT( nState == StateIdle );
+    r = QRect( point, QSize( 1, 1 ) );
+    nState = StateDraw;
+    update();
+    emit signalChangedState();
+}
+
+void PDrawRectangle::doManipulate()
+{
+    Q_ASSERT( nState == StateDraw );
+    doCreateHandles();
+    nState = StateManipulate;
+    emit signalChangedState();
+}
+
+void PDrawRectangle::doIdle()
+{
+    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
+
+    if ( nState == StateDraw )
+    {
+        nState = StateIdle;
+    }
+    else if ( nState == StateManipulate )
+    {
+        doDeleteHandles();
+        nState = StateIdle;
+    }
+    update();
+    emit signalChangedState();
 }
 
 void PDrawRectangle::doCreateHandles()
 {
     Q_ASSERT( vectorHandles.count() == 0 );
 
-    PHandle *pHandle;
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
-
     // Order matters when handles share a position. Last handle will be found first.
+    PHandle *pHandle;
 
     // PDrawRectangleBegin
-    pHandle = new PHandle( pCanvas, PHandle::TypeSizeTopLeft, pointBegin );
+    pHandle = new PHandle( pCanvas, PHandle::TypeSizeTopLeft, r.topLeft() );
     vectorHandles.append( pHandle );
     pHandle->show();
 
@@ -111,7 +176,7 @@ void PDrawRectangle::doCreateHandles()
     pHandle->show();
 
     // PDrawRectangleEnd
-    pHandle = new PHandle( pCanvas, PHandle::TypeSizeBottomRight, pointEnd );
+    pHandle = new PHandle( pCanvas, PHandle::TypeSizeBottomRight, r.bottomRight() );
     vectorHandles.append( pHandle );
     pHandle->show();
 }
@@ -122,62 +187,46 @@ void PDrawRectangle::doMoveHandle( const QPoint &pointPos )
 
     if ( pHandle == vectorHandles[PDrawRectangleBegin] )
     {
-        // move the begin 
-        pointBegin = pointPos;
-        pHandle->setCenter( pointBegin );
-        // set canvas geometry
-        QRect r( pointBegin, pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
+        r.setTopLeft( pointPos );
+        pHandle->setCenter( pointPos );
         // adjust move handle
         vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
-        doSyncHandleTypes( r );
+        doSyncHandleTypes();
     }
     else if ( pHandle == vectorHandles[PDrawRectangleMove] )
     {
-        // get diff
-        QRect r( pointBegin, pointEnd );
-        r = r.normalized();
         QPoint pointDiff = pointPos - r.center();
-        // update points
-        pointBegin += pointDiff;
-        pointEnd += pointDiff;
-        // set canvas geometry
-        r.setTopLeft( pointBegin );
-        r.setBottomRight( pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
+        r.setTopLeft( r.topLeft() + pointDiff );
+        r.setBottomRight( r.bottomRight() + pointDiff );
         // adjust all handles
-        vectorHandles[PDrawRectangleBegin]->setCenter( pointBegin );
-        vectorHandles[PDrawRectangleMove]->setCenter( pointPos );
-        vectorHandles[PDrawRectangleEnd]->setCenter( pointEnd );
+        vectorHandles[PDrawRectangleBegin]->setCenter( r.topLeft() );
+        vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
+        vectorHandles[PDrawRectangleEnd]->setCenter( r.bottomRight() );
     }
     else if ( pHandle == vectorHandles[PDrawRectangleEnd] )
     {
-        // move the end 
-        pointEnd = pointPos;
-        pHandle->setCenter( pointEnd );
-        // set canvas geometry
-        QRect r( pointBegin, pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
+        r.setBottomRight( pointPos );
+        pHandle->setCenter( pointPos );
         // adjust move handle
         vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
-        doSyncHandleTypes( r );
+        doSyncHandleTypes();
     }
+    update();
 }
 
-void PDrawRectangle::doSyncHandleTypes( const QRect &r )
+void PDrawRectangle::doSyncHandleTypes()
 {
-    if ( vectorHandles[PDrawRectangleBegin]->getCenter() == r.topLeft() ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopLeft );
-    else if ( vectorHandles[PDrawRectangleBegin]->getCenter() == r.topRight() ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopRight );
-    else if ( vectorHandles[PDrawRectangleBegin]->getCenter() == r.bottomLeft() ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomLeft );
-    else if ( vectorHandles[PDrawRectangleBegin]->getCenter() == r.bottomRight() ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomRight );
+    QRect rect = r.normalized();
 
-    if ( vectorHandles[PDrawRectangleEnd]->getCenter() == r.topLeft() ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopLeft );
-    else if ( vectorHandles[PDrawRectangleEnd]->getCenter() == r.topRight() ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopRight );
-    else if ( vectorHandles[PDrawRectangleEnd]->getCenter() == r.bottomLeft() ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomLeft );
-    else if ( vectorHandles[PDrawRectangleEnd]->getCenter() == r.bottomRight() ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomRight );
+    if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rect.topLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopLeft );             
+    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopRight );      
+    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomLeft );  
+    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomRight );
+                                                                                                                                                                       
+    if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.topLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopLeft );                 
+    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopRight );          
+    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomLeft );      
+    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomRight );    
 }
 
 //

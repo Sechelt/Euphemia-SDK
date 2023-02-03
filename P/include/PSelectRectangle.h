@@ -7,10 +7,14 @@ class PSelectRectangle : public PDrawRectangle
 {
     Q_OBJECT
 public:
-    PSelectRectangle( PCanvas *pCanvas, const QPoint &pointBegin );
+    PSelectRectangle( PCanvas *pCanvas );
+
+    virtual QRect doCommit() override;
+
+    virtual bool canCommit() override;
 
 protected:
-    virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd ) override;
+    virtual void doPaint( QPainter * ) override;
 };
 
 #endif

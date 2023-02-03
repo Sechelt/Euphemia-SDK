@@ -7,10 +7,10 @@ class PDrawEllipse : public PDrawRectangle
 {
     Q_OBJECT
 public:
-    PDrawEllipse( PCanvas *pCanvas, const QPoint &pointBegin );
+    PDrawEllipse( PCanvas *pCanvas );
 
 protected:
-    virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd );
+    virtual void doPaint( QPainter * );
 };
 
 

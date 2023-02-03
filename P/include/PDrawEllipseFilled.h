@@ -7,10 +7,10 @@ class PDrawEllipseFilled : public PDrawEllipse
 {
     Q_OBJECT
 public:
-    PDrawEllipseFilled( PCanvas *pCanvas, const QPoint &pointBegin );
+    PDrawEllipseFilled( PCanvas *pCanvas );
 
 protected:
-    virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd ) override;
+    virtual void doPaint( QPainter * ) override;
 };
 
 class PEllipseFilledToolBar : public QWidget

@@ -5,13 +5,8 @@ PHandle::PHandle( QWidget *pParent, Type nType, const QPoint &pointCenter )
     : QWidget( pParent )
 {
     this->nType = nType;
-    pen.setColor( Qt::black );
-    pen.setWidth( 1 );
 
-    brush.setColor( Qt::blue );
-    brush.setStyle( Qt::SolidPattern );
-
-    QRect r( 0, 0, 11, 11 );
+    QRect r( 0, 0, 16, 16 );
     r.moveCenter( pointCenter );
     setGeometry( r );
 }
@@ -32,26 +27,42 @@ void PHandle::doMoveBy( int nX, int nY )
     move( pos().x() + nX, pos().y() + nY );
 }
 
+void PHandle::doMoveBy( const QPoint &pointDelta )
+{
+    move( pos() + pointDelta );
+}
+
 void PHandle::paintEvent( QPaintEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
     QPainter painter( this );
-    painter.setPen( pen );
+
+    painter.setPen( QPen( Qt::NoPen ) );
+
+    QBrush brush( Qt::green );
+    brush.setStyle( Qt::SolidPattern );
     painter.setBrush( brush );
+
+    painter.drawEllipse( rect() );
 
     switch ( nType )
     {
         case TypeDrag:
             {
-                painter.drawImage( 0, 0, QImage( ":P/Drag" ).scaled( QSize( rect().width(), rect().height() ) ) );
+                painter.drawImage( 0, 0, QImage( ":P/Drag" ).scaled( rect().size() ) );
             }
             break;
         case TypeMovePoint:
             {
-                QRect r = rect();
-                r.setWidth( r.width() - pen.width() );
-                r.setHeight( r.height() - pen.width() );
+                brush.setColor( Qt::black );
+                painter.setBrush( brush );
+
+                QRect r;
+                r.setWidth( rect().width() / 2 );
+                r.setHeight( rect().height() / 2 );
+                r.moveCenter( rect().center() );
+
                 painter.drawEllipse( r );
             }
             break;

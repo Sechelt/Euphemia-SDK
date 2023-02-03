@@ -1,16 +1,16 @@
 #ifndef H_PSelectEllipse
 #define H_PSelectEllipse
 
-#include "PDrawEllipse.h"
+#include "PSelectRectangle.h"
 
-class PSelectEllipse : public PDrawEllipse
+class PSelectEllipse : public PSelectRectangle
 {
     Q_OBJECT
 public:
-    PSelectEllipse( PCanvas *pCanvas, const QPoint &pointBegin );
+    PSelectEllipse( PCanvas *pCanvas );
 
 protected:
-    virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd ) override;
+    virtual void doPaint( QPainter * ) override;
 };
 
 #endif

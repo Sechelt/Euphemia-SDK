@@ -7,13 +7,14 @@ class PDrawLine : public PShapeBase
 {
     Q_OBJECT
 public:
-    PDrawLine( PCanvas *pCanvas, const QPoint &pointBegin );
+    PDrawLine( PCanvas *pCanvas );
+    virtual ~PDrawLine();
 
-    virtual bool doDoubleClick( QMouseEvent * ) override { return true; }
-    virtual bool doPress( QMouseEvent *pEvent ) override;
-    virtual bool doMove( QMouseEvent *pEvent ) override; 
-    virtual bool doRelease( QMouseEvent *pEvent ) override;
-    virtual void doCommit() override;
+    virtual QRect doDoubleClick( QMouseEvent * ) override;
+    virtual QRect doPress( QMouseEvent *pEvent ) override;
+    virtual QRect doMove( QMouseEvent *pEvent ) override; 
+    virtual QRect doRelease( QMouseEvent *pEvent ) override;
+    virtual QRect doCommit() override;
 
 protected:
     QPoint pointBegin;
@@ -21,7 +22,10 @@ protected:
 
     virtual void paintEvent( QPaintEvent *pEvent ) override;
 
-    virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd );
+    virtual void doPaint( QPainter * );
+    virtual void doDraw( const QPoint & );
+    virtual void doManipulate();
+    virtual void doIdle();
     virtual void doCreateHandles();
     virtual void doMoveHandle( const QPoint &pointPos );
 };

@@ -8,17 +8,18 @@
 #include "PCanvas.h"
 #include "PFontToolBar.h"
 
-PDrawText::PDrawText( PCanvas *pCanvas, const QPoint &pointBegin )
-    : PDrawRectangle( pCanvas, pointBegin )
+PDrawText::PDrawText( PCanvas *pCanvas )
+    : PDrawRectangle( pCanvas )
 {
 }
 
-void PDrawText::doCommit()
+// paint - but without the rect
+QRect PDrawText::doCommit()
 {
-    QPainter painter( g_Context->getImage() );
+    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
+    QRect rectUpdate = r;
+    QPainter painter( g_Context->getImage());
 
     // apply context
     painter.setPen( g_Context->getPen() );
@@ -27,14 +28,16 @@ void PDrawText::doCommit()
     // paint
     painter.drawText( r, g_Context->getText().nHAlign | g_Context->getText().nVAlign, g_Context->getText().stringText );
 
-    doDeleteHandles();
+    emit signalCommitted();
+
+    //
+    doIdle();
+
+    return rectUpdate;
 }
 
-void PDrawText::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
+void PDrawText::doPaint( QPainter *pPainter )
 {
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
-
     // temp outline of rect area
     pPainter->setPen( QPen( Qt::DotLine ) );
     pPainter->drawRect( r );

@@ -1,23 +1,17 @@
 #include "LibInfo.h"
-#include "PDrawPolygon.h"
+#include "PDrawPolyline.h"
 
 #include "PCanvas.h"
 #include "PPenToolBar.h"
 
-PDrawPolygon::PDrawPolygon( PCanvas *pCanvas, const QPoint &pointBegin )
+PDrawPolyline::PDrawPolyline( PCanvas *pCanvas )
     : PShapeBase( pCanvas )
 {
-    // We start of with a single point. 
-    // We assume that doPress is called right after we are instantiated and
-    // this will result in a second point being appended.
-    polygon.append( pointBegin );   // first point
+}
 
-    // set our geometry
-    // - make ourself the same size as the canvas to avoid;
-    //      - having to map coordinates for many points
-    //      - having to call setGeometry too frequently
-    setGeometry( 0, 0, pCanvas->geometry().width(), pCanvas->geometry().height() );
-    setVisible( true );
+PDrawPolyline::~PDrawPolyline()
+{
+    doCancel();
 }
 
 /*!
@@ -27,17 +21,17 @@ PDrawPolygon::PDrawPolygon( PCanvas *pCanvas, const QPoint &pointBegin )
  * 
  * \param pEvent 
  * 
- * \return bool 
+ * \return QRect 
  */
-bool PDrawPolygon::doDoubleClick( QMouseEvent *pEvent )
+QRect PDrawPolyline::doDoubleClick( QMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
-    if ( bManipulating ) return false;
-    bManipulating = true;
-    doCreateHandles();
-    update();
-    return true;
+    if ( nState != StateDraw ) return QRect();
+
+    doManipulate();
+
+    return polygon.boundingRect();
 }
 
 /*!
@@ -49,32 +43,30 @@ bool PDrawPolygon::doDoubleClick( QMouseEvent *pEvent )
  * 
  * \return bool 
  */
-bool PDrawPolygon::doPress( QMouseEvent *pEvent )
+QRect PDrawPolyline::doPress( QMouseEvent *pEvent )
 {
-// qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ <<"]";
-    // manipulating mode
-    if ( bManipulating )
+    QRect rectUpdate;
+
+    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+
+    switch ( nState )
     {
+    case StateIdle:
+        doDraw( pEvent->pos() );
+        rectUpdate = polygon.boundingRect();
+        break;
+    case StateDraw:
+        polygon.append( pEvent->pos() );
+        rectUpdate = polygon.boundingRect();
+        update();
+        break;
+    case StateManipulate:
         pHandle = getHandle( pEvent->pos() );
-        if ( pHandle )
-        {
-            // hide handles during manipulation
-            // doShowHandles( false );
-            return true;
-        }
-        // pressed on the shape (but not a handle)
-        if ( geometry().contains( pEvent->pos() ) ) return true;
-        // nothing to do here so return false
-        // app will probably tell this to doCommit() then delete this
-        return false;
+        if ( !pHandle ) rectUpdate = doCommit();
+        break;
     }
 
-    // drawing mode
-    // - append a point 
-    // - doMove will always be moving the last point so this is the one we will start working with
-    polygon.append( pEvent->pos() );
-    update();
-    return true;
+    return rectUpdate;
 }
 
 /*!
@@ -86,54 +78,67 @@ bool PDrawPolygon::doPress( QMouseEvent *pEvent )
  * 
  * \return bool 
  */
-bool PDrawPolygon::doMove( QMouseEvent *pEvent ) 
+QRect PDrawPolyline::doMove( QMouseEvent *pEvent ) 
 {
-// qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ <<"]";
-    // manipulating mode
-    if ( bManipulating )
+    // We only get here when a button is down but button is always none. Odd.
+    // if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    QRect rectUpdate;
+
+    switch ( nState )
     {
-        // IF no handle moving THEN no manipulation
-        if ( !pHandle ) return true;
-        // move handle and its corresponding point
+    case StateIdle:
+        break;
+    case StateDraw:
+        polygon.setPoint( polygon.count() - 1, pEvent->pos() );
+        rectUpdate = polygon.boundingRect();
+        update();
+        break;
+    case StateManipulate:
         doMoveHandle( pEvent->pos() );
-        return true;
+        rectUpdate = polygon.boundingRect();
+        break;
     }
 
-    // drawing mode
-    // - update the last point
-    // - adjust our size to size of the polygon
-    polygon.setPoint( polygon.count() - 1, pEvent->pos() );
-    update();
-    return true;
+    return rectUpdate;
 }
 
-bool PDrawPolygon::doRelease( QMouseEvent *pEvent )
+QRect PDrawPolyline::doRelease( QMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
-// qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ <<"]";
 
-    // Only relevant when manipulating
-    if ( !bManipulating ) return true;
-    // IF no handle moving THEN no manipulation
-    if ( !pHandle ) return true;
+    QRect rectUpdate;
 
-    // update handle/point position
-    pHandle = nullptr;
+    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
 
-    return true;
+    switch ( nState )
+    {
+    case StateIdle:
+        break;
+    case StateDraw:
+        break;
+    case StateManipulate:
+        break;
+    }
+
+    return rectUpdate;
 }
 
 /*!
  * \brief Commit the polygon to canvas. 
  *  
- * The canvas will probably delete this object after this call. 
  * 
  * \author pharvey (2/1/23)
  */
-void PDrawPolygon::doCommit()
+QRect PDrawPolyline::doCommit()
 {
-    QPainter painter( g_Context->getImage() );
-    doPaint( &painter, polygon );
+    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
+
+    QRect rectUpdate = polygon.boundingRect();
+    QPainter painter( g_Context->getImage());
+    doPaint( &painter );
+    emit signalCommitted();
+    doIdle();
+    return rectUpdate;
 }
 
 /*!
@@ -143,11 +148,12 @@ void PDrawPolygon::doCommit()
  * 
  * \param pEvent 
  */
-void PDrawPolygon::paintEvent( QPaintEvent *pEvent )
+void PDrawPolyline::paintEvent( QPaintEvent *pEvent )
 {
     Q_UNUSED( pEvent );
+    if ( nState != StateDraw && nState != StateManipulate ) return;
     QPainter painter( this );
-    doPaint( &painter, polygon );
+    doPaint( &painter );
 }
 
 /*!
@@ -158,16 +164,53 @@ void PDrawPolygon::paintEvent( QPaintEvent *pEvent )
  * \param pPainter 
  * \param polygon 
  */
-void PDrawPolygon::doPaint( QPainter *pPainter, const QPolygon &polygon )
+void PDrawPolyline::doPaint( QPainter *pPainter )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
-    pPainter->setBrush( g_Context->getBrush() );
-    pPainter->setFont( g_Context->getFont() );
+
     // paint
     pPainter->drawPolyline( polygon );                         
-//    pPainter->drawPolygon( polygon );                         
 }
+
+void PDrawPolyline::doDraw( const QPoint &point )
+{
+    Q_ASSERT( nState == StateIdle );
+
+    polygon.append( point );    // begin
+    polygon.append( point );    // current
+
+    nState = StateDraw;
+    update();
+    emit signalChangedState();
+}
+
+void PDrawPolyline::doManipulate()
+{
+    Q_ASSERT( nState == StateDraw );
+    doCreateHandles();
+    nState = StateManipulate;
+    emit signalChangedState();
+}
+
+void PDrawPolyline::doIdle()
+{
+    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
+
+    if ( nState == StateDraw )
+    {
+        nState = StateIdle;
+    }
+    else if ( nState == StateManipulate )
+    {
+        doDeleteHandles();
+        polygon.clear();
+        nState = StateIdle;
+    }
+    update();
+    emit signalChangedState();
+}
+
 
 /*!
  * \brief Create handles.
@@ -182,7 +225,7 @@ void PDrawPolygon::doPaint( QPainter *pPainter, const QPolygon &polygon )
  *  
  * \author pharvey (2/1/23)
  */
-void PDrawPolygon::doCreateHandles()
+void PDrawPolyline::doCreateHandles()
 {
     Q_ASSERT( vectorHandles.count() == 0 );
 
@@ -214,23 +257,23 @@ void PDrawPolygon::doCreateHandles()
  * 
  * \param pointPos 
  */
-void PDrawPolygon::doMoveHandle( const QPoint &pointPos )
+void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
 {
     Q_ASSERT( pHandle );
-    Q_ASSERT( bManipulating );
 
     // move handle?
     if ( pHandle == vectorHandles[0] )
     {
-        QPoint pointDelta = pHandle->getCenter() - pointPos;
+        QPoint pointDelta = pointPos - pHandle->getCenter();
         // move points
         for ( int n = 0; n < polygon.count(); n++ )
         {
             polygon.setPoint( n, polygon.at( n ) + pointDelta );
-            vectorHandles.at( n + 1 )->doMoveBy( pointDelta.x(), pointDelta.y() );
+            vectorHandles.at( n + 1 )->doMoveBy( pointDelta );
         }
         // move self
-        vectorHandles.at( 0 )->doMoveBy( pointDelta.x(), pointDelta.y() );
+        vectorHandles.at( 0 )->doMoveBy( pointDelta );
+        update();
         return;
     }
 
@@ -242,9 +285,9 @@ void PDrawPolygon::doMoveHandle( const QPoint &pointPos )
 }
 
 //
-// PPolygonToolBar
+// PPolylineToolBar
 //
-PPolygonToolBar::PPolygonToolBar( QWidget *p )
+PPolylineToolBar::PPolylineToolBar( QWidget *p )
     : QWidget( p )
 {
     QHBoxLayout *pLayout = new QHBoxLayout( this );

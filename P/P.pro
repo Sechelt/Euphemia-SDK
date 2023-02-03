@@ -33,6 +33,7 @@ HEADERS += \
         include/PDrawLine.h \
         include/PDrawPolygon.h \
         include/PDrawPolygonFilled.h \
+        include/PDrawPolyline.h \
         include/PDrawRectangle.h \
         include/PDrawRectangleFilled.h \
         include/PDrawSpray.h \
@@ -58,6 +59,7 @@ SOURCES += \
         source/PDrawLine.cpp \
         source/PDrawPolygon.cpp \
         source/PDrawPolygonFilled.cpp \
+        source/PDrawPolyline.cpp \
         source/PDrawRectangle.cpp \
         source/PDrawRectangleFilled.cpp \
         source/PDrawSpray.cpp \

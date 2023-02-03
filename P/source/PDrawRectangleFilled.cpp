@@ -4,21 +4,19 @@
 #include "PPenToolBar.h"
 #include "PBrushToolBar.h"
 
-PDrawRectangleFilled::PDrawRectangleFilled( PCanvas *pCanvas, const QPoint &pointBegin )
-    : PDrawRectangle( pCanvas, pointBegin )
+PDrawRectangleFilled::PDrawRectangleFilled( PCanvas *pCanvas )
+    : PDrawRectangle( pCanvas )
 {
 }
 
-void PDrawRectangleFilled::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
+void PDrawRectangleFilled::doPaint( QPainter *pPainter )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
     pPainter->setBrush( g_Context->getBrush() );
 
     // paint
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
-    pPainter->drawRect( r );                         
+    pPainter->drawRect( r.normalized() );                         
 }
 
 //

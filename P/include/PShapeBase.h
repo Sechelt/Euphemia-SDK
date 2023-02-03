@@ -10,26 +10,44 @@ class PShapeBase : public QWidget
 {
     Q_OBJECT
 public:
+    enum States
+    {
+        StateIdle,
+        StateDraw,
+        StateManipulate
+    };
+
     PShapeBase( PCanvas *pCanvas );
     virtual ~PShapeBase();
 
-    virtual bool doDoubleClick( QMouseEvent *pEvent ) = 0;                      /*!< mouse press from canvas - return false when done   */
-    virtual bool doPress( QMouseEvent *pEvent ) = 0;                            /*!< mouse press from canvas - return false when done   */
-    virtual bool doMove( QMouseEvent *pEvent ) = 0;                             /*!< mouse move from canvas - return false when done    */
-    virtual bool doRelease( QMouseEvent *pEvent ) = 0;                          /*!< mouse release from canvas - return false when done */
-    virtual void doCommit() = 0;                                                /*!< paint shape on QImage                              */
-    virtual void doCancel();
+    virtual States getState() { return nState; }
+
+    virtual QRect   doDoubleClick( QMouseEvent *pEvent ) = 0;                   /*!< mouse press from canvas - return rect to update    */
+    virtual QRect   doPress( QMouseEvent *pEvent ) = 0;                         /*!< mouse press from canvas - return rect to update    */
+    virtual QRect   doMove( QMouseEvent *pEvent ) = 0;                          /*!< mouse move from canvas - return  rect to update    */
+    virtual QRect   doRelease( QMouseEvent *pEvent ) = 0;                       /*!< mouse release from canvas - return rect to update  */
+    virtual QRect   doCommit() = 0;                                             /*!< paint shape on QImage                              */
+    virtual void    doCancel();                                                 /*!< reset state to StateIdle                           */
+
+    virtual bool    canCommit();
+    virtual bool    canCancel();
 
 signals:
-   void signalModified();                           /*!< setters should probably emit this                  */ 
+   void signalChangedState();                                                   /*!<                                                    */ 
+   void signalCommitted();
 
 protected:
-    PCanvas *          pCanvas;
-    QVector<PHandle*>  vectorHandles;              /*!< Handles are children of canvas widget and are shown on top of shape due to z-order. */
-    PHandle *          pHandle = nullptr;          /*!< Handle being moved.                                */
+    States              nState = StateIdle;
+    PCanvas *           pCanvas;
+    QVector<PHandle*>   vectorHandles;              /*!< Handles are children of canvas widget and are shown on top of shape due to z-order. */
+    PHandle *           pHandle = nullptr;          /*!< Handle being moved.                                */
 
     virtual PHandle *   getHandle( const QPoint &pointPos );
-    virtual QRect       getGeometry( const QRect &r, int nPenWidth );
+
+    // state changes
+    virtual void doDraw( const QPoint & ) = 0;
+    virtual void doManipulate() = 0;
+    virtual void doIdle() = 0;
 
     virtual void doCreateHandles() = 0;
     virtual void doDeleteHandles();

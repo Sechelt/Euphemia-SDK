@@ -55,6 +55,13 @@ void PContext::setText( const PContextText &t )
     emit signalModified( text );
 }
 
+void PContext::setPolygonFilled( const PContextPolygonFilled &t )
+{
+    if ( polygonfilled == t ) return;
+    polygonfilled = t;
+    emit signalModified( polygonfilled );
+}
+
 void PContext::slotImage( QImage *p )
 {
     setImage( p );
@@ -88,6 +95,11 @@ void PContext::slotSpray( const PContextSpray &t )
 void PContext::slotText( const PContextText &t )
 {
     setText( t );
+}
+
+void PContext::slotPolygonFilled( const PContextPolygonFilled &t )
+{
+    setPolygonFilled( t );
 }
 
 

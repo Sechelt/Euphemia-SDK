@@ -1,20 +1,30 @@
 #include "LibInfo.h"
 #include "PSelectRectangle.h"
 
-PSelectRectangle::PSelectRectangle( PCanvas *pCanvas, const QPoint &pointBegin )
-    : PDrawRectangle( pCanvas, pointBegin )
+PSelectRectangle::PSelectRectangle( PCanvas *pCanvas )
+    : PDrawRectangle( pCanvas )
 {
 }
 
-void PSelectRectangle::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
+QRect PSelectRectangle::doCommit()
+{
+    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
+    // no commit for a select shape - we just go straight to idle
+    doIdle();
+    return QRect();
+}
+
+bool PSelectRectangle::canCommit()
+{
+    return false;
+}
+
+void PSelectRectangle::doPaint( QPainter *pPainter )
 {
     //
     pPainter->setPen( QPen( Qt::DashLine ) );
 
     // paint
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
-    pPainter->drawRect( r );                         
+    pPainter->drawRect( r.normalized() );                         
 }
-
 

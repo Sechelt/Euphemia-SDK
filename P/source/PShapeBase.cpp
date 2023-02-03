@@ -7,16 +7,28 @@ PShapeBase::PShapeBase( PCanvas *pCanvas )
     : QWidget( pCanvas )
 {
     this->pCanvas = pCanvas;
+    // cover entire canvas - we are a temp layer
+    setGeometry( 0, 0, pCanvas->width(), pCanvas->height() );
+    setVisible( true );
 }
 
 PShapeBase::~PShapeBase()
 {
-    doCancel();
 }
 
 void PShapeBase::doCancel()
 {
-    doDeleteHandles();
+    if ( nState != StateIdle ) doIdle();
+}
+
+bool PShapeBase::canCommit()
+{
+    return nState == StateManipulate;
+}
+
+bool PShapeBase::canCancel() 
+{
+    return nState == StateManipulate;
 }
 
 PHandle *PShapeBase::getHandle( const QPoint &pointPos )
@@ -28,24 +40,6 @@ PHandle *PShapeBase::getHandle( const QPoint &pointPos )
         if ( p->geometry().contains( pointPos ) ) return p;
     }
     return nullptr;
-}
-
-/*!
- * \brief Enlarge rect to account for pen thickness. 
- *  
- * This will prevent lines from being clipped. 
- * 
- * \author pharvey (1/26/23)
- * 
- * \param r 
- * \param nPenWidth 
- * 
- * \return QRect 
- */
-QRect PShapeBase::getGeometry( const QRect &r, int nPenWidth )
-{
-    int n = (nPenWidth + 1) / 2; // add 1 because a bit larger is ok
-    return QRect( r.x() - n, r.y() - n, r.width() + n * 2, r.height() + n * 2 );
 }
 
 void PShapeBase::doDeleteHandles()
@@ -62,7 +56,7 @@ void PShapeBase::doShowHandles( bool b )
 {
     for ( PHandle *p : vectorHandles )
     {
-        if ( b ) p->show(); else p->hide();
+        p->setVisible( b );
     }
 }
 

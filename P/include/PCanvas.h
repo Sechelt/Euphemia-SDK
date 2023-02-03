@@ -3,16 +3,18 @@
 
 #include <WZoomWidget.h>
 
+#include "PDrawFreeHand.h"
+#include "PDrawSpray.h"
 #include "PSelectEllipse.h"
 #include "PSelectRectangle.h"
-#include "PDrawFreeHand.h"
 #include "PDrawLine.h"
 #include "PDrawPolygon.h"
+#include "PDrawPolygonFilled.h"
+#include "PDrawPolyline.h"
 #include "PDrawRectangle.h"
 #include "PDrawRectangleFilled.h"
 #include "PDrawEllipse.h"
 #include "PDrawEllipseFilled.h"
-#include "PDrawSpray.h"
 #include "PDrawText.h"
 
 class PCanvasView;
@@ -35,6 +37,7 @@ public:
         ToolDrawRectangle,              /*!< shape: draw an empty rectangle                          */ 
         ToolDrawEllipse,                /*!< shape: draw an empty ellipse                            */ 
         ToolDrawPolygon,                /*!< shape: draw an empty polygon                            */ 
+        ToolDrawPolyline,               /*!< shape: draw polyline                                    */ 
         ToolDrawRectangleFilled,        /*!< shape: draw a filled rectangle                          */ 
         ToolDrawEllipseFilled,          /*!< shape: draw a filled ellipse                            */ 
         ToolDrawPolygonFilled,          /*!< shape: draw a filled polygon                            */ 
@@ -64,8 +67,8 @@ public:
     void doUndo();
     void doRedo();
 
-    void doDrawCommit();
-    void doDrawCancel();
+    void doCommit();
+    void doCancel();
 
     bool isModified() { return bModified; }
     bool isDrawing();
@@ -75,13 +78,18 @@ public:
     bool canPaste(); 
     bool canUndo(); 
     bool canRedo(); 
+    bool canCommit(); 
+    bool canCancel(); 
 
 public slots:
     void print();
 
 signals:
     void signalPos( const QPoint & );
-    void signalStateChanged();
+    void signalChangedState();
+
+protected slots:
+    void slotCommitted();
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent *pEvent ) override;
@@ -92,7 +100,7 @@ protected:
     void resizeEvent( QResizeEvent *pEvent ) override;
 
 private:
-    void setModified( bool );
+    void setModified( bool b = true );
     
     void doFillFlood( const QPoint &pointSeed );    
     void doFillFloodColor( const QPoint &pointSeed );    
@@ -112,6 +120,7 @@ private:
     int nZoom   = 100;
 
     QImage          image;
+    QImage          imagePreCommit;
     int             nMaxUndo = 10;
     QStack<QImage>  stackUndo;
     QStack<QImage>  stackRedo;

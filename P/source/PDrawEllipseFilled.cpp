@@ -4,21 +4,19 @@
 #include "PPenToolBar.h"
 #include "PBrushToolBar.h"
 
-PDrawEllipseFilled::PDrawEllipseFilled( PCanvas *pCanvas, const QPoint &pointBegin )
-    : PDrawEllipse( pCanvas, pointBegin )
+PDrawEllipseFilled::PDrawEllipseFilled( PCanvas *pCanvas )
+    : PDrawEllipse( pCanvas )
 {
 }
 
-void PDrawEllipseFilled::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
+void PDrawEllipseFilled::doPaint( QPainter *pPainter )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
     pPainter->setBrush( g_Context->getBrush() );
 
     // paint
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
-    pPainter->drawEllipse( r );                         
+    pPainter->drawEllipse( r.normalized() );                         
 }
 
 //

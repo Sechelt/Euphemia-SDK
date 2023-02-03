@@ -7,10 +7,10 @@ class PDrawRectangleFilled : public PDrawRectangle
 {
     Q_OBJECT
 public:
-    PDrawRectangleFilled( PCanvas *pCanvas, const QPoint &pointBegin );
+    PDrawRectangleFilled( PCanvas *pCanvas );
 
 protected:
-    virtual void doPaint( QPainter *, const QPoint &pointBegin, const QPoint &pointEnd ) override;
+    virtual void doPaint( QPainter * ) override;
 };
 
 class PRectangleFilledToolBar : public QWidget

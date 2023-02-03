@@ -1,20 +1,18 @@
 #include "LibInfo.h"
 #include "PSelectEllipse.h"
 
-PSelectEllipse::PSelectEllipse( PCanvas *pCanvas, const QPoint &pointBegin )
-    : PDrawEllipse( pCanvas, pointBegin )
+PSelectEllipse::PSelectEllipse( PCanvas *pCanvas )
+    : PSelectRectangle( pCanvas )
 {
 }
 
-void PSelectEllipse::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
+void PSelectEllipse::doPaint( QPainter *pPainter )
 {
     //
     pPainter->setPen( QPen( Qt::DashLine ) );
 
     // paint
-    QRect r( pointBegin, pointEnd );
-    r = r.normalized();
-    pPainter->drawEllipse( r );                         
+    pPainter->drawEllipse( r.normalized() );                         
 }
 
 

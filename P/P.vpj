@@ -65,6 +65,7 @@
             <F N="source/PDrawLine.cpp"/>
             <F N="source/PDrawPolygon.cpp"/>
             <F N="source/PDrawPolygonFilled.cpp"/>
+            <F N="source/PDrawPolyline.cpp"/>
             <F N="source/PDrawRectangle.cpp"/>
             <F N="source/PDrawRectangleFilled.cpp"/>
             <F N="source/PDrawSpray.cpp"/>
@@ -96,6 +97,7 @@
             <F N="include/PDrawLine.h"/>
             <F N="include/PDrawPolygon.h"/>
             <F N="include/PDrawPolygonFilled.h"/>
+            <F N="include/PDrawPolyline.h"/>
             <F N="include/PDrawRectangle.h"/>
             <F N="include/PDrawRectangleFilled.h"/>
             <F N="include/PDrawSpray.h"/>

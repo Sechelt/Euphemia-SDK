@@ -8,78 +8,120 @@
 #define PDrawLineMove 1
 #define PDrawLineEnd 2
 
-PDrawLine::PDrawLine( PCanvas *pCanvas, const QPoint &pointBegin )
+PDrawLine::PDrawLine( PCanvas *pCanvas )
     : PShapeBase( pCanvas )
 {
-    // init begin
-    this->pointBegin = pointBegin;
-    pointEnd = pointBegin;
-    // init handles
-    QRect r;
-    r.setTopLeft( pointBegin );
-    r.setBottomRight( pointEnd );
-    setGeometry( r.normalized() );
-    setVisible( true );
-    doCreateHandles();
 }
 
-bool PDrawLine::doPress( QMouseEvent *pEvent )
+PDrawLine::~PDrawLine()
 {
-    // IF handle pressed on THEN start manipulation
-    pHandle = getHandle( pEvent->pos() );
-    if ( pHandle )
+    doCancel();
+}
+
+QRect PDrawLine::doDoubleClick( QMouseEvent *pEvent )
+{ 
+    Q_UNUSED( pEvent );
+    return QRect();
+}
+
+QRect PDrawLine::doPress( QMouseEvent *pEvent )
+{
+    QRect rectUpdate;
+
+    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+
+    switch ( nState )
     {
-        // hide handles during manipulation
-        // doShowHandles( false );
-        return true;
+    case StateIdle:
+        doDraw( pEvent->pos() );
+        break;
+    case StateDraw:
+        break;
+    case StateManipulate:
+        pHandle = getHandle( pEvent->pos() );
+        if ( !pHandle )
+        {
+            rectUpdate = doCommit();
+        }
+        break;
     }
 
-    // pressed on the shape (but not a handle)
-    if ( geometry().contains( pEvent->pos() ) ) return true;
-
-    // nothing to do here so return false
-    // app will probably tell this to doCommit() then delete this
-    return false;
+    return rectUpdate;
 }
 
-bool PDrawLine::doMove( QMouseEvent *pEvent ) 
+
+QRect PDrawLine::doMove( QMouseEvent *pEvent ) 
 {
-    // IF no handle moving THEN no manipulation
-    if ( !pHandle ) return true;
+    QRect rectUpdate;
 
-    doMoveHandle( pEvent->pos() );
+    // We only get here when a button is down but button is always none. Odd.
+    // if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
 
-    return true;
+    switch ( nState )
+    {
+    case StateIdle:
+        break;
+    case StateDraw:
+        {
+            QPen pen = g_Context->getPen();
+            pointEnd = pEvent->pos();
+            rectUpdate.setTopLeft( pointBegin - QPoint( pen.width(), pen.width() ) );
+            rectUpdate.setBottomRight( pointEnd + QPoint( pen.width(), pen.width() ) );
+            update();
+        }
+        break;
+    case StateManipulate:
+        doMoveHandle( pEvent->pos() );
+        break;
+    }
+
+    return rectUpdate;
 }
 
-bool PDrawLine::doRelease( QMouseEvent *pEvent )
+QRect PDrawLine::doRelease( QMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
-    // IF no handle moving THEN no manipulation
-    if ( !pHandle ) return true;
 
-    // show handles in case we are going to do more manipulation
-    doShowHandles();
+    QRect rectUpdate;
 
-    return true;
+    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+
+    switch ( nState )
+    {
+    case StateIdle:
+        break;
+    case StateDraw:
+        doManipulate();
+        break;
+    case StateManipulate:
+        break;
+    }
+
+    return rectUpdate;
 }
 
-void PDrawLine::doCommit()
+QRect PDrawLine::doCommit()
 {
-    QPainter painter( g_Context->getImage() );
-    doPaint( &painter, pointBegin, pointEnd );
-
-    doDeleteHandles();
+    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
+    QRect rectUpdate;
+    rectUpdate.setTopLeft( pointBegin );
+    rectUpdate.setBottomRight( pointEnd );
+    QPainter painter( g_Context->getImage());
+    doPaint( &painter );
+    emit signalCommitted();
+    doIdle();
+    return rectUpdate;
 }
 
 void PDrawLine::paintEvent( QPaintEvent *pEvent )
 {
     Q_UNUSED( pEvent );
+    if ( nState != StateDraw && nState != StateManipulate ) return;
     QPainter painter( this );
-    doPaint( &painter, mapFromParent( pointBegin ), mapFromParent( pointEnd ) );
+    doPaint( &painter );
 }
 
-void PDrawLine::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPoint &pointEnd )
+void PDrawLine::doPaint( QPainter *pPainter )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
@@ -87,6 +129,40 @@ void PDrawLine::doPaint( QPainter *pPainter, const QPoint &pointBegin, const QPo
     pPainter->setFont( g_Context->getFont() );
     // paint
     pPainter->drawLine( pointBegin, pointEnd );                         
+}
+
+void PDrawLine::doDraw( const QPoint &point )
+{
+    Q_ASSERT( nState == StateIdle );
+    pointBegin = pointEnd = point;
+    nState = StateDraw;
+    update();
+    emit signalChangedState();
+}
+
+void PDrawLine::doManipulate()
+{
+    Q_ASSERT( nState == StateDraw );
+    doCreateHandles();
+    nState = StateManipulate;
+    emit signalChangedState();
+}
+
+void PDrawLine::doIdle()
+{
+    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
+
+    if ( nState == StateDraw )
+    {
+        nState = StateIdle;
+    }
+    else if ( nState == StateManipulate )
+    {
+        doDeleteHandles();
+        nState = StateIdle;
+    }
+    update();
+    emit signalChangedState();
 }
 
 void PDrawLine::doCreateHandles()
@@ -131,8 +207,6 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         QRect r;
         r.setTopLeft( pointBegin );
         r.setBottomRight( pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust move handle
         vectorHandles[PDrawLineMove]->setCenter( r.center() );
     }
@@ -147,11 +221,6 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         // update points
         pointBegin += pointDiff;
         pointEnd += pointDiff;
-        // set canvas geometry
-        r.setTopLeft( pointBegin );
-        r.setBottomRight( pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust all handles
         vectorHandles[PDrawLineBegin]->setCenter( pointBegin );
         vectorHandles[PDrawLineMove]->setCenter( pointPos );
@@ -166,11 +235,10 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         QRect r;
         r.setTopLeft( pointBegin );
         r.setBottomRight( pointEnd );
-        r = r.normalized();
-        setGeometry( getGeometry( r, g_Context->getPen().width() ) );
         // adjust move handle
         vectorHandles[PDrawLineMove]->setCenter( r.center() );
     }
+    update();
 }
 
 //

@@ -1,35 +1,38 @@
-#ifndef H_PDrawPolygon
-#define H_PDrawPolygon
+#ifndef H_PDrawPolyline
+#define H_PDrawPolyline
 
 #include "PShapeBase.h"
 
-class PDrawPolygon : public PShapeBase
+class PDrawPolyline : public PShapeBase
 {
     Q_OBJECT
 public:
-    PDrawPolygon( PCanvas *pCanvas, const QPoint &pointBegin );
+    PDrawPolyline( PCanvas *pCanvas );
+    virtual ~PDrawPolyline();
 
-    virtual bool doDoubleClick( QMouseEvent * ) override;
-    virtual bool doPress( QMouseEvent *pEvent ) override;
-    virtual bool doMove( QMouseEvent *pEvent ) override; 
-    virtual bool doRelease( QMouseEvent *pEvent ) override;
-    virtual void doCommit() override;
+    virtual QRect   doDoubleClick( QMouseEvent * ) override;
+    virtual QRect   doPress( QMouseEvent *pEvent ) override;
+    virtual QRect   doMove( QMouseEvent *pEvent ) override; 
+    virtual QRect   doRelease( QMouseEvent *pEvent ) override;
+    virtual QRect   doCommit() override;
 
 protected:
-    bool        bManipulating = false;  /*!< we start in 'drawing mode' and switch to 'manipulating mode' when double click.    */
-    QPolygon    polygon;                /*!< in canvas coordinates                                                              */
+    QPolygon polygon;
 
     virtual void paintEvent( QPaintEvent *pEvent ) override;
 
-    virtual void doPaint( QPainter *, const QPolygon & );
+    virtual void doPaint( QPainter * );
+    virtual void doDraw( const QPoint & );
+    virtual void doManipulate();
+    virtual void doIdle();
     virtual void doCreateHandles();
     virtual void doMoveHandle( const QPoint &pointPos );
 };
 
-class PPolygonToolBar : public QWidget
+class PPolylineToolBar : public QWidget
 {
 public:
-    PPolygonToolBar( QWidget *p );
+    PPolylineToolBar( QWidget *p );
 };
 
 #endif
