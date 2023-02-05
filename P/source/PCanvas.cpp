@@ -73,6 +73,7 @@ bool PCanvas::doOpen()
     QImageReader reader( stringFileName );
     if ( reader.read( &image ) ) 
     {
+        image = image.convertToFormat( QImage::Format_ARGB32 );
         resize( image.size() );
         this->stringFileName = stringFileName;
         setModified( false );
@@ -149,14 +150,28 @@ bool PCanvas::doClose()
 
 void PCanvas::doCut()
 {
+    if ( pShapeBase  && pShapeBase->canCopy() ) 
+    {
+        pShapeBase->doCut();
+        update();
+        doPaste();
+    }
 }
 
 void PCanvas::doCopy()
 {
+    if ( pShapeBase && pShapeBase->canCopy() ) 
+    {
+        pShapeBase->doCopy();
+        doPaste();
+    }
 }
 
 void PCanvas::doPaste()
 {
+    if ( isDrawing() ) doCancel();
+    g_Context->setImage( &image );
+    pShapeBase = new PPasteRectangle( this );
 }
 
 void PCanvas::doUndo()
@@ -211,20 +226,23 @@ bool PCanvas::isDrawing()
 
 bool PCanvas::canCut()
 {
-//    PiSelection *pSelection = g_Palette->selection.getCurrent();
-//    return ( pSelection->getState() == PiSelection::StateManipulating );
+    if ( pShapeBase ) return pShapeBase->canCut();
     return false;
 }
 
 bool PCanvas::canCopy() 
 {
-//    PiSelection *pSelection = g_Palette->selection.getCurrent();
-//    return ( pSelection->getState() == PiSelection::StateManipulating );
+    if ( pShapeBase ) return pShapeBase->canCopy();
     return false;
 }
 
 bool PCanvas::canPaste() 
 {
+    QClipboard *pClipboard = QGuiApplication::clipboard();
+    const QMimeData *pMimeData = pClipboard->mimeData();
+
+    if ( pMimeData->hasImage() ) return true;
+
     return false;
 }
 
@@ -291,6 +309,8 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
                 pShapeBase = new PSelectEllipse( this );           
                 break;
             case ToolSelectPolygon:      
+                g_Context->setImage( &image );
+                pShapeBase = new PSelectPolygon( this );           
                 break;
             case ToolDrawFreeHand:               
                 g_Context->setImage( &image );
@@ -356,7 +376,10 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
     if ( pFreeBase )
         update( pFreeBase->doPress( pEvent ) );
     else if ( pShapeBase ) 
+    {
         update( pShapeBase->doPress( pEvent ) );
+        if ( pShapeBase->inherits("PPasteRectangle") && pShapeBase->getState() == PShapeBase::StateIdle ) doCancel();
+    }
 }
 
 void PCanvas::mouseMoveEvent( QMouseEvent *pEvent )
@@ -563,7 +586,7 @@ void PCanvas::doFillGradient( const QPoint &pointSeed )
 
 void PCanvas::doClear()
 {
-    image.fill( qRgb( 255, 255, 255 ) );
+    image.fill( Qt::transparent );
     stringFileName = QString();
     setModified( false );
     update();
@@ -573,8 +596,8 @@ void PCanvas::resizeImage( QImage *image, const QSize &newSize )
 {
     if ( image->size() == newSize ) return;
 
-    QImage newImage( newSize, QImage::Format_RGB32 );
-    newImage.fill( qRgb( 255, 255, 255 ) );
+    QImage newImage( newSize, QImage::Format_ARGB32 );
+    newImage.fill( Qt::transparent );
     QPainter painter( &newImage );
     painter.drawImage( QPoint( 0, 0 ), *image );
     *image = newImage;

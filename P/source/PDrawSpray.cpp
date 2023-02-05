@@ -22,6 +22,7 @@ QRect PDrawSpray::doMove( QMouseEvent *pEvent )
 
 QRect PDrawSpray::doRelease( QMouseEvent *pEvent )
 {
+    Q_UNUSED( pEvent );
     return QRect();
 }
 

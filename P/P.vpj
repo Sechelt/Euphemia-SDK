@@ -76,6 +76,7 @@
             <F N="source/PFontToolBar.cpp"/>
             <F N="source/PFreeBase.cpp"/>
             <F N="source/PHandle.cpp"/>
+            <F N="source/PPasteRectangle.cpp"/>
             <F N="source/PPenToolBar.cpp"/>
             <F N="source/PSelectEllipse.cpp"/>
             <F N="source/PSelectPolygon.cpp"/>
@@ -108,6 +109,7 @@
             <F N="include/PFontToolBar.h"/>
             <F N="include/PFreeBase.h"/>
             <F N="include/PHandle.h"/>
+            <F N="include/PPasteRectangle.h"/>
             <F N="include/PPenToolBar.h"/>
             <F N="include/PSelectEllipse.h"/>
             <F N="include/PSelectPolygon.h"/>

@@ -3,10 +3,12 @@
 
 #include <WZoomWidget.h>
 
+#include "PPasteRectangle.h"
+#include "PSelectEllipse.h"
+#include "PSelectPolygon.h"
+#include "PSelectRectangle.h"
 #include "PDrawFreeHand.h"
 #include "PDrawSpray.h"
-#include "PSelectEllipse.h"
-#include "PSelectRectangle.h"
 #include "PDrawLine.h"
 #include "PDrawPolygon.h"
 #include "PDrawPolygonFilled.h"

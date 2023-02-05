@@ -28,9 +28,13 @@ public:
     virtual QRect   doRelease( QMouseEvent *pEvent ) = 0;                       /*!< mouse release from canvas - return rect to update  */
     virtual QRect   doCommit() = 0;                                             /*!< paint shape on QImage                              */
     virtual void    doCancel();                                                 /*!< reset state to StateIdle                           */
+    virtual void    doCut() {}
+    virtual void    doCopy() {}
 
     virtual bool    canCommit();
     virtual bool    canCancel();
+    virtual bool    canCut() { return false; }
+    virtual bool    canCopy() { return false; }
 
 signals:
    void signalChangedState();                                                   /*!<                                                    */ 

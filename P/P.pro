@@ -42,8 +42,10 @@ HEADERS += \
         include/PFontToolBar.h \
         include/PFreeBase.h \
         include/PHandle.h \
+        include/PPasteRectangle.h \
         include/PPenToolBar.h \
         include/PSelectEllipse.h \
+        include/PSelectPolygon.h \
         include/PSelectRectangle.h \
         include/PShapeBase.h
 
@@ -68,8 +70,10 @@ SOURCES += \
         source/PFontToolBar.cpp \
         source/PFreeBase.cpp \
         source/PHandle.cpp \
+        source/PPasteRectangle.cpp \
         source/PPenToolBar.cpp \
         source/PSelectEllipse.cpp \
+        source/PSelectPolygon.cpp \
         source/PSelectRectangle.cpp \
         source/PShapeBase.cpp
 
