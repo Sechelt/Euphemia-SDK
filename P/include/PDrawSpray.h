@@ -15,8 +15,6 @@ public:
     virtual QRect doRelease( QMouseEvent *pEvent ) override;
 
 protected:
-    PCanvas *pCanvas;
-
     QRect   doSpray( const QPoint & );
 
     double  getRandom();

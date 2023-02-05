@@ -7,6 +7,7 @@ PCanvas::PCanvas( QWidget *parent, const QSize &size )
     : QWidget( parent )
 {
     setAttribute( Qt::WA_StaticContents );
+    setBackground( QColor( Qt::transparent ) );
     resize( size );
     setMouseTracking( true );
 }
@@ -15,6 +16,7 @@ PCanvas::PCanvas( QWidget *parent, const QImage &image )
     : QWidget( parent )
 {
     setAttribute( Qt::WA_StaticContents );
+    setBackground( QColor( Qt::transparent ) );
     resize( image.size() );
     this->image = image;
     setMouseTracking( true );
@@ -35,6 +37,18 @@ void PCanvas::setAutoCommit( bool b )
 {
     if ( isDrawing() ) doCancel();
     bAutoCommit = b;
+}
+
+void PCanvas::setBackground( const QColor &color )
+{
+    colorBackground = color;
+    if (  colorBackground == QColor( Qt::transparent ) ) 
+    {
+        colorBackground.setAlpha( 0 );
+        bBackgroundTransparent = true;
+    }
+    else
+        bBackgroundTransparent = false;
 }
 
 /*!
@@ -320,6 +334,10 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
                 g_Context->setImage( &image );
                 pFreeBase = new PDrawSpray( this );           
                 break;
+            case ToolDrawErase:               
+                g_Context->setImage( &image );
+                pFreeBase = new PDrawErase( this );           
+                break;
             case ToolDrawLine:
                 g_Context->setImage( &image );
                 pShapeBase = new PDrawLine( this );
@@ -586,7 +604,7 @@ void PCanvas::doFillGradient( const QPoint &pointSeed )
 
 void PCanvas::doClear()
 {
-    image.fill( Qt::transparent );
+    image.fill( colorBackground );
     stringFileName = QString();
     setModified( false );
     update();

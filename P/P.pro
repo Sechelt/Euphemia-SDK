@@ -29,6 +29,7 @@ HEADERS += \
         include/PContext.h \
         include/PDrawEllipse.h \
         include/PDrawEllipseFilled.h \
+        include/PDrawErase.h \
         include/PDrawFreeHand.h \
         include/PDrawLine.h \
         include/PDrawPolygon.h \
@@ -57,6 +58,7 @@ SOURCES += \
         source/PContext.cpp \
         source/PDrawEllipse.cpp \
         source/PDrawEllipseFilled.cpp \
+        source/PDrawErase.cpp \
         source/PDrawFreeHand.cpp \
         source/PDrawLine.cpp \
         source/PDrawPolygon.cpp \

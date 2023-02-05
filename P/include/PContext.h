@@ -15,8 +15,8 @@ public:
         ShapeImage          /*!< specified image                                                                */
     };
 
-    Shapes  nShape;
-    QSize   size;
+    Shapes  nShape  = ShapeRound;
+    QSize   size    = QSize( 5, 5 );
     QImage  image;          /*!< this will be 'stamped' and/or 'dragged' - so not like using QBrush::texture    */
 
     inline bool operator==( const PContextFreeHand &t ) 
@@ -24,6 +24,26 @@ public:
         if ( t.nShape != nShape ) return false;
         if ( t.size != size ) return false;
         if ( t.image != image ) return false;
+        return true;
+    }
+};
+
+class PContextErase
+{
+public:
+    enum Shapes
+    {
+        ShapeEllipse,
+        ShapeRectangle
+    };
+
+    Shapes  nShape  = ShapeEllipse;
+    QSize   size    = QSize( 5, 5 );
+
+    inline bool operator==( const PContextErase &t ) 
+    {
+        if ( t.nShape != nShape ) return false;
+        if ( t.size != size ) return false;
         return true;
     }
 };
@@ -81,6 +101,7 @@ public:
     void setBrush( const QBrush & );
     void setFont( const QFont & );
     void setFreeHand( const PContextFreeHand & );
+    void setErase( const PContextErase & );
     void setSpray( const PContextSpray & );
     void setText( const PContextText & );
     void setPolygonFilled( const PContextPolygonFilled & );
@@ -90,6 +111,7 @@ public:
     QBrush                  getBrush()          { return brush;         }
     QFont                   getFont()           { return font;          }
     PContextFreeHand        getFreeHand()       { return freehand;      }
+    PContextErase           getErase()          { return erase;         }
     PContextSpray           getSpray()          { return spray;         }
     PContextText            getText()           { return text;          }
     PContextPolygonFilled   getPolygonFilled()  { return polygonfilled; }
@@ -100,6 +122,7 @@ signals:
     void signalModified( const QFont & );
     void signalModified( const PContextFreeHand & );
     void signalModified( const PContextSpray & );
+    void signalModified( const PContextErase & );
     void signalModified( const PContextText & );
     void signalModified( const PContextPolygonFilled & );
 
@@ -109,6 +132,7 @@ public slots:
     void slotBrush( const QBrush &t );
     void slotFont( const QFont &t );
     void slotFreeHand( const PContextFreeHand &t );
+    void slotErase( const PContextErase &t );
     void slotSpray( const PContextSpray &t );
     void slotText( const PContextText &t );
     void slotPolygonFilled( const PContextPolygonFilled &t );
@@ -120,6 +144,7 @@ protected:
     QFont                   font;                       /*!< defines font details for drawing text  */
     PContextFreeHand        freehand;                   /*!< used by free hand tool                 */
     PContextSpray           spray;                      /*!< used by spray tool                     */
+    PContextErase           erase;                      /*!< used by erase tool                     */
     PContextText            text;                       /*!< used by text tool                      */
     PContextPolygonFilled   polygonfilled;              /*!< used by polygon tool                   */
 };

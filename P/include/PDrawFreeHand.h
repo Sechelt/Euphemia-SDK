@@ -13,7 +13,6 @@ public:
     virtual QRect doRelease( QMouseEvent *pEvent ) override;
 
 protected:
-    PCanvas *   pCanvas;
     QPoint      pointLast;
 
     QRect doDrawLine( const QPoint & );

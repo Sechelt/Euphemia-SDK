@@ -8,6 +8,7 @@
 #include "PSelectPolygon.h"
 #include "PSelectRectangle.h"
 #include "PDrawFreeHand.h"
+#include "PDrawErase.h"
 #include "PDrawSpray.h"
 #include "PDrawLine.h"
 #include "PDrawPolygon.h"
@@ -35,6 +36,7 @@ public:
         ToolSelectPolygon,              /*!< shape: select using a polygon                           */ 
         ToolDrawFreeHand,               /*!< free: scribble                                          */ 
         ToolDrawSpray,                  /*!< free: emulate a spray can                               */ 
+        ToolDrawErase,                  /*!< free: erase to expose background                        */ 
         ToolDrawLine,                   /*!< shape: draw a straight line                             */ 
         ToolDrawRectangle,              /*!< shape: draw an empty rectangle                          */ 
         ToolDrawEllipse,                /*!< shape: draw an empty ellipse                            */ 
@@ -54,10 +56,12 @@ public:
     void setZoom( WZoomWidget::FitTypes nFit, int nZoom );
     void setTool( Tools n );
     void setAutoCommit( bool ); 
+    void setBackground( const QColor & );
 
     int getZoom() { return nZoom; }
     WZoomWidget::FitTypes getFit() { return nFit; }
     QString getFileName() { return stringFileName; }
+    QColor getBackground() { return colorBackground; }
 
     bool doOpen();
     bool doSave();
@@ -74,6 +78,7 @@ public:
 
     bool isModified() { return bModified; }
     bool isDrawing();
+    bool isBackgroundTransparent() { return bBackgroundTransparent; }
 
     bool canCut(); 
     bool canCopy(); 
@@ -116,6 +121,8 @@ private:
     bool        bAutoCommit     = false;
     QString     stringFileName;
     bool        bModified       = false;
+    QColor      colorBackground;
+    bool        bBackgroundTransparent = true;
 
     // zoom
     WZoomWidget::FitTypes nFit = WZoomWidget::FitIgnore;

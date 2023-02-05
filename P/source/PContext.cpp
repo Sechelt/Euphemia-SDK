@@ -41,6 +41,13 @@ void PContext::setFreeHand( const PContextFreeHand &t )
     emit signalModified( freehand );
 }
 
+void PContext::setErase( const PContextErase &t )
+{
+    if ( erase == t ) return;
+    erase = t;
+    emit signalModified( erase );
+}
+
 void PContext::setSpray( const PContextSpray &t )
 {
     if ( spray == t ) return;
@@ -85,6 +92,11 @@ void PContext::slotFont( const QFont &t )
 void PContext::slotFreeHand( const PContextFreeHand &t )
 {
     setFreeHand( t );
+}
+
+void PContext::slotErase( const PContextErase &t )
+{
+    setErase( t );
 }
 
 void PContext::slotSpray( const PContextSpray &t )

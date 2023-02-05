@@ -61,6 +61,7 @@
             <F N="source/PContext.cpp"/>
             <F N="source/PDrawEllipse.cpp"/>
             <F N="source/PDrawEllipseFilled.cpp"/>
+            <F N="source/PDrawErase.cpp"/>
             <F N="source/PDrawFreeHand.cpp"/>
             <F N="source/PDrawLine.cpp"/>
             <F N="source/PDrawPolygon.cpp"/>
@@ -94,6 +95,7 @@
             <F N="include/PContext.h"/>
             <F N="include/PDrawEllipse.h"/>
             <F N="include/PDrawEllipseFilled.h"/>
+            <F N="include/PDrawErase.h"/>
             <F N="include/PDrawFreeHand.h"/>
             <F N="include/PDrawLine.h"/>
             <F N="include/PDrawPolygon.h"/>
