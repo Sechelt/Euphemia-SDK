@@ -50,8 +50,8 @@ public:
         ToolFillGradient                /*!< fill: fill with gradient                                */ 
     };
 
-    PCanvas( QWidget *parent, const QSize &size = QSize( 1024, 768 ) );
-    PCanvas( QWidget *parent, const QImage &image );
+    PCanvas( QWidget *parent );
+//    PCanvas( QWidget *parent, const QImage &image );
 
     void setZoom( WZoomWidget::FitTypes nFit, int nZoom );
     void setTool( Tools n );

@@ -3,24 +3,25 @@
 
 #include "PContext.h"
 
-PCanvas::PCanvas( QWidget *parent, const QSize &size )
+PCanvas::PCanvas( QWidget *parent )
     : QWidget( parent )
 {
     setAttribute( Qt::WA_StaticContents );
     setBackground( QColor( Qt::transparent ) );
-    resize( size );
     setMouseTracking( true );
 }
 
+/*
 PCanvas::PCanvas( QWidget *parent, const QImage &image )
-    : QWidget( parent )
-{
-    setAttribute( Qt::WA_StaticContents );
-    setBackground( QColor( Qt::transparent ) );
-    resize( image.size() );
-    this->image = image;
-    setMouseTracking( true );
-}
+    : QWidget( parent )                                 
+{                                                       
+    setAttribute( Qt::WA_StaticContents );              
+    setBackground( QColor( Qt::transparent ) );         
+    resize( image.size() );                             
+    this->image = image;                                
+    setMouseTracking( true );                           
+}                                                       
+*/
 
 void PCanvas::setZoom( WZoomWidget::FitTypes nFit, int nZoom )
 {
@@ -80,8 +81,10 @@ bool PCanvas::doOpen()
     }
 
     // get a file name
-    QString stringFileName = QFileDialog::getOpenFileName( this, tr( "Select Image..." ), QString(), tr("Image (*.png)") );
+    QString stringFileName = QFileDialog::getOpenFileName( this, tr( "Select Image..." ), QString(), tr("Image (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm)") );
     if ( stringFileName.isEmpty() ) return false;
+
+    // Qt supports svg but not via QImage
 
     // load the file
     QImageReader reader( stringFileName );
@@ -128,6 +131,8 @@ bool PCanvas::doSaveAs()
     // get a file name
     QString stringFileName = QFileDialog::getSaveFileName( this, tr( "Save As..." ) );
     if ( stringFileName.isEmpty() ) return false;
+
+    // Qt will use file extension to set format.
 
     // do it
     QImageWriter writer( stringFileName );

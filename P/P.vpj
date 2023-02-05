@@ -55,9 +55,9 @@
             Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.scala;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm;*.go;*.groovy;*.gsh"
             GUID="{509BF71A-C21F-4E3F-B639-6794BDAAB831}">
             <F N="source/LibInfo.h"/>
+            <F N="source/PBackground.cpp"/>
             <F N="source/PBrushToolBar.cpp"/>
             <F N="source/PCanvas.cpp"/>
-            <F N="source/PCanvasView.cpp"/>
             <F N="source/PContext.cpp"/>
             <F N="source/PDrawEllipse.cpp"/>
             <F N="source/PDrawEllipseFilled.cpp"/>
@@ -77,6 +77,7 @@
             <F N="source/PFontToolBar.cpp"/>
             <F N="source/PFreeBase.cpp"/>
             <F N="source/PHandle.cpp"/>
+            <F N="source/PLayers.cpp"/>
             <F N="source/PPasteRectangle.cpp"/>
             <F N="source/PPenToolBar.cpp"/>
             <F N="source/PSelectEllipse.cpp"/>
@@ -89,9 +90,9 @@
             Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.h++;*.inc;*.sh;*.cpy;*.if"
             GUID="{CDE37B1B-3496-4DC3-84F9-669D82A961FD}">
             <F N="include/P.h"/>
+            <F N="include/PBackground.h"/>
             <F N="include/PBrushToolBar.h"/>
             <F N="include/PCanvas.h"/>
-            <F N="include/PCanvasView.h"/>
             <F N="include/PContext.h"/>
             <F N="include/PDrawEllipse.h"/>
             <F N="include/PDrawEllipseFilled.h"/>
@@ -111,6 +112,7 @@
             <F N="include/PFontToolBar.h"/>
             <F N="include/PFreeBase.h"/>
             <F N="include/PHandle.h"/>
+            <F N="include/PLayers.h"/>
             <F N="include/PPasteRectangle.h"/>
             <F N="include/PPenToolBar.h"/>
             <F N="include/PSelectEllipse.h"/>

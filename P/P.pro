@@ -23,9 +23,9 @@ RESOURCES   = P.qrc
 
 HEADERS += \
         include/P.h \
+        include/PBackground.h \
         include/PBrushToolBar.h \
         include/PCanvas.h \
-        include/PCanvasView.h \
         include/PContext.h \
         include/PDrawEllipse.h \
         include/PDrawEllipseFilled.h \
@@ -43,6 +43,7 @@ HEADERS += \
         include/PFontToolBar.h \
         include/PFreeBase.h \
         include/PHandle.h \
+        include/PLayers.h \
         include/PPasteRectangle.h \
         include/PPenToolBar.h \
         include/PSelectEllipse.h \
@@ -52,9 +53,9 @@ HEADERS += \
 
 SOURCES += \
         source/LibInfo.h \
+        source/PBackground.cpp \
         source/PBrushToolBar.cpp \
         source/PCanvas.cpp \
-        source/PCanvasView.cpp \
         source/PContext.cpp \
         source/PDrawEllipse.cpp \
         source/PDrawEllipseFilled.cpp \
@@ -72,6 +73,7 @@ SOURCES += \
         source/PFontToolBar.cpp \
         source/PFreeBase.cpp \
         source/PHandle.cpp \
+        source/PLayers.cpp \
         source/PPasteRectangle.cpp \
         source/PPenToolBar.cpp \
         source/PSelectEllipse.cpp \
