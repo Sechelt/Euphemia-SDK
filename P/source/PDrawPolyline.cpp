@@ -15,6 +15,26 @@ PDrawPolyline::~PDrawPolyline()
 }
 
 /*!
+ * \brief Return a copy of the CURRENT SHAPE.
+ *  
+ * This is done by getting doPaint to draw on an empty, temp, canvas and then 
+ * copying from that canvas. 
+ *  
+ * \author pharvey (2/6/23)
+ * 
+ * \return QImage 
+ */
+QImage PDrawPolyline::getCopy()
+{
+    QImage image( g_Context->getImage()->size(), QImage::Format_ARGB32 );
+    image.fill( Qt::transparent );
+    QPainter painter( &image );
+    doPaint( &painter );
+
+    return image.copy( polygon.boundingRect() );
+}
+
+/*!
  * \brief Switch from drawing mode to manipulating mode.
  * 
  * \author pharvey (2/1/23)
@@ -29,6 +49,7 @@ QRect PDrawPolyline::doDoubleClick( QMouseEvent *pEvent )
 
     if ( nState != StateDraw ) return QRect();
 
+    if ( pCanvas->getAutoCommit() ) return doCommit();
     doManipulate();
 
     return polygon.boundingRect();

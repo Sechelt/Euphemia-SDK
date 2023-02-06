@@ -7,15 +7,18 @@ class PSelectRectangle : public PDrawRectangle
 {
     Q_OBJECT
 public:
-    PSelectRectangle( PCanvas *pCanvas );
+    PSelectRectangle( PCanvas *pCanvas, bool ball = false );
 
+    virtual QImage getCopy() override;
+
+    virtual QRect doRelease( QMouseEvent *pEvent ) override;
     virtual QRect doCommit() override;
     virtual void  doCut() override;
-    virtual void  doCopy() override;
 
-    virtual bool canCommit() override;
-    virtual bool canCut() override;
-    virtual bool canCopy() override;
+    virtual bool canCommit() override   { return false; }
+    virtual bool canCut() override      { return ( nState == StateManipulate ); }
+
+    virtual bool isSelector() override { return true; }
 
 protected:
     virtual void doPaint( QPainter * ) override;

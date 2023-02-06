@@ -57,10 +57,12 @@ public:
     void setAutoCommit( bool ); 
     void setBackground( const QColor & );
 
-    int getZoom() { return nZoom; }
-    WZoomWidget::FitTypes getFit() { return nFit; }
-    QString getFileName() { return stringFileName; }
-    QColor getBackground() { return colorBackground; }
+    QImage                  getCopy();
+    int                     getZoom() { return nZoom; }
+    WZoomWidget::FitTypes   getFit() { return nFit; }
+    bool                    getAutoCommit() { return bAutoCommit; }
+    QString                 getFileName() { return stringFileName; }
+    QColor                  getBackground() { return colorBackground; }
 
     bool doOpen();
     bool doSave();
@@ -72,6 +74,8 @@ public:
     void doPaste( const QImage & );
     void doUndo();
     void doRedo();
+    void doSelectAll();
+    void doSelectNone();
 
     void doCommit();
     void doCancel();
@@ -79,6 +83,8 @@ public:
     bool isModified() { return bModified; }
     bool isDrawing();
     bool isBackgroundTransparent() { return bBackgroundTransparent; }
+
+    bool hasSelection();
 
     bool canCut(); 
     bool canCopy(); 

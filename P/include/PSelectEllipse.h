@@ -9,12 +9,15 @@ class PSelectEllipse : public PSelectRectangle
 public:
     PSelectEllipse( PCanvas *pCanvas );
 
+    virtual QImage getCopy() override;
+
     virtual void  doCut() override;
     virtual void  doCopy() override;
 
 protected:
+    virtual QImage getMask() override;
+
     virtual void doPaint( QPainter * ) override;
-    virtual QImage doTrim( QImage &image, const QImage &imageEllipse, bool bErase = false );
 };
 
 #endif

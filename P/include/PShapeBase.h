@@ -20,7 +20,8 @@ public:
     PShapeBase( PCanvas *pCanvas );
     virtual ~PShapeBase();
 
-    virtual States getState() { return nState; }
+    virtual States getState()   { return nState;    }
+    virtual QImage getCopy()    { return QImage();  }
 
     virtual QRect   doDoubleClick( QMouseEvent *pEvent ) = 0;                   /*!< mouse press from canvas - return rect to update    */
     virtual QRect   doPress( QMouseEvent *pEvent ) = 0;                         /*!< mouse press from canvas - return rect to update    */
@@ -29,12 +30,14 @@ public:
     virtual QRect   doCommit() = 0;                                             /*!< paint shape on QImage                              */
     virtual void    doCancel();                                                 /*!< reset state to StateIdle                           */
     virtual void    doCut() {}
-    virtual void    doCopy() {}
+    virtual void    doCopy();
 
-    virtual bool    canCommit();
+    virtual bool    canCommit() { return nState == StateManipulate; }
     virtual bool    canCancel();
-    virtual bool    canCut() { return false; }
-    virtual bool    canCopy() { return false; }
+    virtual bool    canCut()    { return false; }
+    virtual bool    canCopy()   { return nState == StateManipulate; }           /*!< draw/paste shape (copy from doPaint) select shape (copy from canvas) */
+
+    virtual bool    isSelector() { return false; }
 
 signals:
    void signalChangedState();                                                   /*!<                                                    */ 
@@ -47,6 +50,8 @@ protected:
     PHandle *           pHandle = nullptr;          /*!< Handle being moved.                                */
 
     virtual PHandle *   getHandle( const QPoint &pointPos );
+    virtual QImage      getMask() { return QImage();  }
+    virtual QImage      getTrimmed( const QRect &r, QImage &image, const QImage &imageMask, bool bErase = false );
 
     // state changes
     virtual void doDraw( const QPoint & ) = 0;

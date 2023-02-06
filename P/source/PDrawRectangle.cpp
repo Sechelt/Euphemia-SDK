@@ -18,6 +18,26 @@ PDrawRectangle::~PDrawRectangle()
     doCancel();
 }
 
+/*!
+ * \brief Return a copy of the CURRENT SHAPE.
+ *  
+ * This is done by getting doPaint to draw on an empty, temp, canvas and then 
+ * copying from that canvas. 
+ *  
+ * \author pharvey (2/6/23)
+ * 
+ * \return QImage 
+ */
+QImage PDrawRectangle::getCopy()
+{
+    QImage image( g_Context->getImage()->size(), QImage::Format_ARGB32 );
+    image.fill( Qt::transparent );
+    QPainter painter( &image );
+    doPaint( &painter );
+
+    return image.copy( r );
+}
+
 QRect PDrawRectangle::doDoubleClick( QMouseEvent *pEvent )
 { 
     Q_UNUSED( pEvent );
@@ -86,6 +106,7 @@ QRect PDrawRectangle::doRelease( QMouseEvent *pEvent )
     case StateIdle:
         break;
     case StateDraw:
+        if ( pCanvas->getAutoCommit() ) return doCommit();
         doManipulate();
         break;
     case StateManipulate:

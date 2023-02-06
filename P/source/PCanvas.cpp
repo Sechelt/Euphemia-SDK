@@ -19,6 +19,7 @@ void PCanvas::setZoom( WZoomWidget::FitTypes nFit, int nZoom )
 
 void PCanvas::setTool( Tools n )
 {
+    if ( isDrawing() ) doCancel();
     nTool = n;
 }
 
@@ -38,6 +39,13 @@ void PCanvas::setBackground( const QColor &color )
     }
     else
         bBackgroundTransparent = false;
+}
+
+QImage PCanvas::getCopy()
+{
+    if ( !pShapeBase ) return QImage();
+    if ( !pShapeBase->canCopy() ) return QImage();
+    return pShapeBase->getCopy();
 }
 
 /*!
@@ -179,6 +187,10 @@ void PCanvas::doPaste()
     if ( isDrawing() ) doCancel();
     g_Context->setImage( &image );
     pShapeBase = new PPasteRectangle( this );
+    imagePreCommit = image;
+    connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
+    connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
+    emit signalChangedState();
 }
 
 void PCanvas::doPaste( const QImage &i )
@@ -186,6 +198,10 @@ void PCanvas::doPaste( const QImage &i )
     if ( isDrawing() ) doCancel();
     g_Context->setImage( &image );
     pShapeBase = new PPasteRectangle( this, i );
+    imagePreCommit = image;
+    connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
+    connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
+    emit signalChangedState();
 }
 
 void PCanvas::doUndo()
@@ -206,6 +222,25 @@ void PCanvas::doRedo()
     emit signalChangedState();
 }
 
+void PCanvas::doSelectAll()
+{
+    if ( isDrawing() ) doCancel();
+    g_Context->setImage( &image );
+    pShapeBase = new PSelectRectangle( this, true );
+    imagePreCommit = image;
+    connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
+    connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
+    emit signalChangedState();
+}
+
+void PCanvas::doSelectNone()
+{
+    if ( !pShapeBase ) return;
+    if ( !pShapeBase->isSelector() ) return;
+    doCancel();
+}
+
+// app calls here ie tool button clicked
 void PCanvas::doCommit()
 {
     if ( !pShapeBase ) return;
@@ -235,6 +270,12 @@ bool PCanvas::isDrawing()
 {
     if ( pFreeBase ) return true;
     if ( pShapeBase ) return true;
+    return false;
+}
+
+bool PCanvas::hasSelection()
+{
+    if ( pShapeBase ) return pShapeBase->isSelector();
     return false;
 }
 
@@ -282,6 +323,11 @@ bool PCanvas::canCancel()
     return false;
 }
 
+// shape has just called its doCommit
+// - shape may have decided to do it in which case shape has gone idle - it will get deleted when dif tool selected
+//   isDrawing remains true
+// - app may have called our doCommit in which case shape will get deleted
+//   isDrawing becomes false
 void PCanvas::slotCommitted()
 {
     // undo/redo

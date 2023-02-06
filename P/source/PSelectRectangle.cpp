@@ -1,9 +1,52 @@
 #include "LibInfo.h"
 #include "PSelectRectangle.h"
 
-PSelectRectangle::PSelectRectangle( PCanvas *pCanvas )
+PSelectRectangle::PSelectRectangle( PCanvas *pCanvas, bool bAll )
     : PDrawRectangle( pCanvas )
 {
+    if ( bAll )
+    {
+        // fake doDraw to cover all
+        r = QRect( QPoint( 0, 0 ), g_Context->getImage()->size() );
+        nState = StateDraw;
+        // go straight into manipulate
+        doManipulate();
+    }
+}
+
+/*!
+ * \brief Return a copy of the SELECTED AREA.
+ * 
+ * \author pharvey (2/6/23)
+ * 
+ * \return QImage 
+ */
+QImage PSelectRectangle::getCopy()
+{
+    return g_Context->getImage()->copy( r );
+}
+
+// this removes the auto commit
+QRect PSelectRectangle::doRelease( QMouseEvent *pEvent )
+{
+    Q_UNUSED( pEvent );
+
+    QRect rectUpdate;
+
+    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+
+    switch ( nState )
+    {
+    case StateIdle:
+        break;
+    case StateDraw:
+        doManipulate();
+        break;
+    case StateManipulate:
+        break;
+    }
+
+    return rectUpdate;
 }
 
 QRect PSelectRectangle::doCommit()
@@ -38,29 +81,6 @@ void PSelectRectangle::doCut()
             pImage->setPixelColor( nX, nY, colorBackground );
         }
     }
-}
-
-void PSelectRectangle::doCopy()
-{
-     QClipboard *clipboard = QGuiApplication::clipboard();
-     clipboard->setImage( g_Context->getImage()->copy( r ) );
-}
-
-bool PSelectRectangle::canCommit()
-{
-    return false;
-}
-
-bool PSelectRectangle::canCut()
-{
-    if ( nState == StateManipulate ) return true;
-    return false;
-}
-
-bool PSelectRectangle::canCopy()
-{
-    if ( nState == StateManipulate ) return true;
-    return false;
 }
 
 void PSelectRectangle::doPaint( QPainter *pPainter )

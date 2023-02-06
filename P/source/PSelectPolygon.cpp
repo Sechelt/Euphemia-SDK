@@ -6,6 +6,32 @@ PSelectPolygon::PSelectPolygon( PCanvas *pCanvas )
 {
 }
 
+/*!
+ * \brief Return a copy of the SELECTED AREA.
+ * 
+ * \author pharvey (2/6/23)
+ * 
+ * \return QImage 
+ */
+QImage PSelectPolygon::getCopy()
+{
+    QRect r = polygon.boundingRect();
+    QImage imageCopy = g_Context->getImage()->copy( r );
+    return getTrimmed( r, imageCopy, getMask() );
+}
+
+// remove the auto commit
+QRect PSelectPolygon::doDoubleClick( QMouseEvent *pEvent )
+{
+    Q_UNUSED( pEvent );
+
+    if ( nState != StateDraw ) return QRect();
+
+    doManipulate();
+
+    return polygon.boundingRect();
+}
+
 QRect PSelectPolygon::doCommit()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
@@ -17,39 +43,21 @@ QRect PSelectPolygon::doCommit()
 void PSelectPolygon::doCut()
 {
     QRect r = polygon.boundingRect();
-    // create a mask where the area we want is black and the rest is transparent
-    QImage imagePolygon( r.size(), QImage::Format_ARGB32 );
-    {
-        QPolygon polygonCopy = polygon;
-        polygonCopy.translate( -r.left(), -r.top() );
-        imagePolygon.fill( Qt::transparent );
-        QPainter painter( &imagePolygon );
-
-        QBrush brush( Qt::black );
-        brush.setStyle( Qt::SolidPattern );
-        painter.setBrush( brush );
-
-        painter.setPen( QPen( Qt::NoPen ) );
-        painter.drawPolygon( polygonCopy );
-    }
-
-    // make a copy (rect) and then trim to polygon
-    // put it into the system clipboard 
-     QClipboard *pClipboard = QGuiApplication::clipboard();
-     QImage image = g_Context->getImage()->copy( r );
-     pClipboard->setImage( doTrim( image, imagePolygon, true ) );
+    QClipboard *pClipboard = QGuiApplication::clipboard();
+    QImage imageCopy = g_Context->getImage()->copy( r );
+    pClipboard->setImage( getTrimmed( r, imageCopy, getMask(), true ) );
 }
 
-void PSelectPolygon::doCopy()
+QImage PSelectPolygon::getMask()
 {
+    // create a mask where the area we want is black and the rest is transparent
     QRect r = polygon.boundingRect();
-    // create a mask where the area we want is black and the rest is transparent
-    QImage imagePolygon( r.size(), QImage::Format_ARGB32 );
+    QImage imageMask( r.size(), QImage::Format_ARGB32 );
     {
         QPolygon polygonCopy = polygon;
         polygonCopy.translate( -r.left(), -r.top() );
-        imagePolygon.fill( Qt::transparent );
-        QPainter painter( &imagePolygon );
+        imageMask.fill( Qt::transparent );
+        QPainter painter( &imageMask );
 
         QBrush brush( Qt::black );
         brush.setStyle( Qt::SolidPattern );
@@ -58,29 +66,7 @@ void PSelectPolygon::doCopy()
         painter.setPen( QPen( Qt::NoPen ) );
         painter.drawPolygon( polygonCopy );
     }
-
-    // make a copy (rect) and then trim to polygon
-    // put it into the system clipboard 
-     QClipboard *pClipboard = QGuiApplication::clipboard();
-     QImage image = g_Context->getImage()->copy( r );
-     pClipboard->setImage( doTrim( image, imagePolygon ) );
-}
-
-bool PSelectPolygon::canCommit()
-{
-    return false;
-}
-
-bool PSelectPolygon::canCut()
-{
-    if ( nState == StateManipulate ) return true;
-    return false;
-}
-
-bool PSelectPolygon::canCopy()
-{
-    if ( nState == StateManipulate ) return true;
-    return false;
+    return imageMask;
 }
 
 void PSelectPolygon::doPaint( QPainter *pPainter )
@@ -92,34 +78,5 @@ void PSelectPolygon::doPaint( QPainter *pPainter )
     pPainter->drawPolygon( polygon );                         
 }
 
-QImage PSelectPolygon::doTrim( QImage &imageCopied, const QImage &imageMask, bool bErase )
-{
-    Q_ASSERT( imageCopied.size() == imageMask.size() );
-
-    QRect       r               = polygon.boundingRect();
-    QColor      colorMask( Qt::black );                         // assume black is for the area we want to keep
-    QColor      colorBackground( Qt::transparent );             // assume canvas background is transparent
-    QImage *    pImageCanvas    = g_Context->getImage();
-    int         nWidth          = imageCopied.size().width();
-    int         nHeight         = imageCopied.size().height();
-
-    // Seems that creating QColor with Qt::transparent does not properly set alpha channel so...
-    colorBackground.setAlpha( 0 );
-
-    for ( int nX = 0; nX < nWidth; nX++ )
-    {
-        for ( int nY = 0; nY < nHeight; nY++ )
-        {
-            // trim by setting pixel to mask trim color - probably transparent but definately not colorMask
-            if ( imageMask.pixelColor( nX, nY ) != colorMask ) 
-                imageCopied.setPixelColor( nX, nY, imageMask.pixelColor( nX, nY ) );
-            // not in trim area so consider erasing (ie for a cut operation)
-            else if ( bErase ) 
-                pImageCanvas->setPixelColor( nX + r.x(), nY + r.y(), colorBackground );
-        }
-    }
-
-    return imageCopied;
-}
 
 
