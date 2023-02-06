@@ -9,6 +9,14 @@ PPasteRectangle::PPasteRectangle( PCanvas *pCanvas )
     doManipulate();
 }
 
+PPasteRectangle::PPasteRectangle( PCanvas *pCanvas, const QImage &i )
+    : PDrawRectangle( pCanvas )
+{
+    image = i;
+    doDraw( QPoint( 10, 10 ) );
+    doManipulate();
+}
+
 QRect PPasteRectangle::doPress( QMouseEvent *pEvent )
 {
     QRect rectUpdate;

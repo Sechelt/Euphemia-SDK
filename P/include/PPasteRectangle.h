@@ -8,6 +8,7 @@ class PPasteRectangle : public PDrawRectangle
     Q_OBJECT
 public:
     PPasteRectangle( PCanvas *pCanvas );
+    PPasteRectangle( PCanvas *pCanvas, const QImage & );
 
     virtual QRect doPress( QMouseEvent *pEvent ) override;
     virtual QRect doCommit() override;

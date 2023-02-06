@@ -11,18 +11,6 @@ PCanvas::PCanvas( QWidget *parent )
     setMouseTracking( true );
 }
 
-/*
-PCanvas::PCanvas( QWidget *parent, const QImage &image )
-    : QWidget( parent )                                 
-{                                                       
-    setAttribute( Qt::WA_StaticContents );              
-    setBackground( QColor( Qt::transparent ) );         
-    resize( image.size() );                             
-    this->image = image;                                
-    setMouseTracking( true );                           
-}                                                       
-*/
-
 void PCanvas::setZoom( WZoomWidget::FitTypes nFit, int nZoom )
 {
     this->nFit = nFit;
@@ -191,6 +179,13 @@ void PCanvas::doPaste()
     if ( isDrawing() ) doCancel();
     g_Context->setImage( &image );
     pShapeBase = new PPasteRectangle( this );
+}
+
+void PCanvas::doPaste( const QImage &i )
+{
+    if ( isDrawing() ) doCancel();
+    g_Context->setImage( &image );
+    pShapeBase = new PPasteRectangle( this, i );
 }
 
 void PCanvas::doUndo()

@@ -51,7 +51,6 @@ public:
     };
 
     PCanvas( QWidget *parent );
-//    PCanvas( QWidget *parent, const QImage &image );
 
     void setZoom( WZoomWidget::FitTypes nFit, int nZoom );
     void setTool( Tools n );
@@ -70,6 +69,7 @@ public:
     void doCut();
     void doCopy();
     void doPaste();
+    void doPaste( const QImage & );
     void doUndo();
     void doRedo();
 
