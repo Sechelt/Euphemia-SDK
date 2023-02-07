@@ -190,6 +190,7 @@ void PCanvas::doPaste()
     imagePreCommit = image;
     connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
     connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
+    bPaste = true;
     emit signalChangedState();
 }
 
@@ -201,6 +202,7 @@ void PCanvas::doPaste( const QImage &i )
     imagePreCommit = image;
     connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
     connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
+    bPaste = true;
     emit signalChangedState();
 }
 
@@ -442,7 +444,11 @@ void PCanvas::mousePressEvent( QMouseEvent *pEvent )
     else if ( pShapeBase ) 
     {
         update( pShapeBase->doPress( pEvent ) );
-        if ( pShapeBase->inherits("PPasteRectangle") && pShapeBase->getState() == PShapeBase::StateIdle ) doCancel();
+        if ( pShapeBase->inherits("PPasteRectangle") && pShapeBase->getState() == PShapeBase::StateIdle ) 
+        {
+            bPaste = false;
+            doCancel();
+        }
     }
 }
 

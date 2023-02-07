@@ -22,4 +22,23 @@ protected:
     virtual void doDraw( const QPoint &point );
 };
 
+class PPasteToolBar : public QWidget
+{
+    Q_OBJECT
+public:
+    PPasteToolBar( QWidget *p );
+
+public slots:
+    void slotRefresh( const PContextPaste & );
+
+protected:
+    QComboBox *pComposition;
+    QCheckBox *pStamp;
+
+protected slots:
+    void slotComposition( int );
+    void slotStamp( int );
+};
+
+
 #endif

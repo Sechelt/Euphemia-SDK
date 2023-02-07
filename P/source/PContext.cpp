@@ -69,6 +69,13 @@ void PContext::setPolygonFilled( const PContextPolygonFilled &t )
     emit signalModified( polygonfilled );
 }
 
+void PContext::setPaste( const PContextPaste &t )
+{
+    if ( paste == t ) return;
+    paste = t;
+    emit signalModified( paste );
+}
+
 void PContext::slotImage( QImage *p )
 {
     setImage( p );
@@ -112,6 +119,11 @@ void PContext::slotText( const PContextText &t )
 void PContext::slotPolygonFilled( const PContextPolygonFilled &t )
 {
     setPolygonFilled( t );
+}
+
+void PContext::slotPaste( const PContextPaste &t )
+{
+    setPaste( t );
 }
 
 

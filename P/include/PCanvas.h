@@ -85,6 +85,7 @@ public:
     bool isBackgroundTransparent() { return bBackgroundTransparent; }
 
     bool hasSelection();
+    bool hasPaste() { return bPaste; }
 
     bool canCut(); 
     bool canCopy(); 
@@ -100,6 +101,8 @@ public slots:
 signals:
     void signalPos( const QPoint & );
     void signalChangedState();
+    void signalPasteBegin();
+    void signalPasteEnd();
 
 protected slots:
     void slotCommitted();
@@ -123,12 +126,13 @@ private:
 
     void resizeImage( QImage *image, const QSize &newSize );
 
-    Tools       nTool           = ToolDrawLine;
-    bool        bAutoCommit     = false;
+    Tools       nTool                       = ToolDrawLine;
+    bool        bAutoCommit                 = false;
     QString     stringFileName;
-    bool        bModified       = false;
+    bool        bModified                   = false;
     QColor      colorBackground;
-    bool        bBackgroundTransparent = true;
+    bool        bBackgroundTransparent      = true;
+    bool        bPaste                      = false;
 
     // zoom
     WZoomWidget::FitTypes nFit = WZoomWidget::FitIgnore;

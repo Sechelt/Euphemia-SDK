@@ -48,6 +48,21 @@ public:
     }
 };
 
+class PContextPaste
+{
+public:
+
+    QPainter::CompositionMode nCompositionMode = QPainter::CompositionMode_SourceOver;
+    bool bStamp = false;
+
+    inline bool operator==( const PContextPaste &t ) 
+    {
+        if ( t.nCompositionMode != nCompositionMode ) return false;
+        if ( t.bStamp != bStamp ) return false;
+        return true;
+    }
+};
+
 class PContextSpray
 {
 public:
@@ -105,6 +120,7 @@ public:
     void setSpray( const PContextSpray & );
     void setText( const PContextText & );
     void setPolygonFilled( const PContextPolygonFilled & );
+    void setPaste( const PContextPaste & );
 
     QImage *                getImage()          { return pImage;        }
     QPen                    getPen()            { return pen;           }
@@ -115,6 +131,7 @@ public:
     PContextSpray           getSpray()          { return spray;         }
     PContextText            getText()           { return text;          }
     PContextPolygonFilled   getPolygonFilled()  { return polygonfilled; }
+    PContextPaste           getPaste()          { return paste;         }
 
 signals:
     void signalModified( const QPen & );
@@ -125,6 +142,7 @@ signals:
     void signalModified( const PContextErase & );
     void signalModified( const PContextText & );
     void signalModified( const PContextPolygonFilled & );
+    void signalModified( const PContextPaste & );
 
 public slots:
     void slotImage( QImage *p );
@@ -136,6 +154,7 @@ public slots:
     void slotSpray( const PContextSpray &t );
     void slotText( const PContextText &t );
     void slotPolygonFilled( const PContextPolygonFilled &t );
+    void slotPaste( const PContextPaste &t );
 
 protected:
     QImage *                pImage = nullptr;           /*!< tool draws on this image               */
@@ -147,6 +166,7 @@ protected:
     PContextErase           erase;                      /*!< used by erase tool                     */
     PContextText            text;                       /*!< used by text tool                      */
     PContextPolygonFilled   polygonfilled;              /*!< used by polygon tool                   */
+    PContextPaste           paste;                      /*!< used by paste                          */
 };
 
 #define g_Context PContext::instance()
