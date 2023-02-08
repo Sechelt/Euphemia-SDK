@@ -27,16 +27,13 @@ public:
     PSprayToolBar( QWidget *p );
 
 public slots:
-    void slotRefresh( const QPen & );
     void slotRefresh( const PContextSpray & );
 
 protected slots:
-    void slotColor( const QColor & );
     void slotRadius( int );
     void slotPoints( int );
 
 protected:
-    WColorButton *  pColor;
     QSpinBox *      pRadius;
     QSpinBox *      pPoints;
 };

@@ -23,22 +23,19 @@ class PTextToolBar : public QWidget
 {
     Q_OBJECT
 public:
-    PTextToolBar( QWidget *p );
+    PTextToolBar( QWidget *p, bool bLineEdit = true );
 
 public slots:
-    void slotRefresh( const QPen & );
     void slotRefresh( const PContextText & );
 
 protected slots:
-    void slotColor( const QColor & );
     void slotText( const QString & );
     void slotHAlign( Qt::AlignmentFlag n );
     void slotVAlign( Qt::AlignmentFlag n );
     void slotMore();
 
 protected:
-    WColorButton *          pColor;
-    QLineEdit *             pLineEdit;
+    QLineEdit *             pLineEdit = nullptr;
     WTextHAlignComboBox *   pHAlign;
     WTextVAlignComboBox *   pVAlign;
     QToolButton *           pMore;

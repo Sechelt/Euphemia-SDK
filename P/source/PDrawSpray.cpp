@@ -72,11 +72,6 @@ PSprayToolBar::PSprayToolBar( QWidget *p )
 {
     QHBoxLayout *pLayout = new QHBoxLayout( this );
 
-    // we only want the pen (foreground) color - not the entire pen
-    pColor = new WColorButton( g_Context->getPen().color(), this, WColorButton::Pen );
-    pLayout->addWidget( pColor );
-    connect( pColor, SIGNAL(signalChanged(const QColor &)), SLOT(slotColor(const QColor &)) );
-    connect( g_Context, SIGNAL(signalModified(const QPen &)), SLOT(slotRefresh(const QPen &)) );
     //
     pRadius = new QSpinBox( this );
     pRadius->setMinimum( 1 );
@@ -99,22 +94,10 @@ PSprayToolBar::PSprayToolBar( QWidget *p )
     connect( g_Context, SIGNAL(signalModified(const PContextSpray &)), SLOT(slotRefresh(const PContextSpray &)) );
 }
 
-void PSprayToolBar::slotRefresh( const QPen &t )
-{
-    pColor->setValue( t.color() );
-}
-
 void PSprayToolBar::slotRefresh( const PContextSpray &t )
 {
     pRadius->setValue( t.nRadius );
     pPoints->setValue( t.nPoints );
-}
-
-void PSprayToolBar::slotColor( const QColor &t )
-{
-    QPen pen = g_Context->getPen();
-    pen.setColor( t );
-    g_Context->setPen( pen );
 }
 
 void PSprayToolBar::slotRadius( int n )

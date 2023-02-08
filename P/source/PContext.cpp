@@ -132,6 +132,9 @@ void PContextGeneral::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
 
 void PContextGeneral::doLoad( QDomElement *pdomElem )
 {
+    // clear to get rid of any texture
+    brushTransparency = QBrush();
+
     bRestoreState = Qt::AlignmentFlag(pdomElem->attribute( "RestoreState", QString::number( int(bRestoreState) ) ).toInt());
     // load child nodes (of interest)
     QDomElement         domElem;
@@ -146,7 +149,7 @@ void PContextGeneral::doLoad( QDomElement *pdomElem )
             continue;
         }
 
-        if ( domElem.tagName() == "BrushTransparency" ) brushTransparency = WPersistNative::doLoadBrush( pdomElem );
+        if ( domElem.tagName() == "BrushTransparency" ) brushTransparency = WPersistNative::doLoadBrush( &domElem );
 
         domNode = domNode.nextSibling();
     }

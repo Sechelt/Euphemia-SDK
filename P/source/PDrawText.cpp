@@ -53,22 +53,20 @@ void PDrawText::doPaint( QPainter *pPainter )
 //
 // PTextToolBar
 //
-PTextToolBar::PTextToolBar( QWidget *p )
+PTextToolBar::PTextToolBar( QWidget *p, bool bLineEdit )
     : QWidget( p )
 {
     QHBoxLayout *pLayout = new QHBoxLayout( this );
 
-    // we only want the pen (foreground) color - not the entire pen
-    pColor = new WColorButton( g_Context->getPen().color(), this, WColorButton::Pen );
-    pLayout->addWidget( pColor );
-    connect( pColor, SIGNAL(signalChanged(const QColor &)), SLOT(slotColor(const QColor &)) );
-    connect( g_Context, SIGNAL(signalModified(const QPen &)), SLOT(slotRefresh(const QPen &)) );
     // font - of course
     pLayout->addWidget( new PFontToolBar( this ) );
     // text
-    pLineEdit = new QLineEdit( g_Context->getText().stringText, this );
-    pLayout->addWidget( pLineEdit );
-    connect( pLineEdit, SIGNAL(textChanged(const QString &)), SLOT(slotText(const QString &)) );
+    if ( bLineEdit )
+    {
+        pLineEdit = new QLineEdit(g_Context->getText().stringText, this);
+        pLayout->addWidget( pLineEdit );
+        connect( pLineEdit, SIGNAL(textChanged(const QString &)), SLOT(slotText(const QString &)) );
+    }
     //
     pHAlign = new WTextHAlignComboBox( g_Context->getText().nHAlign, this );
     pLayout->addWidget( pHAlign );
@@ -88,27 +86,16 @@ PTextToolBar::PTextToolBar( QWidget *p )
     connect( g_Context, SIGNAL(signalModified(const PContextText &)), SLOT(slotRefresh(const PContextText &)) );
 }
 
-void PTextToolBar::slotRefresh( const QPen &t )
-{
-    pColor->setValue( t.color() );
-}
-
 void PTextToolBar::slotRefresh( const PContextText &t )
 {
-    pLineEdit->setText( t.stringText );
+    if ( pLineEdit ) pLineEdit->setText(t.stringText);
     pHAlign->setValue( t.nHAlign );
     pVAlign->setValue( t.nVAlign );
 }
 
-void PTextToolBar::slotColor( const QColor &t )
-{
-    QPen pen = g_Context->getPen();
-    pen.setColor( t );
-    g_Context->setPen( pen );
-}
-
 void PTextToolBar::slotText( const QString &t )
 {
+    if ( !pLineEdit ) return;
     PContextText text = g_Context->getText();
     text.stringText = t;
     g_Context->setText( text );

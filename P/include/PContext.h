@@ -8,16 +8,17 @@ class PContextFreeHand
 public:
     enum Shapes
     {
-        ShapeEllipse,       /*!< ellipse filled with current pen color and of specified size                    */
-        ShapeRectangle,     /*!< rectangle filled with current pen color and of specified size                  */
-        ShapeCross,         /*!< a horizontal and vertical line with current pen color and of specified size    */
-        ShapeImageScaled,   /*!< specified image scaled to size                                                 */
-        ShapeImage          /*!< specified image                                                                */
-    };
+        ShapePen,           /*!< uses current pen to draw a line from last point to current point - easily most eficient    */
+        ShapeEllipse,       /*!< ellipse filled with current pen color and of specified size                                */
+        ShapeRectangle,     /*!< rectangle filled with current pen color and of specified size                              */
+        ShapeCross,         /*!< a horizontal and vertical line with current pen color and of specified size                */
+        ShapeImageScaled,   /*!< specified image scaled to size                                                             */
+        ShapeImage          /*!< specified image                                                                            */
+    };                                                                                                                      
 
-    Shapes  nShape  = ShapeEllipse;
-    QSize   size    = QSize( 5, 5 );
-    QImage  image;          /*!< this will be 'stamped' and/or 'dragged' - so not like using QBrush::texture    */
+    Shapes  nShape  = ShapePen;                                                                                            
+    QSize   size    = QSize( 5, 5 );                                                                                        
+    QImage  image;          /*!< this will be 'stamped' and/or 'dragged' - so not like using QBrush::texture                */
 
     inline bool operator==( const PContextFreeHand &t ) 
     {
