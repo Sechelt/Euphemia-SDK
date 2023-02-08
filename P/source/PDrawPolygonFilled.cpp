@@ -2,8 +2,6 @@
 #include "PDrawPolygonFilled.h"
 
 #include "PCanvas.h"
-#include "PPenToolBar.h"
-#include "PBrushToolBar.h"
 
 PDrawPolygonFilled::PDrawPolygonFilled( PCanvas *pCanvas )
     : PDrawPolygon( pCanvas )
@@ -33,9 +31,6 @@ PPolygonFilledToolBar::PPolygonFilledToolBar( QWidget *p )
     : QWidget( p )
 {
     QHBoxLayout *pLayout = new QHBoxLayout( this );
-    pLayout->addWidget( new PPenToolBar( this ) );
-    pLayout->addWidget( new PBrushToolBar( this ) );
-
     pFillRule = new QComboBox( this );
     pFillRule->addItem( "Odd/Even Fill", Qt::OddEvenFill );
     pFillRule->addItem( "Winding Fill", Qt::WindingFill );

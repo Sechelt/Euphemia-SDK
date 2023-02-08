@@ -31,10 +31,4 @@ protected:
     virtual void doMoveHandle( const QPoint &pointPos );
 };
 
-class PPolylineToolBar : public QWidget
-{
-public:
-    PPolylineToolBar( QWidget *p );
-};
-
 #endif

@@ -6,6 +6,8 @@
 PBrushToolBar::PBrushToolBar( QWidget *pParent )
     : QWidget( pParent )
 {
+    setObjectName( "PBrushToolBar" );
+
     QHBoxLayout *pLayout = new QHBoxLayout( this );
 
     pColor = new WColorButton( g_Context->getBrush().color(), this, WColorButton::Fill );
@@ -15,7 +17,7 @@ PBrushToolBar::PBrushToolBar( QWidget *pParent )
     pStyle = new WBrushStyleComboBox( this, g_Context->getBrush().style() );
     pStyle->setToolTip( tr("brush style") );
     // pStyle->setValue( g_Context->getBrush().style() );
-    pLayout->addWidget( pStyle, 10 );
+    pLayout->addWidget( pStyle );
     connect( pStyle, SIGNAL(signalChanged(Qt::BrushStyle)), SLOT(slotStyle(Qt::BrushStyle)) );
 
     pImage = new WImageButton( g_Context->getBrush().textureImage(), this );
@@ -26,6 +28,8 @@ PBrushToolBar::PBrushToolBar( QWidget *pParent )
     pMore->setText( ":" );
     pLayout->addWidget( pMore );
     connect( pMore, SIGNAL(clicked()), SLOT(slotMore()) );
+
+    pLayout->addStretch( 10 );
 
     connect( g_Context, SIGNAL(signalModified(const QBrush &)), SLOT(slotRefresh(const QBrush &)) );
 }

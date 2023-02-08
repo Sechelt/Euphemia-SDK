@@ -2,7 +2,6 @@
 #include "PDrawRectangle.h"
 
 #include "PCanvas.h"
-#include "PPenToolBar.h"
 
 #define PDrawRectangleBegin 0
 #define PDrawRectangleMove 1
@@ -248,16 +247,5 @@ void PDrawRectangle::doSyncHandleTypes()
     else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopRight );          
     else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomLeft );      
     else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomRight );    
-}
-
-//
-// PRectangleToolBar
-//
-PRectangleToolBar::PRectangleToolBar( QWidget *p )
-    : QWidget( p )
-{
-    QHBoxLayout *pLayout = new QHBoxLayout( this );
-    pLayout->addWidget( new PPenToolBar( this ) );
-    pLayout->addStretch( 10 );
 }
 

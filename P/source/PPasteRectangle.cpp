@@ -159,8 +159,8 @@ PPasteToolBar::PPasteToolBar( QWidget *p )
 
 void PPasteToolBar::slotRefresh( const PContextPaste &t )
 {
-    pComposition->setCurrentIndex( pComposition->findData( (int)g_Context->getPaste().nCompositionMode ) );
-    pStamp->setChecked( g_Context->getPaste().bStamp );
+    pComposition->setCurrentIndex( pComposition->findData( (int)t.nCompositionMode ) );
+    pStamp->setChecked( t.bStamp );
 }
 
 void PPasteToolBar::slotComposition( int )

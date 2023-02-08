@@ -13,10 +13,4 @@ protected:
     virtual void doPaint( QPainter * ) override;
 };
 
-class PRectangleFilledToolBar : public QWidget
-{
-public:
-    PRectangleFilledToolBar( QWidget *p );
-};
-
 #endif

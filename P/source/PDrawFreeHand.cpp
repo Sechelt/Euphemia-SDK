@@ -2,7 +2,6 @@
 #include "PDrawFreeHand.h"
 
 #include "PCanvas.h"
-#include "PPenToolBar.h"
 
 PDrawFreeHand::PDrawFreeHand( PCanvas *pCanvas )
     : PFreeBase( pCanvas )
@@ -52,7 +51,6 @@ PFreeHandToolBar::PFreeHandToolBar( QWidget *p )
     : QWidget( p )
 {
     QHBoxLayout *pLayout = new QHBoxLayout( this );
-    pLayout->addWidget( new PPenToolBar( this ) );
     pLayout->addStretch( 10 );
 }
 

@@ -34,6 +34,10 @@ QRect PDrawErase::doDrawShape( const QPoint &point )
     // we can not use standard shape fill if transparent color because that will be a NoOp
     switch ( erase.nShape )
     {
+    case PContextErase::ShapeCross:
+    case PContextErase::ShapeImage:
+    case PContextErase::ShapeImageScaled:
+        // ToDo
     case PContextErase::ShapeRectangle:
         if ( pCanvas->isBackgroundTransparent() )
         {

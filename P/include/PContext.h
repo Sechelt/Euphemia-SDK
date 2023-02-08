@@ -1,21 +1,21 @@
 #ifndef H_PContext
 #define H_PContext
 
-#include "P.h"
+#include <WPersist.h>
 
 class PContextFreeHand
 {
 public:
     enum Shapes
     {
-        ShapeRound,         /*!< ellipse filled with current pen color and of specified size                    */
+        ShapeEllipse,       /*!< ellipse filled with current pen color and of specified size                    */
         ShapeRectangle,     /*!< rectangle filled with current pen color and of specified size                  */
         ShapeCross,         /*!< a horizontal and vertical line with current pen color and of specified size    */
         ShapeImageScaled,   /*!< specified image scaled to size                                                 */
         ShapeImage          /*!< specified image                                                                */
     };
 
-    Shapes  nShape  = ShapeRound;
+    Shapes  nShape  = ShapeEllipse;
     QSize   size    = QSize( 5, 5 );
     QImage  image;          /*!< this will be 'stamped' and/or 'dragged' - so not like using QBrush::texture    */
 
@@ -26,19 +26,30 @@ public:
         if ( t.image != image ) return false;
         return true;
     }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
 };
 
 class PContextErase
 {
 public:
+
+    // NOTE: Very similar to FreeHand but Erase will not use pen/color as composition will be set to erase background with any color.
+    //       Convenient to have seperate settings.
+
     enum Shapes
     {
-        ShapeEllipse,
-        ShapeRectangle
+        ShapeEllipse,                   /*!< ellipse of specified size                                  */
+        ShapeRectangle,                 /*!< rectangle of specified size                                */
+        ShapeCross,                     /*!< a horizontal and vertical line of specified size           */
+        ShapeImageScaled,               /*!< specified image scaled to size                             */
+        ShapeImage                      /*!< specified image                                            */
     };
 
     Shapes  nShape  = ShapeEllipse;
     QSize   size    = QSize( 5, 5 );
+    QImage  image;                      /*!< this will be 'stamped' and/or 'dragged'                    */
 
     inline bool operator==( const PContextErase &t ) 
     {
@@ -46,6 +57,9 @@ public:
         if ( t.size != size ) return false;
         return true;
     }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
 };
 
 class PContextPaste
@@ -61,6 +75,9 @@ public:
         if ( t.bStamp != bStamp ) return false;
         return true;
     }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
 };
 
 class PContextSpray
@@ -75,6 +92,9 @@ public:
         if ( t.nPoints != nPoints ) return false;
         return true;
     }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
 };
 
 class PContextPolygonFilled
@@ -87,6 +107,9 @@ public:
         if ( t.nFillRule != nFillRule ) return false;
         return true;
     }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
 };
 
 class PContextText
@@ -103,12 +126,36 @@ public:
         if ( t.nVAlign != nVAlign ) return false;
         return true;
     }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
+};
+
+class PContextGeneral
+{
+public:
+    PContextGeneral();
+
+    QBrush brushTransparency;           /*!< brush to use to represent transparency - default is block pattern but a solid color may be easier to work with     */
+    bool   bRestoreState = true;        /*!< UI restore does not always work on Linux under Wayland due to a Qt problem - so here we can turn it off            */
+
+    inline bool operator==( const PContextGeneral &t ) 
+    {
+        if ( t.brushTransparency != brushTransparency ) return false;
+        if ( t.bRestoreState != bRestoreState ) return false;
+        return true;
+    }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
 };
 
 class PContext : public QObject 
 {
     Q_OBJECT
 public:
+    PContext();
+
     static PContext *instance();
 
     void setImage( QImage *p );
@@ -121,6 +168,7 @@ public:
     void setText( const PContextText & );
     void setPolygonFilled( const PContextPolygonFilled & );
     void setPaste( const PContextPaste & );
+    void setGeneral( const PContextGeneral & );
 
     QImage *                getImage()          { return pImage;        }
     QPen                    getPen()            { return pen;           }
@@ -132,6 +180,10 @@ public:
     PContextText            getText()           { return text;          }
     PContextPolygonFilled   getPolygonFilled()  { return polygonfilled; }
     PContextPaste           getPaste()          { return paste;         }
+    PContextGeneral         getGeneral()        { return general;       }
+
+    void doSave();
+    void doLoad();
 
 signals:
     void signalModified( const QPen & );
@@ -143,6 +195,7 @@ signals:
     void signalModified( const PContextText & );
     void signalModified( const PContextPolygonFilled & );
     void signalModified( const PContextPaste & );
+    void signalModified( const PContextGeneral & );
 
 public slots:
     void slotImage( QImage *p );
@@ -155,8 +208,10 @@ public slots:
     void slotText( const PContextText &t );
     void slotPolygonFilled( const PContextPolygonFilled &t );
     void slotPaste( const PContextPaste &t );
+    void slotGeneral( const PContextGeneral &t );
 
 protected:
+    QString                 stringFileName;             /*!< we load/save defaults here             */
     QImage *                pImage = nullptr;           /*!< tool draws on this image               */
     QPen                    pen;                        /*!< defines lines and outlines             */
     QBrush                  brush;                      /*!< defines fill details                   */
@@ -167,6 +222,7 @@ protected:
     PContextText            text;                       /*!< used by text tool                      */
     PContextPolygonFilled   polygonfilled;              /*!< used by polygon tool                   */
     PContextPaste           paste;                      /*!< used by paste                          */
+    PContextGeneral         general;                    
 };
 
 #define g_Context PContext::instance()

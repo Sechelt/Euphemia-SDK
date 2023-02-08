@@ -101,8 +101,6 @@ public slots:
 signals:
     void signalPos( const QPoint & );
     void signalChangedState();
-    void signalPasteBegin();
-    void signalPasteEnd();
 
 protected slots:
     void slotCommitted();

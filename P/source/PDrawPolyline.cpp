@@ -2,7 +2,6 @@
 #include "PDrawPolyline.h"
 
 #include "PCanvas.h"
-#include "PPenToolBar.h"
 
 PDrawPolyline::PDrawPolyline( PCanvas *pCanvas )
     : PShapeBase( pCanvas )
@@ -49,8 +48,9 @@ QRect PDrawPolyline::doDoubleClick( QMouseEvent *pEvent )
 
     if ( nState != StateDraw ) return QRect();
 
-    if ( pCanvas->getAutoCommit() ) return doCommit();
     doManipulate();
+
+    if ( pCanvas->getAutoCommit() ) doCommit();
 
     return polygon.boundingRect();
 }
@@ -303,16 +303,5 @@ void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
     polygon.setPoint( vectorHandles.indexOf( pHandle ) - 1, pointPos );
     vectorHandles.at( 0 )->setCenter( polygon.boundingRect().center() );
     update();
-}
-
-//
-// PPolylineToolBar
-//
-PPolylineToolBar::PPolylineToolBar( QWidget *p )
-    : QWidget( p )
-{
-    QHBoxLayout *pLayout = new QHBoxLayout( this );
-    pLayout->addWidget( new PPenToolBar( this ) );
-    pLayout->addStretch( 10 );
 }
 

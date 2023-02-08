@@ -1,6 +1,173 @@
 #include "LibInfo.h"
 #include "PContext.h"
 
+#define PCONTEXT_DOC_CLASS "PContext"
+
+void PContextFreeHand::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+    pdomElem->setAttribute( "Shape", nShape );
+    pdomElem->setAttribute( "Width", size.width() );
+    pdomElem->setAttribute( "Height", size.height() );
+    if ( !image.isNull() ) pdomElem->appendChild( WPersistNative::doSaveImage( image, pdomDoc, "Image" ) );
+}
+
+void PContextFreeHand::doLoad( QDomElement *pdomElem )
+{
+    nShape = PContextFreeHand::Shapes(pdomElem->attribute( "Shape", QString::number( nShape ) ).toInt());
+    size.setWidth( pdomElem->attribute( "Width", QString::number( size.width() ) ).toInt() );
+    size.setHeight( pdomElem->attribute( "Height", QString::number( size.height() ) ).toInt() );
+
+    // load child nodes (of interest)
+    QDomElement         domElem;
+    QDomNode            domNode;
+    domNode = pdomElem->firstChild();
+    while( !domNode.isNull() ) 
+    {
+        domElem = domNode.toElement();
+        if( domElem.isNull() ) 
+        {
+            domNode = domNode.nextSibling();
+            continue;
+        }
+
+        if ( domElem.tagName() == "Image" ) image = WPersistNative::doLoadImage( pdomElem );
+
+        domNode = domNode.nextSibling();
+    }
+}
+
+void PContextErase::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+    pdomElem->setAttribute( "Shape", nShape );
+    pdomElem->setAttribute( "Width", size.width() );
+    pdomElem->setAttribute( "Height", size.height() );
+    if ( !image.isNull() ) pdomElem->appendChild( WPersistNative::doSaveImage( image, pdomDoc, "Image" ) );
+}
+
+void PContextErase::doLoad( QDomElement *pdomElem )
+{
+    nShape = PContextErase::Shapes(pdomElem->attribute( "Shape", QString::number( int(nShape) ) ).toInt());
+    size.setWidth( pdomElem->attribute( "Width", QString::number( size.width() ) ).toInt() );
+    size.setHeight( pdomElem->attribute( "Height", QString::number( size.height() ) ).toInt() );
+
+    // load child nodes (of interest)
+    QDomElement         domElem;
+    QDomNode            domNode;
+    domNode = pdomElem->firstChild();
+    while( !domNode.isNull() ) 
+    {
+        domElem = domNode.toElement();
+        if( domElem.isNull() ) 
+        {
+            domNode = domNode.nextSibling();
+            continue;
+        }
+
+        if ( domElem.tagName() == "Image" ) image = WPersistNative::doLoadImage( pdomElem );
+
+        domNode = domNode.nextSibling();
+    }
+}
+
+void PContextPaste::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+    Q_UNUSED(pdomDoc);
+    pdomElem->setAttribute( "CompositionMode", nCompositionMode );
+    pdomElem->setAttribute( "Stamp", bStamp );
+}
+
+void PContextPaste::doLoad( QDomElement *pdomElem )
+{
+    nCompositionMode = QPainter::CompositionMode(pdomElem->attribute( "CompositionMode", QString::number( int(nCompositionMode) ) ).toInt());
+    bStamp = pdomElem->attribute( "Stamp", QString::number( bStamp ) ).toInt();
+}
+
+void PContextSpray::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+    Q_UNUSED(pdomDoc);
+    pdomElem->setAttribute( "Radius", nRadius );
+    pdomElem->setAttribute( "Points", nPoints );
+}
+
+void PContextSpray::doLoad( QDomElement *pdomElem )
+{
+    nRadius = pdomElem->attribute( "Radius", QString::number( nRadius ) ).toInt();
+    nPoints = pdomElem->attribute( "Points", QString::number( nPoints ) ).toInt();
+}
+
+void PContextPolygonFilled::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+    Q_UNUSED(pdomDoc);
+    pdomElem->setAttribute( "FillRule", nFillRule );
+}
+
+void PContextPolygonFilled::doLoad( QDomElement *pdomElem )
+{
+    nFillRule = Qt::FillRule(pdomElem->attribute( "FillRule", QString::number( nFillRule ) ).toInt());
+}
+
+void PContextText::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+    Q_UNUSED(pdomDoc);
+    pdomElem->setAttribute( "HAlign", nHAlign );
+    pdomElem->setAttribute( "nVAlign", nVAlign );
+}
+
+void PContextText::doLoad( QDomElement *pdomElem )
+{
+    nHAlign = Qt::AlignmentFlag(pdomElem->attribute( "HAlign", QString::number( int(nHAlign) ) ).toInt());
+    nVAlign = Qt::AlignmentFlag(pdomElem->attribute( "VAlign", QString::number( int(nVAlign) ) ).toInt());
+}
+
+PContextGeneral::PContextGeneral()
+{
+    brushTransparency.setTextureImage( QImage( ":P/Transparent" ) );
+}
+
+void PContextGeneral::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+    pdomElem->setAttribute( "RestoreState", bRestoreState );
+    pdomElem->appendChild( WPersistNative::doSaveBrush( brushTransparency, pdomDoc, "BrushTransparency" ) );
+}
+
+void PContextGeneral::doLoad( QDomElement *pdomElem )
+{
+    bRestoreState = Qt::AlignmentFlag(pdomElem->attribute( "RestoreState", QString::number( int(bRestoreState) ) ).toInt());
+    // load child nodes (of interest)
+    QDomElement         domElem;
+    QDomNode            domNode;
+    domNode = pdomElem->firstChild();
+    while( !domNode.isNull() ) 
+    {
+        domElem = domNode.toElement();
+        if( domElem.isNull() ) 
+        {
+            domNode = domNode.nextSibling();
+            continue;
+        }
+
+        if ( domElem.tagName() == "BrushTransparency" ) brushTransparency = WPersistNative::doLoadBrush( pdomElem );
+
+        domNode = domNode.nextSibling();
+    }
+}
+
+PContext::PContext()
+{
+    QString stringDir = QStandardPaths::writableLocation( QStandardPaths::ConfigLocation );
+    stringDir += ("/" LIB_ORG);
+
+    QDir dir;
+    if ( !dir.exists( stringDir ) ) 
+    {
+        dir.mkdir( stringDir );
+        stringDir += ("/" LIB_NAME);
+        dir.mkdir( stringDir );
+    }
+
+    stringFileName += stringDir + ("/" PCONTEXT_DOC_CLASS ".xml");
+}
+
 PContext* PContext::instance()
 {
     static PContext instance;
@@ -76,6 +243,182 @@ void PContext::setPaste( const PContextPaste &t )
     emit signalModified( paste );
 }
 
+void PContext::setGeneral( const PContextGeneral &t )
+{
+    if ( general == t ) return;
+    general = t;
+    emit signalModified( general );
+}
+
+void PContext::doSave()
+{
+    // create
+    QFile file( stringFileName );
+    if ( !file.open( QIODevice::WriteOnly ) )
+    {
+        QMessageBox::information( qApp->activeWindow(), tr("Save Default Context"), tr("Could not open ") + file.fileName() );
+        return;
+    }
+
+    // create an XML document with class name and document version...
+    QDomDocument domDoc( PCONTEXT_DOC_CLASS );
+    QDomElement domElementRoot = domDoc.createElement( PCONTEXT_DOC_CLASS );
+    domElementRoot.setAttribute( "DocVer", LIB_DOC_VER );
+
+    domDoc.appendChild( domElementRoot );
+
+    domElementRoot.appendChild( WPersistNative::doSavePen( pen, &domDoc, "Pen" ) );
+    domElementRoot.appendChild( WPersistNative::doSaveBrush( brush, &domDoc, "Brush" ) );
+    domElementRoot.appendChild( WPersistNative::doSaveFont( font, &domDoc, "Font" ) );
+
+    QDomElement domElem;
+
+    domElem = domDoc.createElement( "General" );
+    general.doSave( &domDoc, &domElem );
+    domElementRoot.appendChild( domElem );
+
+    domElem = domDoc.createElement( "FreeHand" );
+    freehand.doSave( &domDoc, &domElem );
+    domElementRoot.appendChild( domElem );
+
+    domElem = domDoc.createElement( "Spray" );
+    spray.doSave( &domDoc, &domElem );
+    domElementRoot.appendChild( domElem );
+
+    domElem = domDoc.createElement( "Erase" );
+    erase.doSave( &domDoc, &domElem );
+    domElementRoot.appendChild( domElem );
+
+    domElem = domDoc.createElement( "Text" );
+    text.doSave( &domDoc, &domElem );
+    domElementRoot.appendChild( domElem );
+
+    domElem = domDoc.createElement( "PolygonFilled" );
+    polygonfilled.doSave( &domDoc, &domElem );
+    domElementRoot.appendChild( domElem );
+
+    domElem = domDoc.createElement( "Paste" );
+    paste.doSave( &domDoc, &domElem );
+    domElementRoot.appendChild( domElem );
+
+    // write
+    QString stringXML = domDoc.toString();
+    file.write( stringXML.toLatin1(), stringXML.length() );
+
+    // close
+    file.close();
+}
+
+void PContext::doLoad()
+{
+    // open a file...
+    QFile file( stringFileName );
+    if ( !file.open( QIODevice::ReadOnly ) )
+    {
+        // assume we could not load because its the first time running and config file not yet saved
+        doSave();
+        // QMessageBox::information( qApp->activeWindow(), tr("Open Default Context"), tr("Could not open file.\n\n") + stringFileName, QMessageBox::Ok );
+        return;
+    }
+
+    // read file into XML document...
+    QDomDocument domDoc( PCONTEXT_DOC_CLASS );
+    {
+        QString stringErrorMsg;
+        int nErrorLine;
+        int nErrorColumn;
+        if ( !domDoc.setContent( &file, false, &stringErrorMsg, &nErrorLine, &nErrorColumn ) )
+        {
+            QMessageBox::information( qApp->activeWindow(), tr("Open Default Context"), tr("Invalid file format.\nCould not create an XML document from file.\n\n") + file.fileName() );
+            file.close();
+            return;
+        }
+    }
+    file.close();
+
+    // validate XML...
+    // Root element is only used to check that class in XML matches this class.
+    QDomElement domElemRoot = domDoc.documentElement();
+    if ( domElemRoot.isNull() )
+    {
+        QMessageBox::information( qApp->activeWindow(), tr("Open Default Context"), tr("Invalid file format.\nCould not find a document element.\n\n") + stringFileName );
+        return;
+    }
+    if ( domElemRoot.tagName() != PCONTEXT_DOC_CLASS )
+    {
+        QMessageBox::information( qApp->activeWindow(), tr("Open Default Context"), tr("Invalid file format.\nFile does not appear to be a ") + PCONTEXT_DOC_CLASS + "\n\n" + stringFileName );
+        return;
+    }
+    if ( domElemRoot.attribute( "DocVer" ) != LIB_DOC_VER ) 
+    {
+        QMessageBox::information( qApp->activeWindow(), tr("Open Default Context"), tr("Invalid file format.\nFile is not Version ") + LIB_DOC_VER );
+        return;
+    }
+
+    // Its our data so lets start processing starting at first child...
+    QDomNode domNode = domElemRoot.firstChild();
+
+    while ( !domNode.isNull() )
+    {
+        if ( domNode.nodeType() != QDomNode::ElementNode )
+        {
+            domNode = domNode.nextSibling();
+            continue;
+        }
+
+        QDomElement domElem = domNode.toElement();
+        if ( domElem.isNull() )
+        {
+            domNode = domNode.nextSibling();
+            continue;
+        }
+
+        if ( domElem.tagName() == "General" )
+        { 
+            general.doLoad( &domElem );
+        }
+        else if ( domElem.tagName() == "Pen" )
+        { 
+            pen = WPersistNative::doLoadPen( &domElem );
+        }
+        else if ( domElem.tagName() == "Brush" )
+        { 
+            brush = WPersistNative::doLoadBrush( &domElem );
+        }
+        else if ( domElem.tagName() == "Font" )
+        { 
+            font = WPersistNative::doLoadFont( &domElem );
+        }
+        else if ( domElem.tagName() == "FreeHand" )
+        { 
+            freehand.doLoad( &domElem );
+        }
+        else if ( domElem.tagName() == "Spray" )
+        { 
+            spray.doLoad( &domElem );
+        }
+        else if ( domElem.tagName() == "Erase" )
+        { 
+            erase.doLoad( &domElem );
+        }
+        else if ( domElem.tagName() == "Text" )
+        { 
+            text.doLoad( &domElem );
+        }
+        else if ( domElem.tagName() == "PolygonFilled" )
+        { 
+            polygonfilled.doLoad( &domElem );
+        }
+        else if ( domElem.tagName() == "Paste" )
+        { 
+            paste.doLoad( &domElem );
+        }
+
+        domNode = domNode.nextSibling();
+    }
+    return;
+}
+
 void PContext::slotImage( QImage *p )
 {
     setImage( p );
@@ -124,6 +467,11 @@ void PContext::slotPolygonFilled( const PContextPolygonFilled &t )
 void PContext::slotPaste( const PContextPaste &t )
 {
     setPaste( t );
+}
+
+void PContext::slotGeneral( const PContextGeneral &t )
+{
+    setGeneral( t );
 }
 
 

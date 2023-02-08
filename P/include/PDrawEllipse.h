@@ -14,10 +14,4 @@ protected:
 };
 
 
-class PEllipseToolBar : public QWidget
-{
-public:
-    PEllipseToolBar( QWidget *p );
-};
-
 #endif

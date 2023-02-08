@@ -9,6 +9,8 @@
 PPenToolBar::PPenToolBar( QWidget *pParent )
     : QWidget( pParent )
 {
+    setObjectName( "PPenToolBar" );
+
     QHBoxLayout *pLayout = new QHBoxLayout( this );
 
     pColor = new WColorButton( g_Context->getPen().color(), this, WColorButton::Pen );

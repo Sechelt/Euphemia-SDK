@@ -32,10 +32,4 @@ protected:
     virtual void doSyncHandleTypes();
 };
 
-class PRectangleToolBar : public QWidget
-{
-public:
-    PRectangleToolBar( QWidget *p );
-};
-
 #endif
