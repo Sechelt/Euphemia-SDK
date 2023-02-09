@@ -76,6 +76,8 @@
             <F N="source/PFillGradient.cpp"/>
             <F N="source/PFontToolBar.cpp"/>
             <F N="source/PFreeBase.cpp"/>
+            <F N="source/PGraphicsScene.cpp"/>
+            <F N="source/PGraphicsView.cpp"/>
             <F N="source/PHandle.cpp"/>
             <F N="source/PLayers.cpp"/>
             <F N="source/PPasteRectangle.cpp"/>
@@ -111,6 +113,8 @@
             <F N="include/PFillGradient.h"/>
             <F N="include/PFontToolBar.h"/>
             <F N="include/PFreeBase.h"/>
+            <F N="include/PGraphicsScene.h"/>
+            <F N="include/PGraphicsView.h"/>
             <F N="include/PHandle.h"/>
             <F N="include/PLayers.h"/>
             <F N="include/PPasteRectangle.h"/>

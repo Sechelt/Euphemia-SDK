@@ -42,6 +42,8 @@ HEADERS += \
         include/PFillFlood.h \
         include/PFontToolBar.h \
         include/PFreeBase.h \
+        include/PGraphicsScene.h \
+        include/PGraphicsView.h \
         include/PHandle.h \
         include/PLayers.h \
         include/PPasteRectangle.h \
@@ -72,6 +74,8 @@ SOURCES += \
         source/PFillFlood.cpp \
         source/PFontToolBar.cpp \
         source/PFreeBase.cpp \
+        source/PGraphicsScene.cpp \
+        source/PGraphicsView.cpp \
         source/PHandle.cpp \
         source/PLayers.cpp \
         source/PPasteRectangle.cpp \
