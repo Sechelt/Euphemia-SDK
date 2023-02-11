@@ -14,11 +14,10 @@ PDrawText::PDrawText( PCanvas *pCanvas )
 }
 
 // paint - but without the rect
-QRect PDrawText::doCommit()
+void PDrawText::doCommit()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
-    QRect rectUpdate = r;
     QPainter painter( g_Context->getImage());
 
     // apply context
@@ -31,9 +30,7 @@ QRect PDrawText::doCommit()
     emit signalCommitted();
 
     //
-    doIdle();
-
-    return rectUpdate;
+    doIdleState();
 }
 
 void PDrawText::doPaint( QPainter *pPainter )

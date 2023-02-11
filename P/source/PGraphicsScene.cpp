@@ -1,22 +1,41 @@
 #include "LibInfo.h"
 #include "PGraphicsScene.h"
 
-PGraphicsScene::PGraphicsScene( PLayers *pLayers, const QRectF &r, QObject *pObject )
+PGraphicsScene::PGraphicsScene( const QRectF &r, QObject *pObject )
     : QGraphicsScene( r, pObject )
 {
     setBackgroundBrush( Qt::lightGray );
-    this->pLayers = pLayers;
-    addWidget( pLayers );
+
+    pBackground = new PBackground();
+    addItem( pBackground );
+
+    pCanvas = new PCanvas();
+    addItem( pCanvas );
 }
 
 PGraphicsScene::~PGraphicsScene()
 {
 }
 
-PCanvas *PGraphicsScene::getCanvas()
+void PGraphicsScene::mouseDoubleClickEvent( QGraphicsSceneMouseEvent *pEvent )
 {
-    if ( !pLayers ) return nullptr;
-    return pLayers->getCanvas();
+    pCanvas->doDoubleClickEvent( pEvent );
 }
+
+void PGraphicsScene::mouseMoveEvent( QGraphicsSceneMouseEvent *pEvent )
+{
+    pCanvas->doMoveEvent( pEvent );
+}
+
+void PGraphicsScene::mousePressEvent( QGraphicsSceneMouseEvent *pEvent )
+{
+    pCanvas->doPressEvent( pEvent );
+}
+
+void PGraphicsScene::mouseReleaseEvent( QGraphicsSceneMouseEvent *pEvent )
+{
+    pCanvas->doReleaseEvent( pEvent );
+}
+
 
 

@@ -42,17 +42,15 @@ QImage PDrawPolyline::getCopy()
  * 
  * \return QRect 
  */
-QRect PDrawPolyline::doDoubleClick( QMouseEvent *pEvent )
+void PDrawPolyline::doDoubleClick( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
-    if ( nState != StateDraw ) return QRect();
+    if ( nState != StateDraw ) return;
 
-    doManipulate();
+    doManipulateState();
 
     if ( pCanvas->getAutoCommit() ) doCommit();
-
-    return polygon.boundingRect();
 }
 
 /*!
@@ -64,30 +62,26 @@ QRect PDrawPolyline::doDoubleClick( QMouseEvent *pEvent )
  * 
  * \return bool 
  */
-QRect PDrawPolyline::doPress( QMouseEvent *pEvent )
+void PDrawPolyline::doPress( PMouseEvent *pEvent )
 {
-    QRect rectUpdate;
-
-    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
     case StateIdle:
-        doDraw( pEvent->pos() );
-        rectUpdate = polygon.boundingRect();
+        doDrawState( pEvent->pos() );
+        polygon.boundingRect();
         break;
     case StateDraw:
         polygon.append( pEvent->pos() );
-        rectUpdate = polygon.boundingRect();
+        polygon.boundingRect();
         update();
         break;
     case StateManipulate:
         pHandle = getHandle( pEvent->pos() );
-        if ( !pHandle ) rectUpdate = doCommit();
+        if ( !pHandle ) doCommit();
         break;
     }
-
-    return rectUpdate;
 }
 
 /*!
@@ -99,37 +93,29 @@ QRect PDrawPolyline::doPress( QMouseEvent *pEvent )
  * 
  * \return bool 
  */
-QRect PDrawPolyline::doMove( QMouseEvent *pEvent ) 
+void PDrawPolyline::doMove( PMouseEvent *pEvent ) 
 {
     // We only get here when a button is down but button is always none. Odd.
     // if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
-    QRect rectUpdate;
-
     switch ( nState )
     {
     case StateIdle:
         break;
     case StateDraw:
-        polygon.setPoint( polygon.count() - 1, pEvent->pos() );
-        rectUpdate = polygon.boundingRect();
+        polygon.replace( polygon.count() - 1, pEvent->pos() );
         update();
         break;
     case StateManipulate:
-        doMoveHandle( pEvent->pos() );
-        rectUpdate = polygon.boundingRect();
+        if ( pHandle ) doMoveHandle( pEvent->pos() );
         break;
     }
-
-    return rectUpdate;
 }
 
-QRect PDrawPolyline::doRelease( QMouseEvent *pEvent )
+void PDrawPolyline::doRelease( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
-    QRect rectUpdate;
-
-    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
@@ -140,8 +126,6 @@ QRect PDrawPolyline::doRelease( QMouseEvent *pEvent )
     case StateManipulate:
         break;
     }
-
-    return rectUpdate;
 }
 
 /*!
@@ -150,41 +134,16 @@ QRect PDrawPolyline::doRelease( QMouseEvent *pEvent )
  * 
  * \author pharvey (2/1/23)
  */
-QRect PDrawPolyline::doCommit()
+void PDrawPolyline::doCommit()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
-    QRect rectUpdate = polygon.boundingRect();
     QPainter painter( g_Context->getImage());
     doPaint( &painter );
     emit signalCommitted();
-    doIdle();
-    return rectUpdate;
+    doIdleState();
 }
 
-/*!
- * \brief Paint polygon on self.
- * 
- * \author pharvey (2/1/23)
- * 
- * \param pEvent 
- */
-void PDrawPolyline::paintEvent( QPaintEvent *pEvent )
-{
-    Q_UNUSED( pEvent );
-    if ( nState != StateDraw && nState != StateManipulate ) return;
-    QPainter painter( this );
-    doPaint( &painter );
-}
-
-/*!
- * \brief Paint the polygon. 
- *  
- * \author pharvey (2/1/23)
- * 
- * \param pPainter 
- * \param polygon 
- */
 void PDrawPolyline::doPaint( QPainter *pPainter )
 {
     // apply context
@@ -194,7 +153,7 @@ void PDrawPolyline::doPaint( QPainter *pPainter )
     pPainter->drawPolyline( polygon );                         
 }
 
-void PDrawPolyline::doDraw( const QPoint &point )
+void PDrawPolyline::doDrawState( const QPoint &point )
 {
     Q_ASSERT( nState == StateIdle );
 
@@ -206,7 +165,7 @@ void PDrawPolyline::doDraw( const QPoint &point )
     emit signalChangedState();
 }
 
-void PDrawPolyline::doManipulate()
+void PDrawPolyline::doManipulateState()
 {
     Q_ASSERT( nState == StateDraw );
     doCreateHandles();
@@ -214,7 +173,7 @@ void PDrawPolyline::doManipulate()
     emit signalChangedState();
 }
 
-void PDrawPolyline::doIdle()
+void PDrawPolyline::doIdleState()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
@@ -253,15 +212,17 @@ void PDrawPolyline::doCreateHandles()
     PHandle *pHandle;
 
     // move handle is always vectorHandles[0]
-    pHandle = new PHandle( pCanvas, PHandle::TypeDrag, polygon.boundingRect().center() );
+    pHandle = new PHandle( PHandle::TypeDrag, polygon.boundingRect().center() );
     vectorHandles.append( pHandle );
+    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // add a handle for each point
     for ( QPoint point : polygon )
     {
-        pHandle = new PHandle( pCanvas, PHandle::TypeMovePoint, point );
+        pHandle = new PHandle( PHandle::TypeMovePoint, point );
         vectorHandles.append( pHandle );
+        pCanvas->scene()->addItem( pHandle );
         pHandle->show();
     }
 }
@@ -285,11 +246,11 @@ void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
     // move handle?
     if ( pHandle == vectorHandles[0] )
     {
-        QPoint pointDelta = pointPos - pHandle->getCenter();
+        QPoint pointDelta = pointPos - pHandle->getCenter().toPoint();
         // move points
         for ( int n = 0; n < polygon.count(); n++ )
         {
-            polygon.setPoint( n, polygon.at( n ) + pointDelta );
+            polygon.replace( n, polygon.at( n ) + pointDelta );
             vectorHandles.at( n + 1 )->doMoveBy( pointDelta );
         }
         // move self
@@ -300,7 +261,7 @@ void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
 
     // point handle
     pHandle->setCenter( pointPos );
-    polygon.setPoint( vectorHandles.indexOf( pHandle ) - 1, pointPos );
+    polygon.replace( vectorHandles.indexOf( pHandle ) - 1, pointPos );
     vectorHandles.at( 0 )->setCenter( polygon.boundingRect().center() );
     update();
 }

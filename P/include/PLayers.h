@@ -33,24 +33,4 @@ protected:
     void resizeEvent( QResizeEvent *pEvent ) override;
 };
 
-/*!
- * \brief Scroll area with a PLayers.
- *  
- * This will always have exactly 1 \sa PLayers in it. 
- * The PLayers is created in constructor - it is an error to add one with setWidget. 
- *  
- * \author pharvey (2/5/23)
- */
-class PLayersScrollArea : public QScrollArea
-{
-    Q_OBJECT
-public:
-    PLayersScrollArea( QWidget *parent );
-
-    PLayers *getLayers() { return pLayers; }
-
-protected:
-    PLayers *pLayers;
-};
-
 #endif

@@ -3,13 +3,14 @@
 
 #include "P.h"
 
-class PBackground : public QWidget
+class PBackground : public QGraphicsObject
 {
 public:
-    PBackground( QWidget *pParent );
+    PBackground();
 
 protected:
-    void paintEvent( QPaintEvent *pEvent );
+    virtual void paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0 ) override;
+    virtual QRectF boundingRect() const override;
 
 private:
     QBrush brush;

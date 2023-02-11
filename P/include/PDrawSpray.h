@@ -10,14 +10,14 @@ class PDrawSpray : public PFreeBase
 public:
     PDrawSpray( PCanvas *pCanvas );
 
-    virtual QRect doPress( QMouseEvent *pEvent ) override;
-    virtual QRect doMove( QMouseEvent *pEvent ) override;
-    virtual QRect doRelease( QMouseEvent *pEvent ) override;
+    virtual void doPress( PMouseEvent *pEvent ) override;
+    virtual void doMove( PMouseEvent *pEvent ) override;
+    virtual void doRelease( PMouseEvent *pEvent ) override;
 
 protected:
-    QRect   doSpray( const QPoint & );
+    void doSpray( const QPoint & );
 
-    double  getRandom();
+    double getRandom();
 };
 
 class PSprayToolBar : public QWidget

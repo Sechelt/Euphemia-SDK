@@ -21,23 +21,20 @@ QImage PSelectPolygon::getCopy()
 }
 
 // remove the auto commit
-QRect PSelectPolygon::doDoubleClick( QMouseEvent *pEvent )
+void PSelectPolygon::doDoubleClick( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
-    if ( nState != StateDraw ) return QRect();
+    if ( nState != StateDraw ) return;
 
-    doManipulate();
-
-    return polygon.boundingRect();
+    doManipulateState();
 }
 
-QRect PSelectPolygon::doCommit()
+void PSelectPolygon::doCommit()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
     // no commit for a select shape - we just go straight to idle
-    doIdle();
-    return QRect();
+    doIdleState();
 }
 
 void PSelectPolygon::doCut()
@@ -54,7 +51,7 @@ QImage PSelectPolygon::getMask()
     QRect r = polygon.boundingRect();
     QImage imageMask( r.size(), QImage::Format_ARGB32 );
     {
-        QPolygon polygonCopy = polygon;
+        QPolygonF polygonCopy = polygon;
         polygonCopy.translate( -r.left(), -r.top() );
         imageMask.fill( Qt::transparent );
         QPainter painter( &imageMask );

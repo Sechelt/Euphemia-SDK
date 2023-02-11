@@ -11,9 +11,9 @@ public:
 
     virtual QImage getCopy() override;
 
-    virtual QRect doRelease( QMouseEvent *pEvent ) override;
-    virtual QRect doCommit() override;
-    virtual void  doCut() override;
+    virtual void doRelease( PMouseEvent *pEvent ) override;
+    virtual void doCommit() override;
+    virtual void doCut() override;
 
     virtual bool canCommit() override   { return false; }
     virtual bool canCut() override      { return ( nState == StateManipulate ); }

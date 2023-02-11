@@ -10,9 +10,9 @@ class PDrawFreeHand : public PFreeBase
 public:
     PDrawFreeHand( PCanvas *pCanvas );
 
-    virtual QRect doPress( QMouseEvent *pEvent ) override;
-    virtual QRect doMove( QMouseEvent *pEvent ) override;
-    virtual QRect doRelease( QMouseEvent *pEvent ) override;
+    virtual void doPress( PMouseEvent *pEvent ) override;
+    virtual void doMove( PMouseEvent *pEvent ) override;
+    virtual void doRelease( PMouseEvent *pEvent ) override;
 
 protected:
     QPoint              pointLast;
@@ -20,12 +20,12 @@ protected:
     QBrush              brush;
     PContextFreeHand    t;
 
-    QRect doDraw( const QPoint & );
-    QRect doDrawPen( const QPoint & );
-    QRect doDrawEllipse( const QPoint & );
-    QRect doDrawRectangle( const QPoint & );
-    QRect doDrawCross( const QPoint & );
-    QRect doDrawImage( const QPoint & );
+    void doDrawState( const QPoint & );
+    void doDrawPen( const QPoint & );
+    void doDrawEllipse( const QPoint & );
+    void doDrawRectangle( const QPoint & );
+    void doDrawCross( const QPoint & );
+    void doDrawImage( const QPoint & );
 };
 
 class PFreeHandToolBar : public QWidget

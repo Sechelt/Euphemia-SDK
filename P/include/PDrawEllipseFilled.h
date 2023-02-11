@@ -10,7 +10,7 @@ public:
     PDrawEllipseFilled( PCanvas *pCanvas );
 
 protected:
-    virtual void doPaint( QPainter * ) override;
+    void doPaint( QPainter * ) override;
 };
 
 #endif

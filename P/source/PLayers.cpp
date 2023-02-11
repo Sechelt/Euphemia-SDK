@@ -23,14 +23,5 @@ void PLayers::resizeEvent( QResizeEvent *pEvent )
 
 }
 
-//
-// PLayersScrollArea
-//
-PLayersScrollArea::PLayersScrollArea( QWidget *parent )
-    : QScrollArea( parent )
-{
-    pLayers = new PLayers( this );
-    setWidget( pLayers );
-}
 
 

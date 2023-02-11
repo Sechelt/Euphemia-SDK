@@ -41,44 +41,34 @@ QImage PDrawLine::getCopy()
     return image.copy( r );
 }
 
-QRect PDrawLine::doDoubleClick( QMouseEvent *pEvent )
+void PDrawLine::doDoubleClick( PMouseEvent *pEvent )
 { 
     Q_UNUSED( pEvent );
-    return QRect();
 }
 
-QRect PDrawLine::doPress( QMouseEvent *pEvent )
+void PDrawLine::doPress( PMouseEvent *pEvent )
 {
-    QRect rectUpdate;
-
-    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
     case StateIdle:
-        doDraw( pEvent->pos() );
+        doDrawState( pEvent->pos() );
         break;
     case StateDraw:
         break;
     case StateManipulate:
         pHandle = getHandle( pEvent->pos() );
-        if ( !pHandle )
-        {
-            rectUpdate = doCommit();
-        }
+        if ( !pHandle ) doCommit();
         break;
     }
-
-    return rectUpdate;
 }
 
 
-QRect PDrawLine::doMove( QMouseEvent *pEvent ) 
+void PDrawLine::doMove( PMouseEvent *pEvent ) 
 {
-    QRect rectUpdate;
-
     // We only get here when a button is down but button is always none. Odd.
-    // if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    // if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
@@ -88,26 +78,20 @@ QRect PDrawLine::doMove( QMouseEvent *pEvent )
         {
             QPen pen = g_Context->getPen();
             pointEnd = pEvent->pos();
-            rectUpdate.setTopLeft( pointBegin - QPoint( pen.width(), pen.width() ) );
-            rectUpdate.setBottomRight( pointEnd + QPoint( pen.width(), pen.width() ) );
             update();
         }
         break;
     case StateManipulate:
-        doMoveHandle( pEvent->pos() );
+        if ( pHandle ) doMoveHandle( pEvent->pos() );
         break;
     }
-
-    return rectUpdate;
 }
 
-QRect PDrawLine::doRelease( QMouseEvent *pEvent )
+void PDrawLine::doRelease( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
-    QRect rectUpdate;
-
-    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
@@ -115,34 +99,20 @@ QRect PDrawLine::doRelease( QMouseEvent *pEvent )
         break;
     case StateDraw:
         if ( pCanvas->getAutoCommit() ) return doCommit();
-        doManipulate();
+        doManipulateState();
         break;
     case StateManipulate:
         break;
     }
-
-    return rectUpdate;
 }
 
-QRect PDrawLine::doCommit()
+void PDrawLine::doCommit()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
-    QRect rectUpdate;
-    rectUpdate.setTopLeft( pointBegin );
-    rectUpdate.setBottomRight( pointEnd );
     QPainter painter( g_Context->getImage());
     doPaint( &painter );
     emit signalCommitted();
-    doIdle();
-    return rectUpdate;
-}
-
-void PDrawLine::paintEvent( QPaintEvent *pEvent )
-{
-    Q_UNUSED( pEvent );
-    if ( nState != StateDraw && nState != StateManipulate ) return;
-    QPainter painter( this );
-    doPaint( &painter );
+    doIdleState();
 }
 
 void PDrawLine::doPaint( QPainter *pPainter )
@@ -155,7 +125,7 @@ void PDrawLine::doPaint( QPainter *pPainter )
     pPainter->drawLine( pointBegin, pointEnd );                         
 }
 
-void PDrawLine::doDraw( const QPoint &point )
+void PDrawLine::doDrawState( const QPoint &point )
 {
     Q_ASSERT( nState == StateIdle );
     pointBegin = pointEnd = point;
@@ -164,7 +134,7 @@ void PDrawLine::doDraw( const QPoint &point )
     emit signalChangedState();
 }
 
-void PDrawLine::doManipulate()
+void PDrawLine::doManipulateState()
 {
     Q_ASSERT( nState == StateDraw );
     doCreateHandles();
@@ -172,7 +142,7 @@ void PDrawLine::doManipulate()
     emit signalChangedState();
 }
 
-void PDrawLine::doIdle()
+void PDrawLine::doIdleState()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
@@ -194,27 +164,30 @@ void PDrawLine::doCreateHandles()
     Q_ASSERT( vectorHandles.count() == 0 );
 
     PHandle *pHandle;
-    QRect r;
-
-    r.setTopLeft( pointBegin );
-    r.setBottomRight( pointEnd );
-    r = r.normalized();
 
     // Order matters when handles share a position. Last handle will be found first.
 
     // PDrawLineBegin
-    pHandle = new PHandle( pCanvas, PHandle::TypeMovePoint, pointBegin );
+    pHandle = new PHandle( PHandle::TypeMovePoint, pointBegin );
     vectorHandles.append( pHandle );
+    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // PDrawLineMove
-    pHandle = new PHandle( pCanvas, PHandle::TypeDrag, r.center() );
+    QRect r;
+    r.setTopLeft( pointBegin );
+    r.setBottomRight( pointEnd );
+    r = r.normalized();
+
+    pHandle = new PHandle( PHandle::TypeDrag, r.center() );
     vectorHandles.append( pHandle );
+    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // PDrawLineEnd
-    pHandle = new PHandle( pCanvas, PHandle::TypeMovePoint, pointEnd );
+    pHandle = new PHandle( PHandle::TypeMovePoint, pointEnd );
     vectorHandles.append( pHandle );
+    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 }
 
@@ -227,8 +200,8 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         // move the begin 
         pointBegin = pointPos;
         pHandle->setCenter( pointBegin );
-        // set canvas geometry
-        QRect r;
+        // get center
+        QRectF r;
         r.setTopLeft( pointBegin );
         r.setBottomRight( pointEnd );
         // adjust move handle
@@ -255,8 +228,8 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         // move the end 
         pointEnd = pointPos;
         pHandle->setCenter( pointEnd );
-        // set canvas geometry
-        QRect r;
+        // get center
+        QRectF r;
         r.setTopLeft( pointBegin );
         r.setBottomRight( pointEnd );
         // adjust move handle

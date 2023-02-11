@@ -22,7 +22,6 @@
 	<file alias="TextManipulate">images/TextManipulate.png</file>
 	<file alias="OptimizeSize">images/OptimizeSize.png</file>
 	<file alias="Title">images/Title48x48.png</file>
-	<file alias="Transparent">images/Transparent.png</file>
 	<file alias="Anchor">images/anchor.svg</file>
 	<file alias="HSpacer">images/HSpacer.png</file>
 	<file alias="VSpacer">images/VSpacer.png</file>

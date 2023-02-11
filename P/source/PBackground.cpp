@@ -2,18 +2,24 @@
 
 #include "PContext.h"
 
-PBackground::PBackground( QWidget *pParent )
-    : QWidget( pParent )
+PBackground::PBackground()
+    : QGraphicsObject()
 {
 }
 
-void PBackground::paintEvent( QPaintEvent *pEvent )
+void PBackground::paint( QPainter *pPainter, const QStyleOptionGraphicsItem *nOption, QWidget *pWidget )
 {
-    Q_UNUSED(pEvent);
+    Q_UNUSED( nOption );
+    Q_UNUSED( pWidget );
 
-    QPainter painter( this );
     QBrush brush = g_Context->getGeneral().brushTransparency;
-    if ( brush.style() == Qt::NoBrush ) brush.setTextureImage( QImage(":P/Transparent") );
-    painter.fillRect(0, 0, width(), height(), brush );
+    if ( brush.style() == Qt::NoBrush ) brush.setTextureImage( QImage(":W/Transparent") );
+    pPainter->fillRect( 0, 0, boundingRect().width(), boundingRect().height(), brush );
+}
+
+QRectF PBackground::boundingRect() const
+{
+    if ( scene() ) return scene()->sceneRect();
+    return QRectF();
 }
 

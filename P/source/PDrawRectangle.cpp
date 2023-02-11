@@ -37,41 +37,31 @@ QImage PDrawRectangle::getCopy()
     return image.copy( r );
 }
 
-QRect PDrawRectangle::doDoubleClick( QMouseEvent *pEvent )
+void PDrawRectangle::doDoubleClick( PMouseEvent *pEvent )
 { 
     Q_UNUSED( pEvent );
-    return QRect();
 }
 
-QRect PDrawRectangle::doPress( QMouseEvent *pEvent )
+void PDrawRectangle::doPress( PMouseEvent *pEvent )
 {
-    QRect rectUpdate;
-
-    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
     case StateIdle:
-        doDraw( pEvent->pos() );
+        doDrawState( pEvent->pos() );
         break;
     case StateDraw:
         break;
     case StateManipulate:
         pHandle = getHandle( pEvent->pos() );
-        if ( !pHandle )
-        {
-            rectUpdate = doCommit();
-        }
+        if ( !pHandle ) doCommit();
         break;
     }
-
-    return rectUpdate;
 }
 
-QRect PDrawRectangle::doMove( QMouseEvent *pEvent ) 
+void PDrawRectangle::doMove( PMouseEvent *pEvent ) 
 {
-    QRect rectUpdate;
-
     // We only get here when a button is down but button is always none. Odd.
     // if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
 
@@ -81,24 +71,19 @@ QRect PDrawRectangle::doMove( QMouseEvent *pEvent )
         break;
     case StateDraw:
         r.setBottomRight( pEvent->pos() );
-        rectUpdate = r;
         update();
         break;
     case StateManipulate:
-        doMoveHandle( pEvent->pos() );
+        if ( pHandle ) doMoveHandle( pEvent->pos() );
         break;
     }
-
-    return rectUpdate;
 }
 
-QRect PDrawRectangle::doRelease( QMouseEvent *pEvent )
+void PDrawRectangle::doRelease( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
-    QRect rectUpdate;
-
-    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
@@ -106,33 +91,21 @@ QRect PDrawRectangle::doRelease( QMouseEvent *pEvent )
         break;
     case StateDraw:
         if ( pCanvas->getAutoCommit() ) return doCommit();
-        doManipulate();
+        doManipulateState();
         break;
     case StateManipulate:
         break;
     }
-
-    return rectUpdate;
 }
 
-QRect PDrawRectangle::doCommit()
+void PDrawRectangle::doCommit()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
-    QRect rectUpdate = r;
-    QPainter painter( g_Context->getImage());
+    QPainter painter( g_Context->getImage() );
     doPaint( &painter );
     emit signalCommitted();
-    doIdle();
-    return rectUpdate;
-}
-
-void PDrawRectangle::paintEvent( QPaintEvent *pEvent )
-{
-    Q_UNUSED( pEvent );
-    if ( nState != StateDraw && nState != StateManipulate ) return;
-    QPainter painter( this );
-    doPaint( &painter );
+    doIdleState();
 }
 
 void PDrawRectangle::doPaint( QPainter *pPainter )
@@ -144,7 +117,7 @@ void PDrawRectangle::doPaint( QPainter *pPainter )
     pPainter->drawRect( r.normalized() );                         
 }
 
-void PDrawRectangle::doDraw( const QPoint &point )
+void PDrawRectangle::doDrawState( const QPoint &point )
 {
     Q_ASSERT( nState == StateIdle );
     r = QRect( point, QSize( 1, 1 ) );
@@ -153,7 +126,7 @@ void PDrawRectangle::doDraw( const QPoint &point )
     emit signalChangedState();
 }
 
-void PDrawRectangle::doManipulate()
+void PDrawRectangle::doManipulateState()
 {
     Q_ASSERT( nState == StateDraw );
     doCreateHandles();
@@ -161,7 +134,7 @@ void PDrawRectangle::doManipulate()
     emit signalChangedState();
 }
 
-void PDrawRectangle::doIdle()
+void PDrawRectangle::doIdleState()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
@@ -186,18 +159,21 @@ void PDrawRectangle::doCreateHandles()
     PHandle *pHandle;
 
     // PDrawRectangleBegin
-    pHandle = new PHandle( pCanvas, PHandle::TypeSizeTopLeft, r.topLeft() );
+    pHandle = new PHandle( PHandle::TypeSizeTopLeft, r.topLeft() );
     vectorHandles.append( pHandle );
+    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // PDrawRectangleMove
-    pHandle = new PHandle( pCanvas, PHandle::TypeDrag, r.center() );
+    pHandle = new PHandle( PHandle::TypeDrag, r.center() );
     vectorHandles.append( pHandle );
+    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // PDrawRectangleEnd
-    pHandle = new PHandle( pCanvas, PHandle::TypeSizeBottomRight, r.bottomRight() );
+    pHandle = new PHandle( PHandle::TypeSizeBottomRight, r.bottomRight() );
     vectorHandles.append( pHandle );
+    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 }
 
@@ -236,16 +212,16 @@ void PDrawRectangle::doMoveHandle( const QPoint &pointPos )
 
 void PDrawRectangle::doSyncHandleTypes()
 {
-    QRect rect = r.normalized();
+    QRectF rect = r.normalized();
 
-    if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rect.topLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopLeft );             
-    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopRight );      
-    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomLeft );  
-    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomRight );
+    if ( vectorHandles[PDrawRectangleBegin]->boundingRect().contains( rect.topLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopLeft );             
+    else if ( vectorHandles[PDrawRectangleBegin]->boundingRect().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopRight );      
+    else if ( vectorHandles[PDrawRectangleBegin]->boundingRect().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomLeft );  
+    else if ( vectorHandles[PDrawRectangleBegin]->boundingRect().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomRight );
                                                                                                                                                                        
-    if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.topLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopLeft );                 
-    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopRight );          
-    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomLeft );      
-    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomRight );    
+    if ( vectorHandles[PDrawRectangleEnd]->boundingRect().contains( rect.topLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopLeft );                 
+    else if ( vectorHandles[PDrawRectangleEnd]->boundingRect().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopRight );          
+    else if ( vectorHandles[PDrawRectangleEnd]->boundingRect().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomLeft );      
+    else if ( vectorHandles[PDrawRectangleEnd]->boundingRect().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomRight );    
 }
 

@@ -22,7 +22,32 @@
 
 class PCanvasView;
 
-class PCanvas : public QWidget
+/*!
+ * \brief A canvas which facilitates viewing/editing of a QImage.
+ *  
+ * This canvas has most of the logic for painting within it. The scene just passes the events (mouse events) 
+ * to this canvas. 
+ *  
+ * The; scene, background, canvas and image are all expected to be the same size. The image can change size 
+ * (ie after being loaded from a file or by a request to crop). In this case the others are synced to 
+ * maintain the same size for all. 
+ *  
+ * Precision (double vs int)
+ *  
+ * The scene uses 'double' precision while a QImage is 'int' precision. The painting functionality is 'int' 
+ * precision - inheriting the QImage limitation. 
+ *  
+ * The incoming 'double' coordinates (from mouse events) are converted to 'int' precision for internal use.
+ * The outgoing 'int' coordinates (provided by boundingRect()) are converted to 'double'.
+ *  
+ * Fortunately; QPainter accepts double or int precision. 
+ *  
+ * \sa PGraphicsScene 
+ * \sa PBackground 
+ *  
+ * \author pharvey (2/10/23)
+ */
+class PCanvas : public QGraphicsObject
 {
     Q_OBJECT
 
@@ -50,7 +75,10 @@ public:
         ToolFillGradient                /*!< fill: fill with gradient                                */ 
     };
 
-    PCanvas( QWidget *parent );
+    PCanvas();
+
+    virtual void paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0 ) override;
+    virtual QRectF boundingRect() const override;
 
     void setZoom( WZoomWidget::FitTypes nFit, int nZoom );
     void setTool( Tools n );
@@ -63,6 +91,11 @@ public:
     bool                    getAutoCommit() { return bAutoCommit; }
     QString                 getFileName() { return stringFileName; }
     QColor                  getBackground() { return colorBackground; }
+
+    void doDoubleClickEvent( QGraphicsSceneMouseEvent *pEvent );
+    void doPressEvent( QGraphicsSceneMouseEvent *pEvent );
+    void doMoveEvent( QGraphicsSceneMouseEvent *pEvent );
+    void doReleaseEvent( QGraphicsSceneMouseEvent *pEvent );
 
     bool doOpen();
     bool doSave();
@@ -106,12 +139,6 @@ protected slots:
     void slotCommitted();
 
 protected:
-    void mouseDoubleClickEvent(QMouseEvent *pEvent ) override;
-    void mousePressEvent( QMouseEvent *pEvent ) override;
-    void mouseMoveEvent( QMouseEvent *pEvent ) override;
-    void mouseReleaseEvent( QMouseEvent *pEvent ) override;
-    void paintEvent( QPaintEvent *pEvent ) override;
-    void resizeEvent( QResizeEvent *pEvent ) override;
 
 private:
     void setModified( bool b = true );
@@ -121,8 +148,6 @@ private:
     void doFillFloodTiled( const QPoint &pointSeed );
     void doFillGradient( const QPoint &pointSeed );    
     void doClear();
-
-    void resizeImage( QImage *image, const QSize &newSize );
 
     Tools       nTool                       = ToolDrawLine;
     bool        bAutoCommit                 = false;

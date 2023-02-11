@@ -19,7 +19,6 @@ public:
     void setScale( qreal n );
 
     PGraphicsScene *    getScene();
-    PLayers *           getLayers();
     PCanvas *           getCanvas();
 
     qreal getOffsetH();

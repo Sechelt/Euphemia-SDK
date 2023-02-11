@@ -8,13 +8,13 @@ class PDrawErase : public PFreeBase
 public:
     PDrawErase( PCanvas *pCanvas );
 
-    virtual QRect doPress( QMouseEvent *pEvent ) override;
-    virtual QRect doMove( QMouseEvent *pEvent ) override;
-    virtual QRect doRelease( QMouseEvent *pEvent ) override;
+    void doPress( PMouseEvent *pEvent ) override;
+    void doMove( PMouseEvent *pEvent ) override;
+    void doRelease( PMouseEvent *pEvent ) override;
 
 protected:
-    QRect doDrawShape( const QPoint & );
-    void  doFill( const QRect &rect, const QImage &imageMask, QImage *pImageCanvas, const QColor &colorMask );
+    void doDrawShape( const QPoint & );
+    void doFill( const QRect &rect, const QImage &imageMask, QImage *pImageCanvas, const QColor &colorMask );
 };
 
 class PEraseToolBar : public QWidget

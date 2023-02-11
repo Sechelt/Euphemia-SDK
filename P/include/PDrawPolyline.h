@@ -12,21 +12,19 @@ public:
 
     virtual QImage getCopy() override;
 
-    virtual QRect   doDoubleClick( QMouseEvent * ) override;
-    virtual QRect   doPress( QMouseEvent *pEvent ) override;
-    virtual QRect   doMove( QMouseEvent *pEvent ) override; 
-    virtual QRect   doRelease( QMouseEvent *pEvent ) override;
-    virtual QRect   doCommit() override;
+    virtual void doDoubleClick( PMouseEvent * ) override;
+    virtual void doPress( PMouseEvent * ) override;
+    virtual void doMove( PMouseEvent * ) override; 
+    virtual void doRelease( PMouseEvent * ) override;
+    virtual void doCommit() override;
 
 protected:
     QPolygon polygon;
 
-    virtual void paintEvent( QPaintEvent *pEvent ) override;
-
     virtual void doPaint( QPainter * );
-    virtual void doDraw( const QPoint & ) override;
-    virtual void doManipulate() override;
-    virtual void doIdle() override;
+    virtual void doDrawState( const QPoint & ) override;
+    virtual void doManipulateState() override;
+    virtual void doIdleState() override;
     virtual void doCreateHandles() override;
     virtual void doMoveHandle( const QPoint &pointPos );
 };

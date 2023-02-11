@@ -121,7 +121,7 @@ void PContextText::doLoad( QDomElement *pdomElem )
 
 PContextGeneral::PContextGeneral()
 {
-    brushTransparency.setTextureImage( QImage( ":P/Transparent" ) );
+    brushTransparency.setTextureImage( QImage( ":W/Transparent" ) );
 }
 
 void PContextGeneral::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )

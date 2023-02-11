@@ -10,7 +10,7 @@ PSelectRectangle::PSelectRectangle( PCanvas *pCanvas, bool bAll )
         r = QRect( QPoint( 0, 0 ), g_Context->getImage()->size() );
         nState = StateDraw;
         // go straight into manipulate
-        doManipulate();
+        doManipulateState();
     }
 }
 
@@ -27,34 +27,29 @@ QImage PSelectRectangle::getCopy()
 }
 
 // this removes the auto commit
-QRect PSelectRectangle::doRelease( QMouseEvent *pEvent )
+void PSelectRectangle::doRelease( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
-    QRect rectUpdate;
-
-    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
     case StateIdle:
         break;
     case StateDraw:
-        doManipulate();
+        doManipulateState();
         break;
     case StateManipulate:
         break;
     }
-
-    return rectUpdate;
 }
 
-QRect PSelectRectangle::doCommit()
+void PSelectRectangle::doCommit()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
     // no commit for a select shape - we just go straight to idle
-    doIdle();
-    return QRect();
+    doIdleState();
 }
 
 void PSelectRectangle::doCut()
@@ -69,14 +64,14 @@ void PSelectRectangle::doCut()
     QColor colorBackground( Qt::transparent );      // this does not set alpha for some reason
     colorBackground.setAlpha( 0 );                  // so we set here
     r = r.normalized();
-    int nLeft       = r.left() + 1;
-    int nTop        = r.top() + 1;
-    int nRight      = r.right() - 1;
-    int nBottom     = r.bottom() - 1;
+    qreal nLeft       = r.left() + 1;
+    qreal nTop        = r.top() + 1;
+    qreal nRight      = r.right() - 1;
+    qreal nBottom     = r.bottom() - 1;
 
-    for ( int nX = nLeft; nX <= nRight; nX++ )
+    for ( qreal nX = nLeft; nX <= nRight; nX++ )
     {
-        for ( int nY = nTop; nY <= nBottom; nY++ )
+        for ( qreal nY = nTop; nY <= nBottom; nY++ )
         {
             pImage->setPixelColor( nX, nY, colorBackground );
         }

@@ -19,14 +19,20 @@ PGraphicsView::PGraphicsView( PGraphicsScene *pScene, QWidget *pParent )
 void PGraphicsView::setScale( qreal n )
 {
 
-/*
+    // 1
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ <<"]" << getScaleH() << n;
+ //   scale( n, n );
+
+    // 2
+    /*
     QMatrix matrix;      
     matrix.scale( n, n );
     setMatrix( matrix ); 
-*/
+    */
 
-    QTransform transform;
-    transform.scale( n, n );
+    // 3
+    QTransform transform;     
+    transform.scale( n, n );  
     setTransform( transform );
 
     emit signalChangedH( getOffsetH(), getScaleH(), getLengthH() );
@@ -41,16 +47,9 @@ PGraphicsScene *PGraphicsView::getScene()
     return (PGraphicsScene*)p;
 }
 
-PLayers *PGraphicsView::getLayers()
-{
-    PGraphicsScene *p = getScene();
-    if (!p ) return nullptr;
-    return p->getLayers();
-}
-
 PCanvas *PGraphicsView::getCanvas()
 {
-    PLayers *p = getLayers();
+    PGraphicsScene *p = getScene();
     if (!p ) return nullptr;
     return p->getCanvas();
 }

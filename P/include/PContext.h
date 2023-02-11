@@ -3,6 +3,8 @@
 
 #include <WPersist.h>
 
+#include "P.h"
+
 class PContextFreeHand
 {
 public:

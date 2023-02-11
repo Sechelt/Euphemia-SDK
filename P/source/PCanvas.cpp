@@ -3,12 +3,11 @@
 
 #include "PContext.h"
 
-PCanvas::PCanvas( QWidget *parent )
-    : QWidget( parent )
+PCanvas::PCanvas()
 {
-    setAttribute( Qt::WA_StaticContents );
-    setBackground( QColor( Qt::transparent ) );
-    setMouseTracking( true );
+//    setAttribute( Qt::WA_StaticContents );
+//    setBackground( QColor( Qt::transparent ) );
+//    setMouseTracking( true );
 }
 
 void PCanvas::setZoom( WZoomWidget::FitTypes nFit, int nZoom )
@@ -48,6 +47,167 @@ QImage PCanvas::getCopy()
     return pShapeBase->getCopy();
 }
 
+void PCanvas::doDoubleClickEvent( QGraphicsSceneMouseEvent *pEvent )
+{
+    // ignore if outside of scene (happens when outside of scene but within view)
+    if ( !scene()->sceneRect().contains( pEvent->scenePos() ) ) return;
+    // convert to our simplified mouse event
+    PMouseEvent mouseEvent( pEvent );
+
+    // only makes sense if we are drawing because we need a 'tool' to pass the event to
+    if ( !isDrawing() ) return; 
+
+    if ( pFreeBase )
+        ;
+    else if ( pShapeBase )
+        pShapeBase->doDoubleClick( &mouseEvent );
+}
+
+void PCanvas::doPressEvent( QGraphicsSceneMouseEvent *pEvent )
+{
+    // ignore if outside of scene (happens when outside of scene but within view)
+    if ( !scene()->sceneRect().contains( pEvent->scenePos() ) ) return;
+    // convert to our simplified mouse event
+
+    PMouseEvent mouseEvent( pEvent );
+
+    // is a 'tool' active?
+    if ( !isDrawing() ) 
+    {
+        // init 'tool'
+        switch ( nTool )
+        {
+            case ToolSelectRectangle:    
+                g_Context->setImage( &image );
+                pShapeBase = new PSelectRectangle( this );           
+                break;
+            case ToolSelectEllipse:      
+                g_Context->setImage( &image );
+                pShapeBase = new PSelectEllipse( this );           
+                break;
+            case ToolSelectPolygon:      
+                g_Context->setImage( &image );
+                pShapeBase = new PSelectPolygon( this );           
+                break;
+            case ToolDrawFreeHand:               
+                g_Context->setImage( &image );
+                pFreeBase = new PDrawFreeHand( this );           
+                break;
+            case ToolDrawSpray:               
+                g_Context->setImage( &image );
+                pFreeBase = new PDrawSpray( this );           
+                break;
+            case ToolDrawErase:               
+                g_Context->setImage( &image );
+                pFreeBase = new PDrawErase( this );           
+                break;
+            case ToolDrawLine:
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawLine( this );
+                break;
+            case ToolDrawRectangle:      
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawRectangle( this );           
+                break;
+            case ToolDrawEllipse:        
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawEllipse( this );           
+                break;
+            case ToolDrawPolygon:        
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawPolygon( this );           
+                break;
+            case ToolDrawPolyline:        
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawPolyline( this );           
+                break;
+            case ToolDrawRectangleFilled:
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawRectangleFilled( this );           
+                break;
+            case ToolDrawEllipseFilled:  
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawEllipseFilled( this );           
+                break;
+            case ToolDrawPolygonFilled:  
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawPolygonFilled( this );           
+                break;
+            case ToolDrawText:  
+                g_Context->setImage( &image );
+                pShapeBase = new PDrawText( this );           
+                break;
+            case ToolFillFlood:          
+                doFillFlood( mouseEvent.pos() );
+                break;
+            case ToolFillGradient:       
+                doFillGradient( mouseEvent.pos() );
+                break;
+        }
+        if ( pShapeBase ) 
+        {
+            scene()->addItem( pShapeBase );
+            imagePreCommit = image;
+            connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
+            connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
+        }
+        emit signalChangedState();
+    }
+
+    // pass event to 'tool'
+    if ( pFreeBase )
+        pFreeBase->doPress( &mouseEvent );
+    else if ( pShapeBase ) 
+    {
+        pShapeBase->doPress( &mouseEvent );
+        if ( pShapeBase->inherits("PPasteRectangle") && pShapeBase->getState() == PShapeBase::StateIdle ) 
+        {
+            bPaste = false;
+            doCancel();
+        }
+    }
+}
+
+void PCanvas::doMoveEvent( QGraphicsSceneMouseEvent *pEvent )
+{
+    // ignore if outside of scene (happens when outside of scene but within view)
+    if ( !scene()->sceneRect().contains( pEvent->scenePos() ) ) return;
+    // convert to our simplified mouse event
+    PMouseEvent mouseEvent( pEvent );
+
+    emit signalPos( mouseEvent.pos() );
+
+    // move
+    if ( pFreeBase )
+        pFreeBase->doMove( &mouseEvent );
+    else if ( pShapeBase )
+        pShapeBase->doMove( &mouseEvent );
+}
+
+void PCanvas::doReleaseEvent( QGraphicsSceneMouseEvent *pEvent )
+{
+    // release is outside of scene is not a problem (prevented/handled in the move)
+    // if ( !scene()->sceneRect().contains( pEvent->scenePos() ) ) return;
+
+    // convert to our simplified mouse event
+    PMouseEvent mouseEvent( pEvent );
+
+    // pass event to 'tool'
+    if ( pFreeBase )
+    {
+        pFreeBase->doRelease( &mouseEvent );
+        // tools based upon PFreeBase can not be manipulated after drawn so we are done here
+        delete pFreeBase;
+        pFreeBase = nullptr;
+        setModified();
+        emit signalChangedState(); // setModified may - or may not - have done this so we do it here to ensure it happens
+    }
+    else if ( pShapeBase ) 
+    {
+        pShapeBase->doRelease( &mouseEvent );
+    }
+}
+
 /*!
  * \brief Open/load an image from a file. 
  *  
@@ -70,14 +230,14 @@ bool PCanvas::doOpen()
     if ( isModified() )
     {
         // prompt to save, discard or cancel
-        QMessageBox::StandardButton nButton = QMessageBox::question( this, tr("Open..."), tr("Discard changes?") );
+        QMessageBox::StandardButton nButton = QMessageBox::question( qApp->activeWindow(), tr("Open..."), tr("Discard changes?") );
         if ( nButton == QMessageBox::No ) return false;
         if ( !doSave() ) return false;
         doClear();
     }
 
     // get a file name
-    QString stringFileName = QFileDialog::getOpenFileName( this, tr( "Select Image..." ), QString(), tr("Image (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm)") );
+    QString stringFileName = QFileDialog::getOpenFileName( qApp->activeWindow(), tr( "Select Image..." ), QString(), tr("Image (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm)") );
     if ( stringFileName.isEmpty() ) return false;
 
     // Qt supports svg but not via QImage
@@ -87,7 +247,13 @@ bool PCanvas::doOpen()
     if ( reader.read( &image ) ) 
     {
         image = image.convertToFormat( QImage::Format_ARGB32 );
-        resize( image.size() );
+        if ( scene() ) 
+        {
+            QRectF r = scene()->sceneRect();
+            r.setSize( image.size() );
+            scene()->setSceneRect( r );
+        }
+
         this->stringFileName = stringFileName;
         setModified( false );
         update();
@@ -95,7 +261,7 @@ bool PCanvas::doOpen()
     }
 
     // error
-    QMessageBox::warning( this, tr("Open"), reader.errorString() );
+    QMessageBox::warning( qApp->activeWindow(), tr("Open"), reader.errorString() );
 
     return false;
 }
@@ -117,7 +283,7 @@ bool PCanvas::doSave()
     }
 
     // error
-    QMessageBox::warning( this, tr("Save"), writer.errorString() );
+    QMessageBox::warning( qApp->activeWindow(), tr("Save"), writer.errorString() );
 
     return false;
 }
@@ -125,7 +291,7 @@ bool PCanvas::doSave()
 bool PCanvas::doSaveAs()
 {
     // get a file name
-    QString stringFileName = QFileDialog::getSaveFileName( this, tr( "Save As..." ) );
+    QString stringFileName = QFileDialog::getSaveFileName( qApp->activeWindow(), tr( "Save As..." ) );
     if ( stringFileName.isEmpty() ) return false;
 
     // Qt will use file extension to set format.
@@ -140,7 +306,7 @@ bool PCanvas::doSaveAs()
     }
 
     // error
-    QMessageBox::warning( this, tr("Save"), writer.errorString() );
+    QMessageBox::warning( qApp->activeWindow(), tr("Save"), writer.errorString() );
 
     return false;
 }
@@ -151,7 +317,7 @@ bool PCanvas::doClose()
     if ( isModified() )
     {
         // prompt to save, discard or cancel
-        QMessageBox::StandardButton nButton = QMessageBox::question( this, tr("Close..."), tr("Save changes?") );
+        QMessageBox::StandardButton nButton = QMessageBox::question( qApp->activeWindow(), tr("Close..."), tr("Save changes?") );
         if ( nButton == QMessageBox::Yes ) 
         {
             if ( !doSave() ) return false;
@@ -187,6 +353,7 @@ void PCanvas::doPaste()
     if ( isDrawing() ) doCancel();
     g_Context->setImage( &image );
     pShapeBase = new PPasteRectangle( this );
+    scene()->addItem( pShapeBase );
     imagePreCommit = image;
     connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
     connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
@@ -199,6 +366,7 @@ void PCanvas::doPaste( const QImage &i )
     if ( isDrawing() ) doCancel();
     g_Context->setImage( &image );
     pShapeBase = new PPasteRectangle( this, i );
+    scene()->addItem( pShapeBase );
     imagePreCommit = image;
     connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
     connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
@@ -343,163 +511,28 @@ void PCanvas::slotCommitted()
     emit signalChangedState(); 
 }
 
-void PCanvas::mouseDoubleClickEvent( QMouseEvent *pEvent )
+void PCanvas::paint( QPainter *pPainter, const QStyleOptionGraphicsItem *nOption, QWidget *pWidget )
 {
-    // only makes sense if we are drawing because we need a 'tool' to pass the event to
-    if ( !isDrawing() ) return; 
+    Q_UNUSED( nOption );
+    Q_UNUSED( pWidget );
 
-    if ( pFreeBase )
-        ;
-    else if ( pShapeBase )
-        update( pShapeBase->doDoubleClick( pEvent ) );
-}
-
-void PCanvas::mousePressEvent( QMouseEvent *pEvent )
-{
-    // is a 'tool' active?
-    if ( !isDrawing() ) 
+    // has scene been resized?
+    if ( boundingRect().size().toSize() != image.size() )
     {
-        // init 'tool'
-        switch ( nTool )
-        {
-            case ToolSelectRectangle:    
-                g_Context->setImage( &image );
-                pShapeBase = new PSelectRectangle( this );           
-                break;
-            case ToolSelectEllipse:      
-                g_Context->setImage( &image );
-                pShapeBase = new PSelectEllipse( this );           
-                break;
-            case ToolSelectPolygon:      
-                g_Context->setImage( &image );
-                pShapeBase = new PSelectPolygon( this );           
-                break;
-            case ToolDrawFreeHand:               
-                g_Context->setImage( &image );
-                pFreeBase = new PDrawFreeHand( this );           
-                break;
-            case ToolDrawSpray:               
-                g_Context->setImage( &image );
-                pFreeBase = new PDrawSpray( this );           
-                break;
-            case ToolDrawErase:               
-                g_Context->setImage( &image );
-                pFreeBase = new PDrawErase( this );           
-                break;
-            case ToolDrawLine:
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawLine( this );
-                break;
-            case ToolDrawRectangle:      
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawRectangle( this );           
-                break;
-            case ToolDrawEllipse:        
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawEllipse( this );           
-                break;
-            case ToolDrawPolygon:        
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawPolygon( this );           
-                break;
-            case ToolDrawPolyline:        
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawPolyline( this );           
-                break;
-            case ToolDrawRectangleFilled:
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawRectangleFilled( this );           
-                break;
-            case ToolDrawEllipseFilled:  
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawEllipseFilled( this );           
-                break;
-            case ToolDrawPolygonFilled:  
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawPolygonFilled( this );           
-                break;
-            case ToolDrawText:  
-                g_Context->setImage( &image );
-                pShapeBase = new PDrawText( this );           
-                break;
-            case ToolFillFlood:          
-                doFillFlood( pEvent->pos() );
-                break;
-            case ToolFillGradient:       
-                doFillGradient( pEvent->pos() );
-                break;
-        }
-        if ( pShapeBase ) 
-        {
-            imagePreCommit = image;
-            connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
-            connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
-        }
-        emit signalChangedState();
+        QImage i( boundingRect().size().toSize(), QImage::Format_ARGB32 );
+        i.fill( Qt::transparent );
+        QPainter p( &i );
+        p.drawImage( 0, 0, image );
+        image = i;
     }
 
-    // pass event to 'tool'
-    if ( pFreeBase )
-        update( pFreeBase->doPress( pEvent ) );
-    else if ( pShapeBase ) 
-    {
-        update( pShapeBase->doPress( pEvent ) );
-        if ( pShapeBase->inherits("PPasteRectangle") && pShapeBase->getState() == PShapeBase::StateIdle ) 
-        {
-            bPaste = false;
-            doCancel();
-        }
-    }
+    pPainter->drawImage( 0, 0, image );
 }
 
-void PCanvas::mouseMoveEvent( QMouseEvent *pEvent )
+QRectF PCanvas::boundingRect() const
 {
-    // setMouseTracking has been set true so we are tracking the mouse
-    // - so we get here whether a button is pressed or not
-    emit signalPos( pEvent->pos() );
-
-    // move
-    if ( pFreeBase )
-        update( pFreeBase->doMove( pEvent ) );
-    else if ( pShapeBase )
-        update( pShapeBase->doMove( pEvent ) );
-}
-
-void PCanvas::mouseReleaseEvent( QMouseEvent *pEvent )
-{
-    // pass event to 'tool'
-    if ( pFreeBase )
-    {
-        update( pFreeBase->doRelease( pEvent ) );
-        // tools based upon PFreeBase can not be manipulated after drawn so we are done here
-        delete pFreeBase;
-        pFreeBase = nullptr;
-        setModified();
-        emit signalChangedState(); // setModified may - or may not - have done this so we do it here to ensure it happens
-    }
-    else if ( pShapeBase ) 
-    {
-        update( pShapeBase->doRelease( pEvent ) );
-    }
-}
-
-void PCanvas::paintEvent( QPaintEvent *pEvent )
-{
-    QPainter painter( this );
-    QRect dirtyRect = pEvent->rect();
-    painter.drawImage( dirtyRect, image, dirtyRect );
-}
-
-void PCanvas::resizeEvent( QResizeEvent *pEvent )
-{
-    if ( width() > image.width() || height() > image.height() )
-    {
-        int newWidth = qMax( width() + 128, image.width() );
-        int newHeight = qMax( height() + 128, image.height() );
-        resizeImage( &image, QSize( newWidth, newHeight ) );
-        update();
-    }
-    QWidget::resizeEvent( pEvent );
+    if ( scene() ) return scene()->sceneRect();
+    return QRectF();
 }
 
 void PCanvas::setModified( bool b )
@@ -519,7 +552,7 @@ void PCanvas::doFillFlood( const QPoint &pointSeed )
     else if ( g_Context->getBrush().style() != Qt::NoBrush )
         doFillFloodTiled( pointSeed );
     else
-        QMessageBox::warning( this, tr("Flood Fill"), tr("Please select a brush.") );
+        QMessageBox::warning( qApp->activeWindow(), tr("Flood Fill"), tr("Please select a brush.") );
     update();
 }
 
@@ -652,6 +685,7 @@ void PCanvas::doFillFloodTiled( const QPoint &pointSeed )
 
 void PCanvas::doFillGradient( const QPoint &pointSeed )
 {
+    Q_UNUSED( pointSeed );
 }
 
 void PCanvas::doClear()
@@ -662,22 +696,11 @@ void PCanvas::doClear()
     update();
 }
  
-void PCanvas::resizeImage( QImage *image, const QSize &newSize )
-{
-    if ( image->size() == newSize ) return;
-
-    QImage newImage( newSize, QImage::Format_ARGB32 );
-    newImage.fill( Qt::transparent );
-    QPainter painter( &newImage );
-    painter.drawImage( QPoint( 0, 0 ), *image );
-    *image = newImage;
-}
-
 void PCanvas::print()
 {
     QPrinter printer( QPrinter::HighResolution );
 
-    QPrintDialog printDialog( &printer, this );
+    QPrintDialog printDialog( &printer, qApp->activeWindow() );
     if ( printDialog.exec() == QDialog::Accepted )
     {
         QPainter painter( &printer );

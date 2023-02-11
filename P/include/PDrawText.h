@@ -13,7 +13,7 @@ class PDrawText : public PDrawRectangle
 public:
     PDrawText( PCanvas *pCanvas );
 
-    virtual QRect doCommit() override;
+    virtual void doCommit() override;
 
 protected:
     virtual void doPaint( QPainter * );

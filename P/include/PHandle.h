@@ -3,7 +3,18 @@
 
 #include "P.h"
 
-class PHandle : public QWidget
+/*!
+ * \brief Handle used to allow User to manipulate lines/shapes. 
+ *  
+ * Unlike; canvas, shapes, etc - this; 
+ *  
+ *      - is not the same size as scene/canvas/image (its smaller)
+ *      - is purely in double precision
+ *      - will try to maintain consistent size even during zoom by countering scale change
+ * 
+ * \author pharvey (2/10/23)
+ */
+class PHandle : public QGraphicsObject
 {
     Q_OBJECT
 public:
@@ -21,22 +32,23 @@ public:
         TypeSizeBottomLeft
     };
 
-    PHandle( QWidget *pParent, Type nType, const QPoint &pointCenter );
+    PHandle( Type nType, const QPointF &pointCenter );
+
+    virtual void paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0 ) override;
+    virtual QRectF boundingRect() const override;
 
     void setType( Type );
-    void setCenter( const QPoint & );
+    void setCenter( const QPointF & );
 
     Type    getType()   { return nType; }
-    QPoint  getCenter() { return geometry().center(); }
+    QPointF getCenter() { return r.center(); }
 
-    void doMoveBy( int nX, int nY );
-    void doMoveBy( const QPoint & );
+    void doMoveBy( qreal nX, qreal nY );
+    void doMoveBy( const QPointF & );
 
 protected:
-    Type nType;
-
-    void paintEvent( QPaintEvent *pEvent ) override;
-
+    QRectF  r;
+    Type    nType;
 };
 
 #endif

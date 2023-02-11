@@ -1,14 +1,103 @@
 #include "LibInfo.h"
 #include "PHandle.h"
 
-PHandle::PHandle( QWidget *pParent, Type nType, const QPoint &pointCenter )
-    : QWidget( pParent )
+PHandle::PHandle( Type nType, const QPointF &pointCenter )
 {
     this->nType = nType;
 
-    QRect r( 0, 0, 16, 16 );
-    r.moveCenter( pointCenter );
-    setGeometry( r );
+    r.setSize( QSizeF( 16, 16 ) );
+    r.moveCenter( pointCenter ); 
+}
+
+void PHandle::paint( QPainter *pPainter, const QStyleOptionGraphicsItem *nOption, QWidget *pWidget )
+{
+    Q_UNUSED( nOption );
+    Q_UNUSED( pWidget );
+
+    pPainter->setPen( QPen( Qt::NoPen ) );
+
+    QBrush brush( Qt::green );
+    brush.setStyle( Qt::SolidPattern );
+    pPainter->setBrush( brush );
+
+    pPainter->drawEllipse( r );
+
+    switch ( nType )
+    {
+        case TypeDrag:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/Drag" ).scaled( r.size().toSize() ) );
+            }
+            break;
+        case TypeMovePoint:
+            {
+                brush.setColor( Qt::black );
+                pPainter->setBrush( brush );
+
+                QRectF rect;
+                rect.setWidth( r.width() / 2 );
+                rect.setHeight( r.height() / 2 );
+                rect.moveCenter( r.center() );
+
+                pPainter->drawEllipse( rect );
+            }
+            break;
+        case TypeSizeLeft:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/ResizeHoriz" ).scaled( r.size().toSize() ) );
+            }
+            break;
+        case TypeSizeRight:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/ResizeHoriz" ).scaled( r.size().toSize() ) );
+            }
+            break;
+        case TypeSizeTop:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/ResizeVert" ).scaled( r.size().toSize() ) );
+            }
+            break;
+        case TypeSizeBottom:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/ResizeVert" ).scaled( r.size().toSize() ) );
+            }
+            break;
+        case TypeSizeTopRight:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/ResizeTopRight" ).scaled( r.size().toSize() ) );
+            }
+            break;
+        case TypeSizeTopLeft:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/ResizeTopLeft" ).scaled( r.size().toSize() ) );
+            }
+            break;
+        case TypeSizeBottomRight:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/ResizeTopLeft" ).scaled( r.size().toSize() ) );
+            }
+            break;
+        case TypeSizeBottomLeft:
+            {
+                pPainter->drawImage( r.topLeft(), QImage( ":P/ResizeTopRight" ).scaled( r.size().toSize() ) );
+            }
+            break;
+    }
+}
+
+/*!
+ * \brief Scene, or a PShapeBase object, wants to know our geometry. 
+ *  
+ * A \sa PShapeBase object will use this to determine if the mouse has been 
+ * clicked on one of its a handles. 
+ *  
+ * \author pharvey (2/10/23)
+ * 
+ * \return QRectF 
+ */
+QRectF PHandle::boundingRect() const
+{
+    return r;
 }
 
 void PHandle::setType( Type n )
@@ -17,96 +106,19 @@ void PHandle::setType( Type n )
     update();
 }
 
-void PHandle::setCenter( const QPoint &pointCenter )
+void PHandle::setCenter( const QPointF &pointCenter )
 {
-    move( pointCenter.x() - width() / 2, pointCenter.y() - height() / 2 );
+    r.moveCenter( pointCenter );
 }
 
-void PHandle::doMoveBy( int nX, int nY )
+void PHandle::doMoveBy( qreal nX, qreal nY )
 {
-    move( pos().x() + nX, pos().y() + nY );
+    doMoveBy( QPointF( nX, nY ) );
 }
 
-void PHandle::doMoveBy( const QPoint &pointDelta )
+void PHandle::doMoveBy( const QPointF &pointDelta )
 {
-    move( pos() + pointDelta );
-}
-
-void PHandle::paintEvent( QPaintEvent *pEvent )
-{
-    Q_UNUSED( pEvent );
-
-    QPainter painter( this );
-
-    painter.setPen( QPen( Qt::NoPen ) );
-
-    QBrush brush( Qt::green );
-    brush.setStyle( Qt::SolidPattern );
-    painter.setBrush( brush );
-
-    painter.drawEllipse( rect() );
-
-    switch ( nType )
-    {
-        case TypeDrag:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/Drag" ).scaled( rect().size() ) );
-            }
-            break;
-        case TypeMovePoint:
-            {
-                brush.setColor( Qt::black );
-                painter.setBrush( brush );
-
-                QRect r;
-                r.setWidth( rect().width() / 2 );
-                r.setHeight( rect().height() / 2 );
-                r.moveCenter( rect().center() );
-
-                painter.drawEllipse( r );
-            }
-            break;
-        case TypeSizeLeft:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/ResizeHoriz" ).scaled( QSize( rect().width(), rect().height() ) ) );
-            }
-            break;
-        case TypeSizeRight:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/ResizeHoriz" ).scaled( QSize( rect().width(), rect().height() ) ) );
-            }
-            break;
-        case TypeSizeTop:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/ResizeVert" ).scaled( QSize( rect().width(), rect().height() ) ) );
-            }
-            break;
-        case TypeSizeBottom:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/ResizeVert" ).scaled( QSize( rect().width(), rect().height() ) ) );
-            }
-            break;
-        case TypeSizeTopRight:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/ResizeTopRight" ).scaled( QSize( rect().width(), rect().height() ) ) );
-            }
-            break;
-        case TypeSizeTopLeft:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/ResizeTopLeft" ).scaled( QSize( rect().width(), rect().height() ) ) );
-            }
-            break;
-        case TypeSizeBottomRight:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/ResizeTopLeft" ).scaled( QSize( rect().width(), rect().height() ) ) );
-            }
-            break;
-        case TypeSizeBottomLeft:
-            {
-                painter.drawImage( 0, 0, QImage( ":P/ResizeTopRight" ).scaled( QSize( rect().width(), rect().height() ) ) );
-            }
-            break;
-    }
+    r.moveCenter( r.center() - pointDelta );
 }
 
 

@@ -9,22 +9,22 @@ PDrawErase::PDrawErase( PCanvas *pCanvas )
 {
 }
 
-QRect PDrawErase::doPress( QMouseEvent *pEvent )
+void PDrawErase::doPress( PMouseEvent *pEvent )
 {
-    return doDrawShape( pEvent->pos() );
+    doDrawShape( pEvent->pos() );
 }
 
-QRect PDrawErase::doMove( QMouseEvent *pEvent )
+void PDrawErase::doMove( PMouseEvent *pEvent )
 {
-    return doDrawShape( pEvent->pos() );
+    doDrawShape( pEvent->pos() );
 }
 
-QRect PDrawErase::doRelease( QMouseEvent *pEvent )
+void PDrawErase::doRelease( PMouseEvent *pEvent )
 {
-    return doDrawShape( pEvent->pos() );
+    doDrawShape( pEvent->pos() );
 }
 
-QRect PDrawErase::doDrawShape( const QPoint &point )
+void PDrawErase::doDrawShape( const QPoint &point )
 {
     QImage *pImageCanvas = g_Context->getImage();
     PContextErase erase = g_Context->getErase();
@@ -42,10 +42,10 @@ QRect PDrawErase::doDrawShape( const QPoint &point )
         if ( pCanvas->isBackgroundTransparent() )
         {
             QColor colorBackground = pCanvas->getBackground();
-            int nLeft = rect.left();
-            int nRight = rect.right();
-            int nTop = rect.top();
-            int nBottom = rect.bottom();
+            int nLeft     = rect.left();
+            int nRight    = rect.right();
+            int nTop      = rect.top();
+            int nBottom   = rect.bottom();
 
             // do not need a mask for rectangle
             for ( int nX = nLeft; nX <= nRight; nX++ )
@@ -95,18 +95,16 @@ QRect PDrawErase::doDrawShape( const QPoint &point )
         }
         break;
     }
-
-    return rect;
 }
 
 void PDrawErase::doFill( const QRect &rect, const QImage &imageMask, QImage *pImageCanvas, const QColor &colorMask )
 {
     QColor colorBackground = pCanvas->getBackground();
     // fill (apply mask)
-    int nLeft = rect.left();
-    int nTop = rect.top();
-    int nWidth = rect.width();
-    int nHeight = rect.height();
+    int nLeft     = rect.left();
+    int nTop      = rect.top();
+    int nWidth    = rect.width();
+    int nHeight   = rect.height();
 
     // process the mask
     for ( int nX = 0; nX < nWidth; nX++ )

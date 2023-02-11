@@ -10,29 +10,28 @@ PDrawSpray::PDrawSpray( PCanvas *pCanvas )
 {
 }
 
-QRect PDrawSpray::doPress( QMouseEvent *pEvent )
+void PDrawSpray::doPress( PMouseEvent *pEvent )
 {
-    return doSpray( pEvent->pos() );
+    doSpray( pEvent->pos() );
 }
 
-QRect PDrawSpray::doMove( QMouseEvent *pEvent )
+void PDrawSpray::doMove( PMouseEvent *pEvent )
 {
-    return doSpray( pEvent->pos() );
+    doSpray( pEvent->pos() );
 }
 
-QRect PDrawSpray::doRelease( QMouseEvent *pEvent )
+void PDrawSpray::doRelease( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
-    return QRect();
 }
 
-QRect PDrawSpray::doSpray( const QPoint &point )
+void PDrawSpray::doSpray( const QPoint &point )
 {
-    int     nX = point.x();     
-    int     nY = point.y();     
-    int     nR = g_Context->getSpray().nRadius;
-    int     nN = g_Context->getSpray().nPoints;
-    QPoint  pointSpray;
+    int nX = point.x();     
+    int nY = point.y();     
+    int nR = g_Context->getSpray().nRadius;
+    int nN = g_Context->getSpray().nPoints;
+    QPoint pointSpray;
 
     // draw points
     QPainter painter( g_Context->getImage() );
@@ -50,12 +49,6 @@ QRect PDrawSpray::doSpray( const QPoint &point )
 
         painter.drawPoint( pointSpray );
     }
-
-    // update area
-    QRect r;
-    r.setSize( QSize( 32, 32 ) );
-    r.moveCenter( point );
-    return r;
 }
 
 double PDrawSpray::getRandom()

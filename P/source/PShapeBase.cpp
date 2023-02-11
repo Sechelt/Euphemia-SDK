@@ -4,21 +4,55 @@
 #include "PCanvas.h"
 
 PShapeBase::PShapeBase( PCanvas *pCanvas )
-    : QWidget( pCanvas )
+    : QGraphicsObject()
 {
     this->pCanvas = pCanvas;
-    // cover entire canvas - we are a temp layer
-    setGeometry( 0, 0, pCanvas->width(), pCanvas->height() );
-    setVisible( true );
 }
 
 PShapeBase::~PShapeBase()
 {
 }
 
+/*!
+ * \brief Scene wants this to paint itself. 
+ *  
+ * Ignore if this is StateIdle otherwise strip down the call and pass to doPaint. 
+ * 
+ * \author pharvey (2/10/23)
+ * 
+ * \param pPainter 
+ * \param nOption  
+ * \param pWidget  
+ */
+void PShapeBase::paint( QPainter *pPainter, const QStyleOptionGraphicsItem *nOption, QWidget *pWidget )
+{
+    Q_UNUSED( nOption );
+    Q_UNUSED( pWidget );
+
+    if ( nState == StateIdle ) return;
+    doPaint( pPainter );
+}
+
+/*!
+ * \brief Scene wants to know the geometry. 
+ *  
+ * We are a temp object which always covers the entire; scene/canvas/image. 
+ *  
+ * Derived classes should not need to change this. 
+ * 
+ * \author pharvey (2/10/23)
+ * 
+ * \return QRectF 
+ */
+QRectF PShapeBase::boundingRect() const
+{
+    if ( scene() ) return scene()->sceneRect();
+    return QRectF();
+}
+
 void PShapeBase::doCancel()
 {
-    if ( nState != StateIdle ) doIdle();
+    if ( nState != StateIdle ) doIdleState();
 }
 
 void PShapeBase::doCopy()
@@ -38,7 +72,7 @@ PHandle *PShapeBase::getHandle( const QPoint &pointPos )
     for ( int n = vectorHandles.count() - 1; n >=0; n-- )
     {
         PHandle *p = vectorHandles.at( n );
-        if ( p->geometry().contains( pointPos ) ) return p;
+        if ( p->boundingRect().contains( pointPos ) ) return p;
     }
     return nullptr;
 }

@@ -45,7 +45,7 @@ HEADERS += \
         include/PGraphicsScene.h \
         include/PGraphicsView.h \
         include/PHandle.h \
-        include/PLayers.h \
+#        include/PLayers.h \
         include/PPasteRectangle.h \
         include/PPenToolBar.h \
         include/PSelectEllipse.h \
@@ -77,7 +77,7 @@ SOURCES += \
         source/PGraphicsScene.cpp \
         source/PGraphicsView.cpp \
         source/PHandle.cpp \
-        source/PLayers.cpp \
+#        source/PLayers.cpp \
         source/PPasteRectangle.cpp \
         source/PPenToolBar.cpp \
         source/PSelectEllipse.cpp \

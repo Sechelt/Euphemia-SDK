@@ -8,23 +8,21 @@ PPasteRectangle::PPasteRectangle( PCanvas *pCanvas )
     : PDrawRectangle( pCanvas )
 {
     image = QGuiApplication::clipboard()->image();
-    doDraw( QPoint( 10, 10 ) );
-    doManipulate();
+    doDrawState( QPoint( 10, 10 ) );
+    doManipulateState();
 }
 
 PPasteRectangle::PPasteRectangle( PCanvas *pCanvas, const QImage &i )
     : PDrawRectangle( pCanvas )
 {
     image = i;
-    doDraw( QPoint( 10, 10 ) );
-    doManipulate();
+    doDrawState( QPoint( 10, 10 ) );
+    doManipulateState();
 }
 
-QRect PPasteRectangle::doPress( QMouseEvent *pEvent )
+void PPasteRectangle::doPress( PMouseEvent *pEvent )
 {
-    QRect rectUpdate;
-
-    if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
+    if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
@@ -34,26 +32,19 @@ QRect PPasteRectangle::doPress( QMouseEvent *pEvent )
         break;
     case StateManipulate:
         pHandle = getHandle( pEvent->pos() );
-        if ( !pHandle )
-        {
-            rectUpdate = doCommit();
-        }
+        if ( !pHandle ) doCommit();
         break;
     }
-
-    return rectUpdate;
 }
 
-QRect PPasteRectangle::doCommit()
+void PPasteRectangle::doCommit()
 {
     Q_ASSERT( nState == StateDraw || nState == StateManipulate );
 
-    QRect rectUpdate = r;
     QPainter painter( g_Context->getImage());
     doPaint( &painter );
     emit signalCommitted();
-    doIdle();
-    return rectUpdate;
+    doIdleState();
 }
 
 bool PPasteRectangle::canCommit()
@@ -86,7 +77,7 @@ void PPasteRectangle::doPaint( QPainter *pPainter )
     pPainter->drawImage( r, image );
 }
 
-void PPasteRectangle::doDraw( const QPoint &point )
+void PPasteRectangle::doDrawState( const QPoint &point )
 {
     Q_ASSERT( nState == StateIdle );
     r.setTopLeft( point );

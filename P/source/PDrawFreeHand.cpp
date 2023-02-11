@@ -8,7 +8,7 @@ PDrawFreeHand::PDrawFreeHand( PCanvas *pCanvas )
 {
 }
 
-QRect PDrawFreeHand::doPress( QMouseEvent *pEvent )
+void PDrawFreeHand::doPress( PMouseEvent *pEvent )
 {
     // init/reinit
     t = g_Context->getFreeHand();
@@ -43,20 +43,19 @@ QRect PDrawFreeHand::doPress( QMouseEvent *pEvent )
     }
 
     pointLast = pEvent->pos();
-    return QRect();
 }
 
-QRect PDrawFreeHand::doMove( QMouseEvent *pEvent )
+void PDrawFreeHand::doMove( PMouseEvent *pEvent )
 {
-    return doDraw( pEvent->pos() );
+    doDrawState( pEvent->pos() );
 }
 
-QRect PDrawFreeHand::doRelease( QMouseEvent *pEvent )
+void PDrawFreeHand::doRelease( PMouseEvent *pEvent )
 {
-    return doDraw( pEvent->pos() );
+    return doDrawState( pEvent->pos() );
 }
 
-QRect PDrawFreeHand::doDraw( const QPoint &point )
+void PDrawFreeHand::doDrawState( const QPoint &point )
 {
     switch ( t.nShape )
     {
@@ -75,27 +74,17 @@ QRect PDrawFreeHand::doDraw( const QPoint &point )
     return doDrawPen( point );
 }
 
-QRect PDrawFreeHand::doDrawPen( const QPoint &point )
+void PDrawFreeHand::doDrawPen( const QPoint &point )
 {
     // draw line
     QPainter painter( g_Context->getImage() );
     painter.setPen( pen );
     painter.drawLine( pointLast, point );
-    // calc rect to be updated - factor in pen width to avoid artifacts
-    int nW = pen.width();
-    QRect r( pointLast, point );
-    r = r.normalized();
-    r.setX( r.x() - nW );
-    r.setY( r.y() - nW );
-    r.setWidth( r.width() + nW );
-    r.setHeight( r.height() + nW );
     // ready for next
     pointLast = point;
-
-    return r;
 }
 
-QRect PDrawFreeHand::doDrawEllipse( const QPoint &point )
+void PDrawFreeHand::doDrawEllipse( const QPoint &point )
 {
     QRect r( point, t.size );
     r.moveCenter( point );
@@ -107,11 +96,9 @@ QRect PDrawFreeHand::doDrawEllipse( const QPoint &point )
     painter.drawEllipse( r );
     // ready for next
     pointLast = point;
-
-    return r;
 }
 
-QRect PDrawFreeHand::doDrawRectangle( const QPoint &point )
+void PDrawFreeHand::doDrawRectangle( const QPoint &point )
 {
     QRect r( point, t.size );
     r.moveCenter( point );
@@ -123,11 +110,9 @@ QRect PDrawFreeHand::doDrawRectangle( const QPoint &point )
     painter.drawRect( r );
     // ready for next
     pointLast = point;
-
-    return r;
 }
 
-QRect PDrawFreeHand::doDrawCross( const QPoint &point )
+void PDrawFreeHand::doDrawCross( const QPoint &point )
 {
     QRect r( point, t.size );
     r.moveCenter( point );
@@ -137,26 +122,16 @@ QRect PDrawFreeHand::doDrawCross( const QPoint &point )
     painter.setPen( pen );
     painter.drawLine( r.left(), r.top() + r.height() / 2, r.right(), r.top() + r.height() / 2 );
     painter.drawLine( r.left() + r.width() / 2, r.top(), r.left() + r.width() / 2, r.bottom() );
-    // calc rect to be updated - factor in pen width to avoid artifacts
-    int nW = pen.width();
-    r.setX( r.x() - nW );
-    r.setY( r.y() - nW );
-    r.setWidth( r.width() + nW );
-    r.setHeight( r.height() + nW );
     // ready for next
     pointLast = point;
-
-    return r;
 }
 
-QRect PDrawFreeHand::doDrawImage( const QPoint &point )
+void PDrawFreeHand::doDrawImage( const QPoint &point )
 {
     QPainter painter( g_Context->getImage() );
     painter.drawImage( pointLast, t.image );
     // update last point even though we do not need it in this case
     pointLast = point;
-
-    return QRect( point, t.size );
 }
 
 //
