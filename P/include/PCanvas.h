@@ -97,7 +97,7 @@ public:
     void doMoveEvent( QGraphicsSceneMouseEvent *pEvent );
     void doReleaseEvent( QGraphicsSceneMouseEvent *pEvent );
 
-    bool doOpen();
+    bool doOpen( const QString &s = QString() );
     bool doSave();
     bool doSaveAs();
     bool doClose();
@@ -134,6 +134,7 @@ public slots:
 signals:
     void signalPos( const QPoint & );
     void signalChangedState();
+    void signalChangedFileName( const QString & );
 
 protected slots:
     void slotCommitted();

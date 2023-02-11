@@ -47,8 +47,11 @@ void PCanvas::setBackground( const QColor &color )
                                                         
 QImage PCanvas::getCopy()
 {
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
     if ( !pShapeBase ) return QImage();
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
     if ( !pShapeBase->canCopy() ) return QImage();
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
     return pShapeBase->getCopy();
 }
 
@@ -233,7 +236,7 @@ void PCanvas::doReleaseEvent( QGraphicsSceneMouseEvent *pEvent )
  * 
  * \return bool 
  */
-bool PCanvas::doOpen()
+bool PCanvas::doOpen( const QString &s )
 {
     // save any changes
     // - not likley to ever be modified here as open will be called from a new state - but just in case
@@ -247,7 +250,9 @@ bool PCanvas::doOpen()
     }
 
     // get a file name
-    QString stringFileName = QFileDialog::getOpenFileName( qApp->activeWindow(), tr( "Select Image..." ), QString(), tr("Image (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm)") );
+    QString stringFileName = s;
+    if ( stringFileName.isEmpty() )
+        stringFileName = QFileDialog::getOpenFileName(qApp->activeWindow(), tr("Select Image..."), QString(), tr("Image (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm)"));
     if ( stringFileName.isEmpty() ) return false;
 
     // Qt supports svg but not via QImage
@@ -265,6 +270,7 @@ bool PCanvas::doOpen()
         }
 
         this->stringFileName = stringFileName;
+        emit signalChangedFileName( stringFileName );
         setModified( false );
         update();
         return true;
@@ -311,6 +317,7 @@ bool PCanvas::doSaveAs()
     if ( writer.write( image ) ) 
     {
         this->stringFileName = stringFileName;
+        emit signalChangedFileName( stringFileName );
         setModified( false );
         return true;
     }
@@ -702,6 +709,7 @@ void PCanvas::doClear()
 {
     image.fill( colorBackground );
     stringFileName = QString();
+    emit signalChangedFileName( stringFileName );
     setModified( false );
     update();
 }
