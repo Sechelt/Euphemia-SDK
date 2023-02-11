@@ -83,12 +83,12 @@ public:
     void setZoom( WZoomWidget::FitTypes nFit, int nZoom );
     void setTool( Tools n );
     void setAutoCommit( bool ); 
-    void setBackground( const QColor & );
+    void setBackground( const QColor & ); // a default color for a new image - not the same as PBackground
 
     QImage                  getCopy();
     int                     getZoom() { return nZoom; }
     WZoomWidget::FitTypes   getFit() { return nFit; }
-    bool                    getAutoCommit() { return bAutoCommit; }
+    bool                    getAutoCommit();
     QString                 getFileName() { return stringFileName; }
     QColor                  getBackground() { return colorBackground; }
 
@@ -150,7 +150,6 @@ private:
     void doClear();
 
     Tools       nTool                       = ToolDrawLine;
-    bool        bAutoCommit                 = false;
     QString     stringFileName;
     bool        bModified                   = false;
     QColor      colorBackground;

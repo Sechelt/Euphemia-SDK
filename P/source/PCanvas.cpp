@@ -24,27 +24,37 @@ void PCanvas::setTool( Tools n )
 
 void PCanvas::setAutoCommit( bool b )
 {
+    PContextGeneral t = g_Context->getGeneral();
+    if ( t.bAutoCommit == b ) return;
+
     if ( isDrawing() ) doCancel();
-    bAutoCommit = b;
+
+    t.bAutoCommit = b;
+    g_Context->setGeneral( t );
 }
 
-void PCanvas::setBackground( const QColor &color )
-{
-    colorBackground = color;
-    if (  colorBackground == QColor( Qt::transparent ) ) 
-    {
-        colorBackground.setAlpha( 0 );
-        bBackgroundTransparent = true;
-    }
-    else
-        bBackgroundTransparent = false;
-}
-
+void PCanvas::setBackground( const QColor &color )      
+{                                                       
+    colorBackground = color;                            
+    if (  colorBackground == QColor( Qt::transparent ) )
+    {                                                   
+        colorBackground.setAlpha( 0 );                  
+        bBackgroundTransparent = true;                  
+    }                                                   
+    else                                                
+        bBackgroundTransparent = false;                 
+}                                                       
+                                                        
 QImage PCanvas::getCopy()
 {
     if ( !pShapeBase ) return QImage();
     if ( !pShapeBase->canCopy() ) return QImage();
     return pShapeBase->getCopy();
+}
+
+bool PCanvas::getAutoCommit()
+{
+    return g_Context->getGeneral().bAutoCommit;
 }
 
 void PCanvas::doDoubleClickEvent( QGraphicsSceneMouseEvent *pEvent )

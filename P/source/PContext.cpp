@@ -127,6 +127,7 @@ PContextGeneral::PContextGeneral()
 void PContextGeneral::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
 {
     pdomElem->setAttribute( "RestoreState", bRestoreState );
+    pdomElem->setAttribute( "AutoCommit", bAutoCommit );
     pdomElem->appendChild( WPersistNative::doSaveBrush( brushTransparency, pdomDoc, "BrushTransparency" ) );
 }
 
@@ -136,6 +137,8 @@ void PContextGeneral::doLoad( QDomElement *pdomElem )
     brushTransparency = QBrush();
 
     bRestoreState = Qt::AlignmentFlag(pdomElem->attribute( "RestoreState", QString::number( int(bRestoreState) ) ).toInt());
+    bAutoCommit = Qt::AlignmentFlag(pdomElem->attribute( "AutoCommit", QString::number( int(bAutoCommit) ) ).toInt());
+
     // load child nodes (of interest)
     QDomElement         domElem;
     QDomNode            domNode;

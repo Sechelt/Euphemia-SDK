@@ -10,7 +10,7 @@ class PContextFreeHand
 public:
     enum Shapes
     {
-        ShapePen,           /*!< uses current pen to draw a line from last point to current point - easily most eficient    */
+        ShapePen,           /*!< uses current pen to draw a line from last point to current point - easily most efficient   */
         ShapeEllipse,       /*!< ellipse filled with current pen color and of specified size                                */
         ShapeRectangle,     /*!< rectangle filled with current pen color and of specified size                              */
         ShapeCross,         /*!< a horizontal and vertical line with current pen color and of specified size                */
@@ -139,13 +139,15 @@ class PContextGeneral
 public:
     PContextGeneral();
 
-    QBrush brushTransparency;           /*!< brush to use to represent transparency - default is block pattern but a solid color may be easier to work with     */
-    bool   bRestoreState = true;        /*!< UI restore does not always work on Linux under Wayland due to a Qt problem - so here we can turn it off            */
+    QBrush  brushTransparency;           /*!< brush to use to represent transparency - default is block pattern but a solid color may be easier to work with     */
+    bool    bRestoreState = true;        /*!< UI restore does not always work on Linux under Wayland due to a Qt problem - so here we can turn it off            */
+    bool    bAutoCommit = true;
 
     inline bool operator==( const PContextGeneral &t ) 
     {
         if ( t.brushTransparency != brushTransparency ) return false;
         if ( t.bRestoreState != bRestoreState ) return false;
+        if ( t.bAutoCommit != bAutoCommit ) return false;
         return true;
     }
 
