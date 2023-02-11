@@ -20,7 +20,6 @@ void PGraphicsView::setScale( qreal n )
 {
 
     // 1
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ <<"]" << getScaleH() << n;
  //   scale( n, n );
 
     // 2

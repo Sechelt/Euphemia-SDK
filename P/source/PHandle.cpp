@@ -118,7 +118,7 @@ void PHandle::doMoveBy( qreal nX, qreal nY )
 
 void PHandle::doMoveBy( const QPointF &pointDelta )
 {
-    r.moveCenter( r.center() - pointDelta );
+    r.moveCenter( r.center() + pointDelta );
 }
 
 

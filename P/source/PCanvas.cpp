@@ -6,7 +6,7 @@
 PCanvas::PCanvas()
 {
 //    setAttribute( Qt::WA_StaticContents );
-//    setBackground( QColor( Qt::transparent ) );
+      setBackground( QColor( Qt::transparent ) );
 //    setMouseTracking( true );
 }
 
