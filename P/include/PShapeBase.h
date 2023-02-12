@@ -48,9 +48,10 @@ signals:
 
 protected:
     States              nState = StateIdle;
-    PCanvas *           pCanvas;
-    QVector<PHandle*>   vectorHandles;              /*!< Handles are children of canvas widget and are shown on top of shape due to z-order. */
-    PHandle *           pHandle = nullptr;          /*!< Handle being moved.                                */
+    PGraphicsView *     pView;                      /*!< view with focus - handles belong here - in pCanvas but we use it a lot so its here     */
+    PCanvas *           pCanvas;                    /*!< canvas we are drawing on                                                               */
+    QVector<PHandle*>   vectorHandles;              /*!< Handles are children of canvas widget and are shown on top of shape due to z-order.    */
+    PHandle *           pHandle = nullptr;          /*!< Handle being moved.                                                                    */
 
     virtual PHandle *   getHandle( const QPoint &pointPos );
     virtual QImage      getMask() { return QImage();  }

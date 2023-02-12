@@ -7,6 +7,7 @@ PShapeBase::PShapeBase( PCanvas *pCanvas )
     : QGraphicsObject()
 {
     this->pCanvas = pCanvas;
+    pView = pCanvas->getView();
 }
 
 PShapeBase::~PShapeBase()
@@ -69,10 +70,11 @@ bool PShapeBase::canCancel()
 PHandle *PShapeBase::getHandle( const QPoint &pointPos )
 {
     // search in REVERSE order to reflect z-order
-    for ( int n = vectorHandles.count() - 1; n >=0; n-- )
+    for ( int n = vectorHandles.count() - 1; n >= 0; n-- )
     {
         PHandle *p = vectorHandles.at( n );
-        if ( p->boundingRect().contains( pointPos ) ) return p;
+        QRect r = pView->mapToScene( p->geometry() ).boundingRect().toRect();
+        if ( r.contains( pointPos ) ) return p;
     }
     return nullptr;
 }

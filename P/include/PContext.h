@@ -139,9 +139,9 @@ class PContextGeneral
 public:
     PContextGeneral();
 
-    QBrush  brushTransparency;           /*!< brush to use to represent transparency - default is block pattern but a solid color may be easier to work with     */
-    bool    bRestoreState = true;        /*!< UI restore does not always work on Linux under Wayland due to a Qt problem - so here we can turn it off            */
-    bool    bAutoCommit = true;
+    QBrush  brushTransparency;          /*!< brush to use to represent transparency - default is block pattern but a solid color may be easier to work with     */
+    bool    bRestoreState = false;      /*!< UI restore does not always work on Linux under Wayland due to a Qt problem - so here we can turn it on/off         */
+    bool    bAutoCommit = true;         /*!< objects derived from PShapeBase can be manipulated before committing to image - here you can turn it on/off        */
 
     inline bool operator==( const PContextGeneral &t ) 
     {

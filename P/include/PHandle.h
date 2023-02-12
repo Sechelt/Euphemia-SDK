@@ -1,20 +1,26 @@
 #ifndef H_PHandle
 #define H_PHandle
 
-#include "P.h"
+#include "PGraphicsView.h"
 
 /*!
  * \brief Handle used to allow User to manipulate lines/shapes. 
  *  
- * Unlike; canvas, shapes, etc - this; 
+ * The handles are a child of the current PGraphivsView::viewport. 
  *  
- *      - is not the same size as scene/canvas/image (its smaller)
- *      - is purely in double precision
- *      - will try to maintain consistent size even during zoom by countering scale change
- * 
+ * This means that they avoid being scaled either in the main viewport 
+ * or a minimap viewport. The downside is that there is more coordinate 
+ * mapping. 
+ *  
+ * The coordinate mapping is done by the PCanvas. The handle simply 
+ * assumes all coordinates are relative to its parent - the viewport. 
+ *  
+ * The handle does not even care about its mouse events. It relies on 
+ * the canvas to manage it position. 
+ *  
  * \author pharvey (2/10/23)
  */
-class PHandle : public QGraphicsObject
+class PHandle : public QWidget
 {
     Q_OBJECT
 public:
@@ -32,23 +38,22 @@ public:
         TypeSizeBottomLeft
     };
 
-    PHandle( Type nType, const QPointF &pointCenter );
+    PHandle( PGraphicsView *pView, Type nType, const QPoint &pointCenter );
 
-    virtual void paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0 ) override;
-    virtual QRectF boundingRect() const override;
+    void paintEvent( QPaintEvent *pEvent );
 
     void setType( Type );
-    void setCenter( const QPointF & );
+    void setCenter( const QPoint & );
 
-    Type    getType()   { return nType; }
-    QPointF getCenter() { return r.center(); }
+    Type    getType()   { return nType;         }
+    QPoint  getCenter() { return geometry().center();    }
 
-    void doMoveBy( qreal nX, qreal nY );
-    void doMoveBy( const QPointF & );
+    void doMoveBy( int nX, int nY );
+    void doMoveBy( const QPoint & );
 
 protected:
-    QRectF  r;
-    Type    nType;
+    Type            nType;
+    PGraphicsView * pView;
 };
 
 #endif

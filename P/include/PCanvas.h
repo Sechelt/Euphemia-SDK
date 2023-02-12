@@ -1,8 +1,6 @@
 #ifndef H_PCanvas
 #define H_PCanvas
 
-#include <WZoomWidget.h>
-
 #include "PPasteRectangle.h"
 #include "PSelectEllipse.h"
 #include "PSelectPolygon.h"
@@ -20,7 +18,8 @@
 #include "PDrawEllipseFilled.h"
 #include "PDrawText.h"
 
-class PCanvasView;
+class PGraphicsView;
+class PGraphicsScene;
 
 /*!
  * \brief A canvas which facilitates viewing/editing of a QImage.
@@ -80,14 +79,15 @@ public:
     virtual void paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0 ) override;
     virtual QRectF boundingRect() const override;
 
-    void setZoom( WZoomWidget::FitTypes nFit, int nZoom );
+    void setZoom( int nZoom );
     void setTool( Tools n );
     void setAutoCommit( bool ); 
     void setBackground( const QColor & ); // a default color for a new image - not the same as PBackground
 
+    PGraphicsView *         getView();
+    PGraphicsScene *        getScene();
     QImage                  getCopy();
     int                     getZoom() { return nZoom; }
-    WZoomWidget::FitTypes   getFit() { return nFit; }
     bool                    getAutoCommit();
     QString                 getFileName() { return stringFileName; }
     QColor                  getBackground() { return colorBackground; }
@@ -158,8 +158,10 @@ private:
     bool        bPaste                      = false;
 
     // zoom
-    WZoomWidget::FitTypes nFit = WZoomWidget::FitIgnore;
-    int nZoom   = 100;
+    // - this is so zoom widget can be updated - to get the scale at play access this->scale() or scene()->scale()
+    // - ie PHandle may want to counter the scale the scene has applied to it
+    int nZoom = 100; // % 
+                    
 
     QImage          image;
     QImage          imagePreCommit;

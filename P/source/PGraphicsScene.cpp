@@ -1,6 +1,8 @@
 #include "LibInfo.h"
 #include "PGraphicsScene.h"
 
+#include "PCanvas.h"
+
 PGraphicsScene::PGraphicsScene( const QRectF &r, QObject *pObject )
     : QGraphicsScene( r, pObject )
 {

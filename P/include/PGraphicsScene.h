@@ -2,7 +2,8 @@
 #define H_PGraphicsScene
 
 #include "PBackground.h"
-#include "PCanvas.h"
+
+class PCanvas;
 
 /*!
  * \brief A graphics scene.

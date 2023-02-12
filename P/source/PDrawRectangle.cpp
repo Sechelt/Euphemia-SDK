@@ -155,25 +155,25 @@ void PDrawRectangle::doCreateHandles()
 {
     Q_ASSERT( vectorHandles.count() == 0 );
 
+    // their parent will be the viewport so...
+    QRect rectView = pView->mapFromScene( r ).boundingRect();
+
     // Order matters when handles share a position. Last handle will be found first.
     PHandle *pHandle;
 
     // PDrawRectangleBegin
-    pHandle = new PHandle( PHandle::TypeSizeTopLeft, r.topLeft() );
+    pHandle = new PHandle( pView, PHandle::TypeSizeTopLeft, rectView.topLeft() );
     vectorHandles.append( pHandle );
-    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // PDrawRectangleMove
-    pHandle = new PHandle( PHandle::TypeDrag, r.center() );
+    pHandle = new PHandle( pView, PHandle::TypeDrag, rectView.center() );
     vectorHandles.append( pHandle );
-    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // PDrawRectangleEnd
-    pHandle = new PHandle( PHandle::TypeSizeBottomRight, r.bottomRight() );
+    pHandle = new PHandle( pView, PHandle::TypeSizeBottomRight, rectView.bottomRight() );
     vectorHandles.append( pHandle );
-    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 }
 
@@ -181,30 +181,44 @@ void PDrawRectangle::doMoveHandle( const QPoint &pointPos )
 {
     Q_ASSERT( pHandle );
 
+    // adjust our geometry
     if ( pHandle == vectorHandles[PDrawRectangleBegin] )
     {
         r.setTopLeft( pointPos );
-        pHandle->setCenter( pointPos );
-        // adjust move handle
-        vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
-        doSyncHandleTypes();
     }
     else if ( pHandle == vectorHandles[PDrawRectangleMove] )
     {
         QPoint pointDiff = pointPos - r.center();
         r.setTopLeft( r.topLeft() + pointDiff );
         r.setBottomRight( r.bottomRight() + pointDiff );
-        // adjust all handles
-        vectorHandles[PDrawRectangleBegin]->setCenter( r.topLeft() );
-        vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
-        vectorHandles[PDrawRectangleEnd]->setCenter( r.bottomRight() );
     }
     else if ( pHandle == vectorHandles[PDrawRectangleEnd] )
     {
         r.setBottomRight( pointPos );
-        pHandle->setCenter( pointPos );
-        // adjust move handle
-        vectorHandles[PDrawRectangleMove]->setCenter( r.center() );
+    }
+
+    // adjust handles
+
+    // their parent is the viewport so...
+    QRect   rectView    = pView->mapFromScene( r ).boundingRect();
+    QPoint  pointView   = pView->mapFromScene( pointPos );
+
+    if ( pHandle == vectorHandles[PDrawRectangleBegin] )
+    {
+        pHandle->setCenter( pointView );
+        vectorHandles[PDrawRectangleMove]->setCenter( rectView.center() );
+        doSyncHandleTypes();
+    }
+    else if ( pHandle == vectorHandles[PDrawRectangleMove] )
+    {
+        vectorHandles[PDrawRectangleBegin]->setCenter( rectView.topLeft() );
+        vectorHandles[PDrawRectangleMove]->setCenter( rectView.center() );
+        vectorHandles[PDrawRectangleEnd]->setCenter( rectView.bottomRight() );
+    }
+    else if ( pHandle == vectorHandles[PDrawRectangleEnd] )
+    {
+        pHandle->setCenter( pointView );
+        vectorHandles[PDrawRectangleMove]->setCenter( rectView.center() );
         doSyncHandleTypes();
     }
     update();
@@ -212,16 +226,16 @@ void PDrawRectangle::doMoveHandle( const QPoint &pointPos )
 
 void PDrawRectangle::doSyncHandleTypes()
 {
-    QRectF rect = r.normalized();
+    QRect rectView = pView->mapFromScene( r.normalized() ).boundingRect();
 
-    if ( vectorHandles[PDrawRectangleBegin]->boundingRect().contains( rect.topLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopLeft );             
-    else if ( vectorHandles[PDrawRectangleBegin]->boundingRect().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopRight );      
-    else if ( vectorHandles[PDrawRectangleBegin]->boundingRect().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomLeft );  
-    else if ( vectorHandles[PDrawRectangleBegin]->boundingRect().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomRight );
+    if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rectView.topLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopLeft );             
+    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rectView.topRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeTopRight );      
+    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rectView.bottomLeft() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomLeft );  
+    else if ( vectorHandles[PDrawRectangleBegin]->geometry().contains( rectView.bottomRight() ) ) vectorHandles[PDrawRectangleBegin]->setType( PHandle::TypeSizeBottomRight );
                                                                                                                                                                        
-    if ( vectorHandles[PDrawRectangleEnd]->boundingRect().contains( rect.topLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopLeft );                 
-    else if ( vectorHandles[PDrawRectangleEnd]->boundingRect().contains( rect.topRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopRight );          
-    else if ( vectorHandles[PDrawRectangleEnd]->boundingRect().contains( rect.bottomLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomLeft );      
-    else if ( vectorHandles[PDrawRectangleEnd]->boundingRect().contains( rect.bottomRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomRight );    
+    if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rectView.topLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopLeft );                 
+    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rectView.topRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeTopRight );          
+    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rectView.bottomLeft() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomLeft );      
+    else if ( vectorHandles[PDrawRectangleEnd]->geometry().contains( rectView.bottomRight() ) ) vectorHandles[PDrawRectangleEnd]->setType( PHandle::TypeSizeBottomRight );    
 }
 

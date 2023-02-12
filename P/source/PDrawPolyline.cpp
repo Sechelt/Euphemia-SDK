@@ -209,20 +209,22 @@ void PDrawPolyline::doCreateHandles()
 {
     Q_ASSERT( vectorHandles.count() == 0 );
 
+    // their parent will be the viewport so...
+    QPolygon polygonView = pView->mapFromScene( polygon );
+
+    // Order matters when handles share a position. Last handle will be found first.
     PHandle *pHandle;
 
     // move handle is always vectorHandles[0]
-    pHandle = new PHandle( PHandle::TypeDrag, polygon.boundingRect().center() );
+    pHandle = new PHandle( pView, PHandle::TypeDrag, polygonView.boundingRect().center() );
     vectorHandles.append( pHandle );
-    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // add a handle for each point
-    for ( QPoint point : polygon )
+    for ( QPoint point : polygonView )
     {
-        pHandle = new PHandle( PHandle::TypeMovePoint, point );
+        pHandle = new PHandle( pView, PHandle::TypeMovePoint, point );
         vectorHandles.append( pHandle );
-        pCanvas->scene()->addItem( pHandle );
         pHandle->show();
     }
 }
@@ -243,10 +245,14 @@ void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
 {
     Q_ASSERT( pHandle );
 
+    // their parent will be the viewport so...
+    QPolygon    polygonView     = pView->mapFromScene( polygon );
+    QPoint      pointViewPos    = pView->mapFromScene( pointPos );
+
     // move handle?
     if ( pHandle == vectorHandles[0] )
     {
-        QPoint pointDelta = pointPos - pHandle->getCenter().toPoint();
+        QPoint pointDelta = pointPos - pView->mapToScene( pHandle->getCenter() ).toPoint();
         // move points
         for ( int n = 0; n < polygon.count(); n++ )
         {
@@ -259,10 +265,10 @@ void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
         return;
     }
 
-    // point handle
-    pHandle->setCenter( pointPos );
+    // just a single point handle
+    pHandle->setCenter( pointViewPos );
     polygon.replace( vectorHandles.indexOf( pHandle ) - 1, pointPos );
-    vectorHandles.at( 0 )->setCenter( polygon.boundingRect().center() );
+    vectorHandles.at( 0 )->setCenter( polygonView.boundingRect().center() );
     update();
 }
 

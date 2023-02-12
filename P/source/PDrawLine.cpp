@@ -163,31 +163,31 @@ void PDrawLine::doCreateHandles()
 {
     Q_ASSERT( vectorHandles.count() == 0 );
 
-    PHandle *pHandle;
+    // their parent will be the viewport so...
+    QPoint pointViewBegin   = pView->mapFromScene( pointBegin );
+    QPoint pointViewEnd     = pView->mapFromScene( pointEnd );
 
     // Order matters when handles share a position. Last handle will be found first.
+    PHandle *pHandle;
 
     // PDrawLineBegin
-    pHandle = new PHandle( PHandle::TypeMovePoint, pointBegin );
+    pHandle = new PHandle( pView, PHandle::TypeMovePoint, pointViewBegin );
     vectorHandles.append( pHandle );
-    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // PDrawLineMove
     QRect r;
-    r.setTopLeft( pointBegin );
-    r.setBottomRight( pointEnd );
+    r.setTopLeft( pointViewBegin );
+    r.setBottomRight( pointViewEnd );
     r = r.normalized();
 
-    pHandle = new PHandle( PHandle::TypeDrag, r.center() );
+    pHandle = new PHandle( pView, PHandle::TypeDrag, r.center() );
     vectorHandles.append( pHandle );
-    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 
     // PDrawLineEnd
-    pHandle = new PHandle( PHandle::TypeMovePoint, pointEnd );
+    pHandle = new PHandle( pView, PHandle::TypeMovePoint, pointViewEnd );
     vectorHandles.append( pHandle );
-    pCanvas->scene()->addItem( pHandle );
     pHandle->show();
 }
 
@@ -195,17 +195,11 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
 {
     Q_ASSERT( pHandle );
 
+    // adjust our geometry
     if ( pHandle == vectorHandles[PDrawLineBegin] )
     {
         // move the begin 
         pointBegin = pointPos;
-        pHandle->setCenter( pointBegin );
-        // get center
-        QRectF r;
-        r.setTopLeft( pointBegin );
-        r.setBottomRight( pointEnd );
-        // adjust move handle
-        vectorHandles[PDrawLineMove]->setCenter( r.center() );
     }
     else if ( pHandle == vectorHandles[PDrawLineMove] )
     {
@@ -218,20 +212,41 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
         // update points
         pointBegin += pointDiff;
         pointEnd += pointDiff;
-        // adjust all handles
-        vectorHandles[PDrawLineBegin]->setCenter( pointBegin );
-        vectorHandles[PDrawLineMove]->setCenter( pointPos );
-        vectorHandles[PDrawLineEnd]->setCenter( pointEnd );
     }
     else if ( pHandle == vectorHandles[PDrawLineEnd] )
     {
         // move the end 
         pointEnd = pointPos;
-        pHandle->setCenter( pointEnd );
+    }
+
+    // adjust handles
+    QPoint  pointViewBegin  = pView->mapFromScene( pointBegin );
+    QPoint  pointViewPos    = pView->mapFromScene( pointPos );
+    QPoint  pointViewEnd    = pView->mapFromScene( pointEnd );
+
+    if ( pHandle == vectorHandles[PDrawLineBegin] )
+    {
+        pHandle->setCenter( pointViewBegin );
         // get center
-        QRectF r;
-        r.setTopLeft( pointBegin );
-        r.setBottomRight( pointEnd );
+        QRect r;
+        r.setTopLeft( pointViewBegin );
+        r.setBottomRight( pointViewEnd );
+        // adjust move handle
+        vectorHandles[PDrawLineMove]->setCenter( r.center() );
+    }
+    else if ( pHandle == vectorHandles[PDrawLineMove] )
+    {
+        vectorHandles[PDrawLineBegin]->setCenter( pointViewBegin );
+        vectorHandles[PDrawLineMove]->setCenter( pointViewPos );
+        vectorHandles[PDrawLineEnd]->setCenter( pointViewEnd );
+    }
+    else if ( pHandle == vectorHandles[PDrawLineEnd] )
+    {
+        pHandle->setCenter( pointViewEnd );
+        // get center
+        QRect r;
+        r.setTopLeft( pointViewBegin );
+        r.setBottomRight( pointViewEnd );
         // adjust move handle
         vectorHandles[PDrawLineMove]->setCenter( r.center() );
     }

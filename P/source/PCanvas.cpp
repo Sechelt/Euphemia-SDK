@@ -1,6 +1,9 @@
 #include "LibInfo.h"
 #include "PCanvas.h"
 
+#include "PGraphicsView.h"
+#include "PGraphicsScene.h"
+
 #include "PContext.h"
 
 PCanvas::PCanvas()
@@ -10,10 +13,11 @@ PCanvas::PCanvas()
 //    setMouseTracking( true );
 }
 
-void PCanvas::setZoom( WZoomWidget::FitTypes nFit, int nZoom )
+void PCanvas::setZoom(  int n  )
 {
-    this->nFit = nFit;
-    this->nZoom = nZoom;
+    Q_ASSERT( n >= 10 );    // max zoom out to 10% 
+    Q_ASSERT( n <= 300 );   // max zoom in to 300% 
+    nZoom = n;
 }
 
 void PCanvas::setTool( Tools n )
@@ -45,13 +49,27 @@ void PCanvas::setBackground( const QColor &color )
         bBackgroundTransparent = false;                 
 }                                                       
                                                         
+PGraphicsView *PCanvas::getView()
+{
+    // get view with focus 
+    QList <QGraphicsView *> l = scene()->views();
+    for ( QGraphicsView *p : l )
+    {
+        if ( p->hasFocus() ) return (PGraphicsView *)p;
+    }
+
+    return nullptr;
+}
+
+PGraphicsScene *PCanvas::getScene() 
+{ 
+    return (PGraphicsScene*)scene(); 
+}
+
 QImage PCanvas::getCopy()
 {
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
     if ( !pShapeBase ) return QImage();
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
     if ( !pShapeBase->canCopy() ) return QImage();
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
     return pShapeBase->getCopy();
 }
 
