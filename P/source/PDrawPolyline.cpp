@@ -229,6 +229,18 @@ void PDrawPolyline::doCreateHandles()
     }
 }
 
+void PDrawPolyline::doSyncHandles()
+{
+    QPolygon polygonView = pView->mapFromScene( polygon );
+
+    vectorHandles[0]->setCenter( polygonView.boundingRect().center() );
+    for ( int n = 0; n < polygonView.count(); n++ )
+    {
+        vectorHandles[n+1]->setCenter( polygonView[n] );
+    }
+}
+
+
 /*!
  * \brief Move current handle.
  *  

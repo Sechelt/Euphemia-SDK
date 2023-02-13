@@ -95,6 +95,7 @@ void PDrawErase::doDrawShape( const QPoint &point )
         }
         break;
     }
+    pCanvas->update();
 }
 
 void PDrawErase::doFill( const QRect &rect, const QImage &imageMask, QImage *pImageCanvas, const QColor &colorMask )

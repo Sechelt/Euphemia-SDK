@@ -177,6 +177,15 @@ void PDrawRectangle::doCreateHandles()
     pHandle->show();
 }
 
+void PDrawRectangle::doSyncHandles()
+{
+    QRect rectView = pView->mapFromScene( r.normalized() ).boundingRect();
+
+    vectorHandles[PDrawRectangleBegin]->setCenter( rectView.topLeft() );
+    vectorHandles[PDrawRectangleMove]->setCenter( rectView.center() );
+    vectorHandles[PDrawRectangleEnd]->setCenter( rectView.bottomRight() );
+}
+
 void PDrawRectangle::doMoveHandle( const QPoint &pointPos )
 {
     Q_ASSERT( pHandle );

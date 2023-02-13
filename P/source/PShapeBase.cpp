@@ -62,6 +62,12 @@ void PShapeBase::doCopy()
      clipboard->setImage( getCopy() );
 }
 
+void PShapeBase::doZoom()
+{
+    if ( nState != StateManipulate ) return;
+    doSyncHandles();
+}
+
 bool PShapeBase::canCancel() 
 {
     return nState == StateManipulate;

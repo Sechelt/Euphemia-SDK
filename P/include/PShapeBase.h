@@ -34,6 +34,7 @@ public:
     virtual void doCancel();                                    /*!< reset state to StateIdle                                                   */
     virtual void doCut() {}
     virtual void doCopy();
+    virtual void doZoom();
 
     virtual bool    canCommit() { return nState == StateManipulate; }
     virtual bool    canCancel();
@@ -66,6 +67,7 @@ protected:
 
     virtual void doCreateHandles() = 0;
     virtual void doDeleteHandles();
+    virtual void doSyncHandles() = 0;
     virtual void doShowHandles( bool b = true );
 };
 

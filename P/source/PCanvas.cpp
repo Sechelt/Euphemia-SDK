@@ -13,13 +13,6 @@ PCanvas::PCanvas()
 //    setMouseTracking( true );
 }
 
-void PCanvas::setZoom(  int n  )
-{
-    Q_ASSERT( n >= 10 );    // max zoom out to 10% 
-    Q_ASSERT( n <= 300 );   // max zoom in to 300% 
-    nZoom = n;
-}
-
 void PCanvas::setTool( Tools n )
 {
     if ( isDrawing() ) doCancel();
@@ -544,6 +537,11 @@ void PCanvas::slotCommitted()
     setModified();
     // setModified may - or may not - have done this so we do it here to ensure it happens
     emit signalChangedState(); 
+}
+
+void PCanvas::slotZoomChanged()
+{
+    if ( pShapeBase ) pShapeBase->doZoom();
 }
 
 void PCanvas::paint( QPainter *pPainter, const QStyleOptionGraphicsItem *nOption, QWidget *pWidget )

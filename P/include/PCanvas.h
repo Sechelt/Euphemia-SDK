@@ -79,7 +79,6 @@ public:
     virtual void paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0 ) override;
     virtual QRectF boundingRect() const override;
 
-    void setZoom( int nZoom );
     void setTool( Tools n );
     void setAutoCommit( bool ); 
     void setBackground( const QColor & ); // a default color for a new image - not the same as PBackground
@@ -87,7 +86,6 @@ public:
     PGraphicsView *         getView();
     PGraphicsScene *        getScene();
     QImage                  getCopy();
-    int                     getZoom() { return nZoom; }
     bool                    getAutoCommit();
     QString                 getFileName() { return stringFileName; }
     QColor                  getBackground() { return colorBackground; }
@@ -109,7 +107,6 @@ public:
     void doRedo();
     void doSelectAll();
     void doSelectNone();
-
     void doCommit();
     void doCancel();
 
@@ -138,6 +135,7 @@ signals:
 
 protected slots:
     void slotCommitted();
+    void slotZoomChanged();
 
 protected:
 
@@ -156,12 +154,6 @@ private:
     QColor      colorBackground;
     bool        bBackgroundTransparent      = true;
     bool        bPaste                      = false;
-
-    // zoom
-    // - this is so zoom widget can be updated - to get the scale at play access this->scale() or scene()->scale()
-    // - ie PHandle may want to counter the scale the scene has applied to it
-    int nZoom = 100; // % 
-                    
 
     QImage          image;
     QImage          imagePreCommit;

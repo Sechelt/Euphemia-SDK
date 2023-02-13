@@ -49,6 +49,8 @@ void PDrawSpray::doSpray( const QPoint &point )
 
         painter.drawPoint( pointSpray );
     }
+
+    pCanvas->update();
 }
 
 double PDrawSpray::getRandom()

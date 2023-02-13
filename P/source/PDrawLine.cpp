@@ -191,6 +191,15 @@ void PDrawLine::doCreateHandles()
     pHandle->show();
 }
 
+void PDrawLine::doSyncHandles()
+{
+    QRect rectView = pView->mapFromScene( QRect( pointBegin, pointEnd ).normalized() ).boundingRect();
+
+    vectorHandles[PDrawLineBegin]->setCenter( rectView.topLeft() );
+    vectorHandles[PDrawLineMove]->setCenter( rectView.center() );
+    vectorHandles[PDrawLineEnd]->setCenter( rectView.bottomRight() );
+}
+
 void PDrawLine::doMoveHandle( const QPoint &pointPos )
 {
     Q_ASSERT( pHandle );
@@ -204,9 +213,7 @@ void PDrawLine::doMoveHandle( const QPoint &pointPos )
     else if ( pHandle == vectorHandles[PDrawLineMove] )
     {
         // get diff
-        QRect r;
-        r.setTopLeft( pointBegin );
-        r.setBottomRight( pointEnd );
+        QRect r( pointBegin, pointEnd );
         r = r.normalized();
         QPoint pointDiff = pointPos - r.center();
         // update points

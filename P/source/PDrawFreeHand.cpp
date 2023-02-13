@@ -52,7 +52,7 @@ void PDrawFreeHand::doMove( PMouseEvent *pEvent )
 
 void PDrawFreeHand::doRelease( PMouseEvent *pEvent )
 {
-    return doDrawState( pEvent->pos() );
+    doDrawState( pEvent->pos() );
 }
 
 void PDrawFreeHand::doDrawState( const QPoint &point )
@@ -71,7 +71,7 @@ void PDrawFreeHand::doDrawState( const QPoint &point )
         case PContextFreeHand::ShapeImage:
             return doDrawImage( point );
     }
-    return doDrawPen( point );
+    doDrawPen( point );
 }
 
 void PDrawFreeHand::doDrawPen( const QPoint &point )
@@ -82,6 +82,8 @@ void PDrawFreeHand::doDrawPen( const QPoint &point )
     painter.drawLine( pointLast, point );
     // ready for next
     pointLast = point;
+
+    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawEllipse( const QPoint &point )
@@ -96,6 +98,8 @@ void PDrawFreeHand::doDrawEllipse( const QPoint &point )
     painter.drawEllipse( r );
     // ready for next
     pointLast = point;
+
+    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawRectangle( const QPoint &point )
@@ -110,6 +114,8 @@ void PDrawFreeHand::doDrawRectangle( const QPoint &point )
     painter.drawRect( r );
     // ready for next
     pointLast = point;
+
+    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawCross( const QPoint &point )
@@ -124,6 +130,8 @@ void PDrawFreeHand::doDrawCross( const QPoint &point )
     painter.drawLine( r.left() + r.width() / 2, r.top(), r.left() + r.width() / 2, r.bottom() );
     // ready for next
     pointLast = point;
+
+    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawImage( const QPoint &point )
@@ -132,6 +140,8 @@ void PDrawFreeHand::doDrawImage( const QPoint &point )
     painter.drawImage( pointLast, t.image );
     // update last point even though we do not need it in this case
     pointLast = point;
+
+    pCanvas->update();
 }
 
 //

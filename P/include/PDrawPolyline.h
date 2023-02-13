@@ -26,6 +26,7 @@ protected:
     virtual void doManipulateState() override;
     virtual void doIdleState() override;
     virtual void doCreateHandles() override;
+    virtual void doSyncHandles() override;
     virtual void doMoveHandle( const QPoint &pointPos );
 };
 
