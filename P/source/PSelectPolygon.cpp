@@ -72,7 +72,16 @@ void PSelectPolygon::doPaint( QPainter *pPainter )
     pPainter->setPen( QPen( Qt::DashLine ) );
 
     // paint
-    pPainter->drawPolygon( polygon );                         
+    if ( nState == StateDraw )
+    {
+        QPolygon poly = polygon;
+        poly.append( pointMouse );
+        pPainter->drawPolygon( poly );                         
+    }
+    else
+    {
+        pPainter->drawPolygon( polygon );                         
+    }
 }
 
 

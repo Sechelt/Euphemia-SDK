@@ -55,6 +55,9 @@ protected:
     PHandle *           pHandle = nullptr;          /*!< Handle being moved.                                                                    */
 
     virtual PHandle *   getHandle( const QPoint &pointPos );
+    virtual PHandle *   getHandleUnder( PHandle *pHandle, PHandle::Type n );
+    virtual PHandle *   getHandleNext( PHandle *pHandle, PHandle::Type n );
+    virtual PHandle *   getHandlePrev( PHandle *pHandle, PHandle::Type n );
     virtual QImage      getMask() { return QImage();  }
     virtual QImage      getTrimmed( const QRect &r, QImage &image, const QImage &imageMask, bool bErase = false );
 

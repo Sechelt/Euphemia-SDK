@@ -30,13 +30,21 @@ void PDrawFreeHand::doPress( PMouseEvent *pEvent )
             break;
         case PContextFreeHand::ShapeImageScaled:
             if ( t.image.isNull() )
+            {
                 t.nShape = PContextFreeHand::ShapePen;
+                pen = g_Context->getPen();
+                brush.setStyle( Qt::NoBrush );
+            }
             else
                 t.image = t.image.scaled( t.size );
             break;
         case PContextFreeHand::ShapeImage:
             if ( t.image.isNull() )
+            {
                 t.nShape = PContextFreeHand::ShapePen;
+                pen = g_Context->getPen();
+                brush.setStyle( Qt::NoBrush );
+            }
             else
                 t.size = t.image.size();
             break;
@@ -72,6 +80,7 @@ void PDrawFreeHand::doDrawState( const QPoint &point )
             return doDrawImage( point );
     }
     doDrawPen( point );
+    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawPen( const QPoint &point )
@@ -82,8 +91,6 @@ void PDrawFreeHand::doDrawPen( const QPoint &point )
     painter.drawLine( pointLast, point );
     // ready for next
     pointLast = point;
-
-    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawEllipse( const QPoint &point )
@@ -98,8 +105,6 @@ void PDrawFreeHand::doDrawEllipse( const QPoint &point )
     painter.drawEllipse( r );
     // ready for next
     pointLast = point;
-
-    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawRectangle( const QPoint &point )
@@ -114,8 +119,6 @@ void PDrawFreeHand::doDrawRectangle( const QPoint &point )
     painter.drawRect( r );
     // ready for next
     pointLast = point;
-
-    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawCross( const QPoint &point )
@@ -126,22 +129,21 @@ void PDrawFreeHand::doDrawCross( const QPoint &point )
     // draw rectangle
     QPainter painter( g_Context->getImage() );
     painter.setPen( pen );
-    painter.drawLine( r.left(), r.top() + r.height() / 2, r.right(), r.top() + r.height() / 2 );
-    painter.drawLine( r.left() + r.width() / 2, r.top(), r.left() + r.width() / 2, r.bottom() );
+    painter.drawLine( r.left(), point.y(), r.right(), point.y() );
+    painter.drawLine( point.x(), r.top(), point.x(), r.bottom() );
     // ready for next
     pointLast = point;
-
-    pCanvas->update();
 }
 
 void PDrawFreeHand::doDrawImage( const QPoint &point )
 {
     QPainter painter( g_Context->getImage() );
-    painter.drawImage( pointLast, t.image );
+    QRect r( point, t.image.size() );
+    r.moveCenter( point );
+
+    painter.drawImage( r.topLeft(), t.image );
     // update last point even though we do not need it in this case
     pointLast = point;
-
-    pCanvas->update();
 }
 
 //
@@ -186,7 +188,7 @@ PFreeHandToolBar::PFreeHandToolBar( QWidget *p )
     pLayout->addWidget( pImage, 10 );
     connect( pImage, SIGNAL(signalClick()), SLOT(slotImage()) );
 
-    pLayout->addStretch( 10 );
+    pLayout->addStretch( 16 );
 
     connect( g_Context, SIGNAL(signalModified(const PContextFreeHand &)), SLOT(slotRefresh(const PContextFreeHand &)) );
 }
@@ -222,8 +224,17 @@ void PFreeHandToolBar::slotHeight( int )
 
 void PFreeHandToolBar::slotImage()
 {
+    QImage image;
+
+    QString stringFileName = QFileDialog::getOpenFileName( this, tr("Select image..."), QString(), "Image files (*.png *.xpm *.jpg)" );
+    if ( !stringFileName.isEmpty() )
+    {
+        image.load( stringFileName );
+    }
+
+    //
     PContextFreeHand t = g_Context->getFreeHand();
-    t.image = pImage->getImage();
+    t.image = image;
     g_Context->setFreeHand( t );
 }
 

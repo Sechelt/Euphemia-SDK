@@ -207,6 +207,34 @@ void PContext::setFont( const QFont &t )
     emit signalModified( font );
 }
 
+void PContext::setGradient( QGradient::Type n )
+{
+    if ( nGradientType == n ) return;
+    nGradientType = n;
+    emit signalModified( nGradientType );
+}
+
+void PContext::setGradientLinear( const QLinearGradient &t )
+{
+    if ( gradientlinear == t ) return;
+    gradientlinear = t;
+    emit signalModified( gradientlinear );
+}
+
+void PContext::setGradientRadial( const QRadialGradient &t )
+{
+    if ( gradientradial == t ) return;
+    gradientradial = t;
+    emit signalModified( gradientradial );
+}
+
+void PContext::setGradientConical( const QConicalGradient &t )
+{
+    if ( gradientconical == t ) return;
+    gradientconical = t;
+    emit signalModified( gradientconical );
+}
+
 void PContext::setFreeHand( const PContextFreeHand &t )
 {
     if ( freehand == t ) return;
@@ -443,6 +471,26 @@ void PContext::slotBrush( const QBrush &t )
 void PContext::slotFont( const QFont &t )
 {
     setFont( t );
+}
+
+void PContext::slotGradient( QGradient::Type n )
+{
+    setGradient( n );
+}
+
+void PContext::slotGradientLinear( const QLinearGradient &t )
+{
+    setGradientLinear( t );
+}
+
+void PContext::slotGradientRadial( const QRadialGradient &t )
+{
+    setGradientRadial( t );
+}
+
+void PContext::slotGradientConical( const QConicalGradient &t )
+{
+    setGradientConical( t );
 }
 
 void PContext::slotFreeHand( const PContextFreeHand &t )

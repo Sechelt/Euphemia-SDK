@@ -40,6 +40,7 @@ HEADERS += \
         include/PDrawSpray.h \
         include/PDrawText.h \
         include/PFillFlood.h \
+        include/PFillGradient.h \
         include/PFontToolBar.h \
         include/PFreeBase.h \
         include/PGraphicsScene.h \
@@ -72,6 +73,7 @@ SOURCES += \
         source/PDrawSpray.cpp \
         source/PDrawText.cpp \
         source/PFillFlood.cpp \
+        source/PFillGradient.cpp \
         source/PFontToolBar.cpp \
         source/PFreeBase.cpp \
         source/PGraphicsScene.cpp \

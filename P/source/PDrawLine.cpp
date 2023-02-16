@@ -67,9 +67,6 @@ void PDrawLine::doPress( PMouseEvent *pEvent )
 
 void PDrawLine::doMove( PMouseEvent *pEvent ) 
 {
-    // We only get here when a button is down but button is always none. Odd.
-    // if ( pEvent->button() != Qt::LeftButton ) return;
-
     switch ( nState )
     {
     case StateIdle:
@@ -82,6 +79,7 @@ void PDrawLine::doMove( PMouseEvent *pEvent )
         }
         break;
     case StateManipulate:
+        if ( pEvent->button() != Qt::LeftButton ) return;
         if ( pHandle ) doMoveHandle( pEvent->pos() );
         break;
     }

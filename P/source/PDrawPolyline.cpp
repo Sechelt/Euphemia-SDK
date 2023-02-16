@@ -75,6 +75,7 @@ void PDrawPolyline::doPress( PMouseEvent *pEvent )
     case StateDraw:
         polygon.append( pEvent->pos() );
         polygon.boundingRect();
+        pointMouse = pEvent->pos();
         update();
         break;
     case StateManipulate:
@@ -95,14 +96,12 @@ void PDrawPolyline::doPress( PMouseEvent *pEvent )
  */
 void PDrawPolyline::doMove( PMouseEvent *pEvent ) 
 {
-    // We only get here when a button is down but button is always none. Odd.
-    // if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
     switch ( nState )
     {
     case StateIdle:
         break;
     case StateDraw:
-        polygon.replace( polygon.count() - 1, pEvent->pos() );
+        pointMouse = pEvent->pos();
         update();
         break;
     case StateManipulate:
@@ -115,7 +114,7 @@ void PDrawPolyline::doRelease( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
-    if ( pEvent->button() != Qt::LeftButton ) return;
+    // if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
     {
@@ -124,6 +123,11 @@ void PDrawPolyline::doRelease( PMouseEvent *pEvent )
     case StateDraw:
         break;
     case StateManipulate:
+        if ( pHandle )
+        {
+            if ( shouldRemovePoint() ) doRemovePoint();
+            pHandle = nullptr;
+        }
         break;
     }
 }
@@ -150,7 +154,9 @@ void PDrawPolyline::doPaint( QPainter *pPainter )
     pPainter->setPen( g_Context->getPen() );
 
     // paint
-    pPainter->drawPolyline( polygon );                         
+    pPainter->drawPolyline( polygon );      
+    
+    if ( nState == StateDraw ) pPainter->drawLine( polygon.last(), pointMouse );
 }
 
 void PDrawPolyline::doDrawState( const QPoint &point )
@@ -158,11 +164,13 @@ void PDrawPolyline::doDrawState( const QPoint &point )
     Q_ASSERT( nState == StateIdle );
 
     polygon.append( point );    // begin
-    polygon.append( point );    // current
+    pointMouse = point;
 
     nState = StateDraw;
     update();
     emit signalChangedState();
+
+    setAcceptHoverEvents( true ); // mouse tracking - mouse move event even when no button down
 }
 
 void PDrawPolyline::doManipulateState()
@@ -171,6 +179,8 @@ void PDrawPolyline::doManipulateState()
     doCreateHandles();
     nState = StateManipulate;
     emit signalChangedState();
+
+    setAcceptHoverEvents( false );
 }
 
 void PDrawPolyline::doIdleState()
@@ -180,6 +190,7 @@ void PDrawPolyline::doIdleState()
     if ( nState == StateDraw )
     {
         nState = StateIdle;
+        setAcceptHoverEvents( false );
     }
     else if ( nState == StateManipulate )
     {
@@ -201,7 +212,7 @@ void PDrawPolyline::doIdleState()
  * be a direct correspondence between point indexs and handle indexs - but this would make 
  * the move handle the default when all handles happened to be stacked upon each other. 
  * This would make resizing a very small polygon difficult - so we have the move handle 
- * first (at bottom). 
+ * first (at bottom) followed by NewPoint handles and then MovePoint handles.
  *  
  * \author pharvey (2/1/23)
  */
@@ -220,6 +231,14 @@ void PDrawPolyline::doCreateHandles()
     vectorHandles.append( pHandle );
     pHandle->show();
 
+    // add a handle between each point (moving it will create a new point)
+    for ( int n = 1; n < polygonView.count(); n++ )
+    {
+        pHandle = new PHandle( pView, PHandle::TypeNewPoint, QRect( polygonView.at( n - 1 ), polygonView.at( n ) ).center() );
+        vectorHandles.append( pHandle );
+        pHandle->show();
+    }
+
     // add a handle for each point
     for ( QPoint point : polygonView )
     {
@@ -227,16 +246,27 @@ void PDrawPolyline::doCreateHandles()
         vectorHandles.append( pHandle );
         pHandle->show();
     }
+
 }
 
 void PDrawPolyline::doSyncHandles()
 {
     QPolygon polygonView = pView->mapFromScene( polygon );
+    int nHandle = 0;
 
-    vectorHandles[0]->setCenter( polygonView.boundingRect().center() );
+    // move handle
+    vectorHandles[nHandle]->setCenter( polygonView.boundingRect().center() );
+
+    // new point handles
+    for ( int n = 1; n < polygonView.count(); n++ )
+    {
+        vectorHandles[++nHandle]->setCenter( QRect( polygonView.at( n - 1 ), polygonView.at( n ) ).center() );
+    }
+
+    // point handles
     for ( int n = 0; n < polygonView.count(); n++ )
     {
-        vectorHandles[n+1]->setCenter( polygonView[n] );
+        vectorHandles[++nHandle]->setCenter( polygonView[n] );
     }
 }
 
@@ -259,28 +289,96 @@ void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
 
     // their parent will be the viewport so...
     QPolygon    polygonView     = pView->mapFromScene( polygon );
-    QPoint      pointViewPos    = pView->mapFromScene( pointPos );
+
+    int nFirstMovePointHandle = polygon.count(); // would be count() - 1 except we also have the DragHandle at index 0
 
     // move handle?
-    if ( pHandle == vectorHandles[0] )
+    if ( pHandle->getType() == PHandle::TypeDrag )
     {
         QPoint pointDelta = pointPos - pView->mapToScene( pHandle->getCenter() ).toPoint();
         // move points
         for ( int n = 0; n < polygon.count(); n++ )
         {
             polygon.replace( n, polygon.at( n ) + pointDelta );
-            vectorHandles.at( n + 1 )->doMoveBy( pointDelta );
         }
-        // move self
-        vectorHandles.at( 0 )->doMoveBy( pointDelta );
-        update();
-        return;
+    }
+    else if ( pHandle->getType() == PHandle::TypeMovePoint )
+    {
+        // just a single point handle
+        polygon.replace( vectorHandles.indexOf( pHandle ) - nFirstMovePointHandle, pointPos );
+    }
+    else if ( pHandle->getType() == PHandle::TypeNewPoint )
+    {
+        QPoint point            = pView->mapToScene( pHandle->getCenter() ).toPoint();
+        int nHandleNewPoint     = vectorHandles.indexOf( pHandle );
+        int nPointNext          = nHandleNewPoint; // almost corresponds to polygon but less 1 to account for DragHandle
+        int nHandlePointNext    = nFirstMovePointHandle + nPointNext;
+        int nHandleNewPointNext = nHandleNewPoint + 1;
+
+        // insert point
+        polygon.insert( nPointNext, pView->mapToScene( pHandle->getCenter() ).toPoint() );
+
+        // insert another new point handle
+        pHandle = new PHandle( pView, PHandle::TypeNewPoint, point );
+        vectorHandles.insert( nHandleNewPointNext, pHandle );
+        pHandle->show();
+        nHandlePointNext++; // we just shoved everything over by one
+
+        // insert another point handle for the point we just inserted
+        pHandle = new PHandle( pView, PHandle::TypeMovePoint, point );
+        vectorHandles.insert( nHandlePointNext, pHandle );
+        pHandle->show();
     }
 
-    // just a single point handle
-    pHandle->setCenter( pointViewPos );
-    polygon.replace( vectorHandles.indexOf( pHandle ) - 1, pointPos );
-    vectorHandles.at( 0 )->setCenter( polygonView.boundingRect().center() );
+    doSyncHandles();
     update();
+}
+
+// call shouldRemovePoint() before calling here
+void PDrawPolyline::doRemovePoint()
+{
+    // remove point
+    int nFirstMovePointHandle = polygon.count() + 1;
+    int nHandle = vectorHandles.indexOf( pHandle );
+    int nPoint = nHandle - nFirstMovePointHandle + 1;
+    polygon.remove( nPoint );
+
+    // remove point handle
+    delete vectorHandles.takeAt( nHandle );
+
+    // remove left or right NewPoint handle?
+    if ( nHandle > nFirstMovePointHandle ) nHandle = nPoint;  // left
+    else nHandle = nPoint + 1;  // right
+
+    delete vectorHandles.takeAt( nHandle );
+
+    doSyncHandles();
+    update();
+}
+
+bool PDrawPolyline::shouldRemovePoint()
+{
+    // we must be working with an existing polygon point
+    if ( !pHandle ) return false;
+    if ( pHandle->getType() != PHandle::TypeMovePoint ) return false;
+    // not enough points to consider removing one?
+    if ( polygon.count() <= 2 ) return false;
+    // on another point?
+    PHandle *p = getHandleUnder( pHandle, PHandle::TypeMovePoint );
+    if ( !p ) return false;
+    // must be an adjacent point to eliminate a line segment - adjacent?
+    if ( p != getHandlePrev( pHandle, PHandle::TypeMovePoint ) && p != getHandleNext( pHandle, PHandle::TypeMovePoint ) ) return false;
+
+    return true;
+}
+
+void PDrawPolyline::doDump()
+{
+    qInfo() << polygon;
+    for ( int n = 0; n < vectorHandles.count(); n++ )
+    {
+        PHandle *p = vectorHandles.at( n );
+        qInfo() << n << ":" << p->getType() << p->getCenter();
+    }
 }
 

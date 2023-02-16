@@ -151,8 +151,8 @@ private:
     Tools       nTool                       = ToolDrawLine;
     QString     stringFileName;
     bool        bModified                   = false;
-    QColor      colorBackground;
-    bool        bBackgroundTransparent      = true;
+    QColor      colorBackground             = QColor( Qt::transparent );        /*!< erase tool will use this */
+    bool        bBackgroundTransparent      = true;                             /*!< erase tool will use this */
     bool        bPaste                      = false;
 
     QImage          image;

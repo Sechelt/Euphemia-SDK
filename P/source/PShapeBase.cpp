@@ -85,6 +85,41 @@ PHandle *PShapeBase::getHandle( const QPoint &pointPos )
     return nullptr;
 }
 
+PHandle *PShapeBase::getHandleUnder( PHandle *pHandle, PHandle::Type nType )
+{
+    QPoint point = pHandle->geometry().center();
+
+    // search in REVERSE order to reflect z-order
+    for ( int n = vectorHandles.count() - 1; n >= 0; n-- )
+    {
+        PHandle *p = vectorHandles.at( n );
+        if ( p->getType() != nType ) continue;          // looking for a handle this is the same type
+        if ( p == pHandle ) continue;                   // and not given handle
+        if ( p->geometry().contains( point ) ) return p;    // and at same pos (roughly)
+    }
+    return nullptr;
+}
+
+PHandle *PShapeBase::getHandleNext( PHandle *pHandle, PHandle::Type nType )
+{
+    for ( int n = vectorHandles.indexOf( pHandle ) + 1; n < vectorHandles.count(); n++ )
+    {
+        PHandle *p = vectorHandles.at( n );
+        if ( p->getType() == nType ) return p;
+    }
+    return nullptr;
+}
+
+PHandle *PShapeBase::getHandlePrev( PHandle *pHandle, PHandle::Type nType )
+{
+    for ( int n = vectorHandles.indexOf( pHandle ) - 1; n >= 0; n-- )
+    {
+        PHandle *p = vectorHandles.at( n );
+        if ( p->getType() == nType ) return p;
+    }
+    return nullptr;
+}
+
 /*!
  * \brief Returns a trimmed version of a copied image. The trimmed area becomes transparent.
  *  

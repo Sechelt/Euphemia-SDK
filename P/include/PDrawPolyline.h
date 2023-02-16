@@ -19,7 +19,8 @@ public:
     virtual void doCommit() override;
 
 protected:
-    QPolygon polygon;
+    QPolygon    polygon;
+    QPoint      pointMouse;     /*!< when moving in draw state we have a temp line following the mouse from the last polygon point */
 
     virtual void doPaint( QPainter * );
     virtual void doDrawState( const QPoint & ) override;
@@ -28,6 +29,12 @@ protected:
     virtual void doCreateHandles() override;
     virtual void doSyncHandles() override;
     virtual void doMoveHandle( const QPoint &pointPos );
+    virtual void doRemovePoint();
+
+    virtual bool shouldRemovePoint();
+
+private:
+    void doDump();
 };
 
 #endif

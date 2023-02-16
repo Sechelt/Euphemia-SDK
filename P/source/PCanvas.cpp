@@ -6,11 +6,12 @@
 
 #include "PContext.h"
 
+#include "PFillGradient.h"
+
 PCanvas::PCanvas()
 {
-//    setAttribute( Qt::WA_StaticContents );
-      setBackground( QColor( Qt::transparent ) );
-//    setMouseTracking( true );
+    setBackground( QColor( Qt::transparent ) );
+//    setBackground( QColor( Qt::cyan ) );
 }
 
 void PCanvas::setTool( Tools n )
@@ -30,12 +31,25 @@ void PCanvas::setAutoCommit( bool b )
     g_Context->setGeneral( t );
 }
 
+/*!
+ * \brief Sets the background color. Also sets bool to indicate whether or not its transparent. 
+ *  
+ * This does not flood the canvas with the color - it simply indicates, to the erase tool, what 
+ * color it should erase to. A transparent background will cause the erase tool to reveal PBackground.
+ *  
+ * This should not be confused with \sa PBackground which indicates transparency and could do 
+ * that with the classic checker pattern or a solid color. 
+ *  
+ * \author pharvey (2/16/23)
+ * 
+ * \param color  
+ */
 void PCanvas::setBackground( const QColor &color )      
 {                                                       
     colorBackground = color;                            
     if (  colorBackground == QColor( Qt::transparent ) )
     {                                                   
-        colorBackground.setAlpha( 0 );                  
+        colorBackground.setAlpha( 0 );  // Qt::transparent does not get the alpha all the way to 0 so we do it here                  
         bBackgroundTransparent = true;                  
     }                                                   
     else                                                
@@ -165,7 +179,9 @@ void PCanvas::doPressEvent( QGraphicsSceneMouseEvent *pEvent )
                 doFillFlood( mouseEvent.pos() );
                 break;
             case ToolFillGradient:       
-                doFillGradient( mouseEvent.pos() );
+                g_Context->setImage( &image );
+                pShapeBase = new PFillGradientLinear( this );           
+                // doFillGradient( mouseEvent.pos() );
                 break;
         }
         if ( pShapeBase ) 
@@ -718,7 +734,71 @@ void PCanvas::doFillFloodTiled( const QPoint &pointSeed )
 
 void PCanvas::doFillGradient( const QPoint &pointSeed )
 {
-    Q_UNUSED( pointSeed );
+    int nWidth              = image.size().width();
+    int nHeight             = image.size().height();
+    bool tableProcessed[nWidth][nHeight];                               // cell == true if point processed (auto inits to 0)
+    QColor colorSeed        = image.pixelColor( pointSeed );            // we will use to determine the boundary
+    QImage imageSource      = QImage( image.size(), image.format() );   // we will use to get our new pixel colors
+
+    // Initialize the source image.
+    {
+        // We will use a pattern with a transparent background so fill with the seed color.
+        imageSource.fill( colorSeed );
+        // Fill with pattern.
+        QPainter painter( &imageSource );
+        // QBrush brush = g_Context->getBrush();
+        // QGradient gradient = g_Context->getGradient();
+        // QGradient gradient;
+
+        // example 1
+        QRadialGradient radialGrad( pointSeed, 100 );
+        radialGrad.setColorAt( 0, Qt::red);
+        radialGrad.setColorAt( 0.5, Qt::blue);
+        radialGrad.setColorAt( 1, Qt::green);
+
+        // example 2 (preset)
+        QGradient gradient( QGradient::WarmFlame );
+        gradient.setColorAt( 0, Qt::red);
+        gradient.setColorAt( 0.5, Qt::blue);
+        gradient.setColorAt( 1, Qt::green);
+
+        painter.fillRect( 0, 0, nWidth, nHeight, QBrush( gradient ) );
+return;
+    }
+
+    // prime stack with seed point
+    QStack<QPoint> stackPointsToProcess;
+    stackPointsToProcess.push( pointSeed );
+    // process until stack is empty
+    while ( !stackPointsToProcess.isEmpty() )
+    {
+        QPoint point = stackPointsToProcess.pop();
+        int nX = point.x();
+        int nY = point.y();
+        tableProcessed[nX][nY] = true;                                      // first and last time we will process this point 
+        if ( image.pixelColor( point ) != colorSeed ) continue;             // not the color we want to fill over so do nothing
+        image.setPixelColor( point, imageSource.pixelColor( point ) );      // fill
+        // look N
+        if ( nY - 1 >= 0 && tableProcessed[nX][nY-1] == false )
+        {
+            stackPointsToProcess.push( QPoint( nX, nY - 1 ) );
+        }
+        // look S
+        if ( nY + 1 < nHeight && tableProcessed[nX][nY+1] == false )
+        {
+            stackPointsToProcess.push( QPoint( nX, nY + 1 ) );
+        }
+        // look E
+        if ( nX + 1 < nWidth && tableProcessed[nX+1][nY] == false )
+        {
+            stackPointsToProcess.push( QPoint( nX + 1, nY ) );
+        }
+        // look W
+        if ( nX - 1 >= 0 && tableProcessed[nX-1][nY] == false )
+        {
+            stackPointsToProcess.push( QPoint( nX - 1, nY ) );
+        }
+    }
 }
 
 void PCanvas::doClear()

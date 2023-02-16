@@ -39,10 +39,11 @@ class PContextErase
 public:
 
     // NOTE: Very similar to FreeHand but Erase will not use pen/color as composition will be set to erase background with any color.
-    //       Convenient to have seperate settings.
+    //       Convenient to have seperate settings to save/restore default to.
 
     enum Shapes
     {
+        ShapePen,                       /*!< uses current pen for width, shape is a circle              */
         ShapeEllipse,                   /*!< ellipse of specified size                                  */
         ShapeRectangle,                 /*!< rectangle of specified size                                */
         ShapeCross,                     /*!< a horizontal and vertical line of specified size           */
@@ -58,6 +59,7 @@ public:
     {
         if ( t.nShape != nShape ) return false;
         if ( t.size != size ) return false;
+        if ( t.image != image ) return false;
         return true;
     }
 
@@ -142,6 +144,7 @@ public:
     QBrush  brushTransparency;          /*!< brush to use to represent transparency - default is block pattern but a solid color may be easier to work with     */
     bool    bRestoreState = false;      /*!< UI restore does not always work on Linux under Wayland due to a Qt problem - so here we can turn it on/off         */
     bool    bAutoCommit = true;         /*!< objects derived from PShapeBase can be manipulated before committing to image - here you can turn it on/off        */
+    QGradient::Type nTypeGradient = QGradient::LinearGradient;      /*!< last used gradient type                                                                */
 
     inline bool operator==( const PContextGeneral &t ) 
     {
@@ -167,6 +170,10 @@ public:
     void setPen( const QPen & );
     void setBrush( const QBrush & );
     void setFont( const QFont & );
+    void setGradient( QGradient::Type );
+    void setGradientLinear( const QLinearGradient & );
+    void setGradientRadial( const QRadialGradient & );
+    void setGradientConical( const QConicalGradient & );
     void setFreeHand( const PContextFreeHand & );
     void setErase( const PContextErase & );
     void setSpray( const PContextSpray & );
@@ -175,17 +182,21 @@ public:
     void setPaste( const PContextPaste & );
     void setGeneral( const PContextGeneral & );
 
-    QImage *                getImage()          { return pImage;        }
-    QPen                    getPen()            { return pen;           }
-    QBrush                  getBrush()          { return brush;         }
-    QFont                   getFont()           { return font;          }
-    PContextFreeHand        getFreeHand()       { return freehand;      }
-    PContextErase           getErase()          { return erase;         }
-    PContextSpray           getSpray()          { return spray;         }
-    PContextText            getText()           { return text;          }
-    PContextPolygonFilled   getPolygonFilled()  { return polygonfilled; }
-    PContextPaste           getPaste()          { return paste;         }
-    PContextGeneral         getGeneral()        { return general;       }
+    QImage *                getImage()          { return pImage;            }
+    QPen                    getPen()            { return pen;               }
+    QBrush                  getBrush()          { return brush;             }
+    QFont                   getFont()           { return font;              }
+    QGradient::Type         getGradient()       { return nGradientType;     }
+    QLinearGradient         getGradientLinear() { return gradientlinear;    }   
+    QRadialGradient         getGradientRadial() { return gradientradial;    }   
+    QConicalGradient        getGradientConical(){ return gradientconical;   }   
+    PContextFreeHand        getFreeHand()       { return freehand;          }
+    PContextErase           getErase()          { return erase;             }
+    PContextSpray           getSpray()          { return spray;             }
+    PContextText            getText()           { return text;              }
+    PContextPolygonFilled   getPolygonFilled()  { return polygonfilled;     }
+    PContextPaste           getPaste()          { return paste;             }
+    PContextGeneral         getGeneral()        { return general;           }
 
     void doSave();
     void doLoad();
@@ -194,6 +205,10 @@ signals:
     void signalModified( const QPen & );
     void signalModified( const QBrush & );
     void signalModified( const QFont & );
+    void signalModified( QGradient::Type );
+    void signalModified( const QLinearGradient & );
+    void signalModified( const QRadialGradient & );
+    void signalModified( const QConicalGradient & );
     void signalModified( const PContextFreeHand & );
     void signalModified( const PContextSpray & );
     void signalModified( const PContextErase & );
@@ -207,6 +222,10 @@ public slots:
     void slotPen( const QPen &t );
     void slotBrush( const QBrush &t );
     void slotFont( const QFont &t );
+    void slotGradient( QGradient::Type n );
+    void slotGradientLinear( const QLinearGradient &t );
+    void slotGradientRadial( const QRadialGradient &t );
+    void slotGradientConical( const QConicalGradient &t );
     void slotFreeHand( const PContextFreeHand &t );
     void slotErase( const PContextErase &t );
     void slotSpray( const PContextSpray &t );
@@ -221,6 +240,10 @@ protected:
     QPen                    pen;                        /*!< defines lines and outlines             */
     QBrush                  brush;                      /*!< defines fill details                   */
     QFont                   font;                       /*!< defines font details for drawing text  */
+    QGradient::Type         nGradientType = QGradient::LinearGradient;
+    QLinearGradient         gradientlinear;             /*!< used by gradient fill tool             */
+    QRadialGradient         gradientradial;             /*!< used by gradient fill tool             */
+    QConicalGradient        gradientconical;            /*!< used by gradient fill tool             */
     PContextFreeHand        freehand;                   /*!< used by free hand tool                 */
     PContextSpray           spray;                      /*!< used by spray tool                     */
     PContextErase           erase;                      /*!< used by erase tool                     */

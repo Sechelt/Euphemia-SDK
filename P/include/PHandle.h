@@ -28,6 +28,7 @@ public:
     {
         TypeDrag,
         TypeMovePoint,
+        TypeNewPoint,
         TypeSizeLeft,
         TypeSizeRight,
         TypeSizeTop,

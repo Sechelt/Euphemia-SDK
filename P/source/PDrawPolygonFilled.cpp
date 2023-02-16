@@ -16,11 +16,20 @@ void PDrawPolygonFilled::doPaint( QPainter *pPainter )
 
     // paint
     QPainterPath path;
-    path.addPolygon( polygon );
 
-    // - Qt::OddEvenFill (default)
-    // - Qt::WindingFill
-    pPainter->drawPolygon( polygon, Qt::OddEvenFill );                         
+    if ( nState == StateDraw )
+    {
+        QPolygon poly = polygon;
+        poly.append( pointMouse );
+        path.addPolygon( poly );
+        pPainter->drawPolygon( poly, g_Context->getPolygonFilled().nFillRule );
+    }
+    else
+    {
+        path.addPolygon( polygon );
+        pPainter->drawPolygon( polygon, g_Context->getPolygonFilled().nFillRule );
+    }
+
     pPainter->fillPath( path, g_Context->getBrush() );
 }
 

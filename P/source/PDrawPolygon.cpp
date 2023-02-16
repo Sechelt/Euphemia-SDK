@@ -21,8 +21,18 @@ void PDrawPolygon::doPaint( QPainter *pPainter )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
+
     // paint
-    pPainter->drawPolygon( polygon );                         
+    if ( nState == StateDraw )
+    {
+        QPolygon poly = polygon;
+        poly.append( pointMouse );
+        pPainter->drawPolygon( poly );                         
+    }
+    else
+    {
+        pPainter->drawPolygon( polygon );                         
+    }
 }
 
 //

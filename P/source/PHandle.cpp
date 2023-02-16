@@ -9,7 +9,7 @@ PHandle::PHandle( PGraphicsView *pView, Type nType, const QPoint &pointCenter )
     this->pView = pView;
     this->nType = nType;
 
-    resize( 16, 16 );
+    resize( 12, 12 );
     setCenter( pointCenter ); 
 }
 
@@ -25,65 +25,90 @@ void PHandle::paintEvent( QPaintEvent *pEvent )
     brush.setStyle( Qt::SolidPattern );
     painter.setBrush( brush );
 
-    painter.drawEllipse( rect() );
-
     switch ( nType )
     {
         case TypeDrag:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/Drag" ).scaled( rect().size() ) );
             }
             break;
         case TypeMovePoint:
             {
-                brush.setColor( Qt::black );
-                painter.setBrush( brush );
+                painter.drawEllipse( rect() );
+/*
+                brush.setColor( Qt::black );       
+                                                   
+                QRect r;                           
+                r.setWidth( rect().width() / 2 );  
+                r.setHeight( rect().height() / 2 );
+                r.moveCenter( rect().center() );   
+                                                   
+                painter.drawEllipse( r );          
+*/
+            }
+            break;
+        case TypeNewPoint:
+            {
+                painter.setBrush( Qt::yellow );
 
                 QRect r;
-                r.setWidth( rect().width() / 2 );
-                r.setHeight( rect().height() / 2 );
+                r.setWidth( rect().center().x() );
+                r.setHeight( rect().center().y() );
                 r.moveCenter( rect().center() );
 
                 painter.drawEllipse( r );
+
+                painter.setPen( QPen( Qt::black ) );
+                painter.drawLine( r.center().x(), r.top(), r.center().x(), r.bottom() );
+                painter.drawLine( r.left(), r.center().y(), r.right(), r.center().y() );
             }
             break;
         case TypeSizeLeft:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeHoriz" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeRight:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeHoriz" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeTop:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeVert" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeBottom:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeVert" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeTopRight:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopRight" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeTopLeft:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopLeft" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeBottomRight:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopLeft" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeBottomLeft:
             {
+                painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopRight" ).scaled( rect().size() ) );
             }
             break;

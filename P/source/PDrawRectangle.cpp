@@ -62,9 +62,6 @@ void PDrawRectangle::doPress( PMouseEvent *pEvent )
 
 void PDrawRectangle::doMove( PMouseEvent *pEvent ) 
 {
-    // We only get here when a button is down but button is always none. Odd.
-    // if ( pEvent->button() != Qt::LeftButton ) return rectUpdate;
-
     switch ( nState )
     {
     case StateIdle:
