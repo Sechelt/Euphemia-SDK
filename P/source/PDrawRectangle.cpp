@@ -44,6 +44,8 @@ void PDrawRectangle::doDoubleClick( PMouseEvent *pEvent )
 
 void PDrawRectangle::doPress( PMouseEvent *pEvent )
 {
+    Q_ASSERT( !acceptHoverEvents() );
+
     if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
@@ -62,6 +64,8 @@ void PDrawRectangle::doPress( PMouseEvent *pEvent )
 
 void PDrawRectangle::doMove( PMouseEvent *pEvent ) 
 {
+    Q_ASSERT( !acceptHoverEvents() );
+
     switch ( nState )
     {
     case StateIdle:
@@ -80,6 +84,8 @@ void PDrawRectangle::doRelease( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
+    Q_ASSERT( !acceptHoverEvents() );
+
     if ( pEvent->button() != Qt::LeftButton ) return;
 
     switch ( nState )
@@ -91,6 +97,7 @@ void PDrawRectangle::doRelease( PMouseEvent *pEvent )
         doManipulateState();
         break;
     case StateManipulate:
+        pHandle = nullptr;
         break;
     }
 }

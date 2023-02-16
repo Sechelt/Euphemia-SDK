@@ -123,6 +123,7 @@ void PFillGradientLinear::doRelease( PMouseEvent *pEvent )
     case StateDraw:
         break;
     case StateManipulate:
+        pHandle = nullptr;
         break;
     }
 }

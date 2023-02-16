@@ -41,6 +41,7 @@ void PSelectRectangle::doRelease( PMouseEvent *pEvent )
         doManipulateState();
         break;
     case StateManipulate:
+        pHandle = nullptr;
         break;
     }
 }

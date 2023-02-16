@@ -79,6 +79,7 @@ void PDrawPolyline::doPress( PMouseEvent *pEvent )
         update();
         break;
     case StateManipulate:
+        Q_ASSERT( !acceptHoverEvents() );
         pHandle = getHandle( pEvent->pos() );
         if ( !pHandle ) doCommit();
         break;
@@ -105,6 +106,7 @@ void PDrawPolyline::doMove( PMouseEvent *pEvent )
         update();
         break;
     case StateManipulate:
+        Q_ASSERT( !acceptHoverEvents() );
         if ( pHandle ) doMoveHandle( pEvent->pos() );
         break;
     }
@@ -123,6 +125,7 @@ void PDrawPolyline::doRelease( PMouseEvent *pEvent )
     case StateDraw:
         break;
     case StateManipulate:
+        Q_ASSERT( !acceptHoverEvents() );
         if ( pHandle )
         {
             if ( shouldRemovePoint() ) doRemovePoint();
@@ -146,6 +149,8 @@ void PDrawPolyline::doCommit()
     doPaint( &painter );
     emit signalCommitted();
     doIdleState();
+
+    Q_ASSERT( !acceptHoverEvents() );
 }
 
 void PDrawPolyline::doPaint( QPainter *pPainter )
@@ -198,6 +203,9 @@ void PDrawPolyline::doIdleState()
         polygon.clear();
         nState = StateIdle;
     }
+
+    Q_ASSERT( !acceptHoverEvents() );
+
     update();
     emit signalChangedState();
 }

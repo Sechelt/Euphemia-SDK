@@ -100,6 +100,7 @@ void PDrawLine::doRelease( PMouseEvent *pEvent )
         doManipulateState();
         break;
     case StateManipulate:
+        pHandle = nullptr;
         break;
     }
 }
