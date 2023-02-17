@@ -3,6 +3,27 @@
 
 #include "PShapeBase.h"
 
+/*!
+ * \brief Fill using linear gradient. 
+ *  
+ * Starts in idle mode. 
+ *  
+ * The first doPress specifies the seed for the fill - the color which will get filled in. 
+ * A handle is created - it can be moved. 
+ * An out line of the fill area is created as a polygon. 
+ * A start and a stop handle is created with a line between. 
+ *  
+ * Enters manipulation mode. 
+ *  
+ * The start/stop handles can be moved as desired. 
+ *  
+ * Returns to idle. 
+ *  
+ * Clicking other than on the start/stop signifies accept (Esc cancels). In either case; return to idle. 
+ * Accept causes the fill to occur. 
+ * 
+ * \author pharvey (2/16/23)
+ */
 class PFillGradientLinear : public PShapeBase
 {
     Q_OBJECT
@@ -19,7 +40,10 @@ public:
     virtual void doCommit() override;
 
 protected:
-    QPolygon polygon;
+    QPoint      pointSeed;
+    QPoint      pointStart;
+    QPoint      pointStop;
+    QPolygon    polygon;
 
     virtual void doPaint( QPainter * );
     virtual void doDrawState( const QPoint & ) override;

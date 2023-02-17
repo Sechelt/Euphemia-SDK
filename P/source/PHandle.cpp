@@ -112,6 +112,34 @@ void PHandle::paintEvent( QPaintEvent *pEvent )
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopRight" ).scaled( rect().size() ) );
             }
             break;
+        case TypeFillSeed:
+            {
+                QRect r( 0, 0, 4, 4 );
+                r.moveCenter( rect().center() );
+                painter.drawEllipse( r );
+
+                painter.setPen( QPen( Qt::black ) );
+                painter.drawLine( rect().topLeft(), rect().bottomRight() );
+                painter.drawLine( rect().bottomLeft(), rect().topRight() );
+            }
+            break;
+        case TypeFillStart:
+            {
+                painter.setBrush( QBrush( Qt::darkGreen ) );
+                painter.drawEllipse( rect() );
+            }
+            break;
+        case TypeFillStop:
+            {
+                painter.setBrush( QBrush( Qt::darkRed ) );
+                painter.drawEllipse( rect() );
+            }
+            break;
+        case TypeFillPoint:
+            {
+                painter.drawEllipse( rect() );
+            }
+            break;
     }
 }
 

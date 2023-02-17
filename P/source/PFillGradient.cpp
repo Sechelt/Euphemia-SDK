@@ -4,6 +4,10 @@
 #include "PContext.h"
 #include "PCanvas.h"
 
+#define PFillGradientLinearSeed 0
+#define PFillGradientLinearStart 1
+#define PFillGradientLinearStop 2
+
 PFillGradientLinear::PFillGradientLinear( PCanvas *pCanvas )
     : PShapeBase( pCanvas )
 {
@@ -46,12 +50,6 @@ QImage PFillGradientLinear::getCopy()
 void PFillGradientLinear::doDoubleClick( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
-
-    if ( nState != StateDraw ) return;
-
-    doManipulateState();
-
-    if ( pCanvas->getAutoCommit() ) doCommit();
 }
 
 /*!
@@ -71,12 +69,8 @@ void PFillGradientLinear::doPress( PMouseEvent *pEvent )
     {
     case StateIdle:
         doDrawState( pEvent->pos() );
-        polygon.boundingRect();
         break;
     case StateDraw:
-        polygon.append( pEvent->pos() );
-        polygon.boundingRect();
-        update();
         break;
     case StateManipulate:
         pHandle = getHandle( pEvent->pos() );
@@ -85,15 +79,6 @@ void PFillGradientLinear::doPress( PMouseEvent *pEvent )
     }
 }
 
-/*!
- * \brief Move the last point (drawing mode) or the handle/point (manipulating mode).
- * 
- * \author pharvey (2/1/23)
- * 
- * \param pEvent 
- * 
- * \return bool 
- */
 void PFillGradientLinear::doMove( PMouseEvent *pEvent ) 
 {
     switch ( nState )
@@ -101,8 +86,6 @@ void PFillGradientLinear::doMove( PMouseEvent *pEvent )
     case StateIdle:
         break;
     case StateDraw:
-        polygon.replace( polygon.count() - 1, pEvent->pos() );
-        update();
         break;
     case StateManipulate:
         if ( pHandle ) doMoveHandle( pEvent->pos() );
@@ -128,53 +111,49 @@ void PFillGradientLinear::doRelease( PMouseEvent *pEvent )
     }
 }
 
-/*!
- * \brief Commit the polygon to canvas. 
- *  
- * 
- * \author pharvey (2/1/23)
- */
 void PFillGradientLinear::doCommit()
 {
-    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
+    Q_ASSERT( nState == StateManipulate );
+
+    QLinearGradient gradient( pointStart, pointStop );
+    gradient.setColorAt( 0, Qt::black );
+    gradient.setColorAt( 1, Qt::white );
 
     QPainter painter( g_Context->getImage());
-    doPaint( &painter );
+    QBrush brush( gradient );
+    painter.setBrush( brush );
+
+    QRect r( pointStart, pointStop );
+
+    painter.drawRect( r );
+
+
     emit signalCommitted();
     doIdleState();
 }
 
 void PFillGradientLinear::doPaint( QPainter *pPainter )
 {
-    // apply context
-    pPainter->setPen( g_Context->getPen() );
+    if ( nState != StateManipulate ) return;
 
-    if ( nState == StateManipulate )
-    {
-        QPointF pointStart = polygon.at( 0 );
-        QPointF pointStop = polygon.at( 1 );
+    // draw outline of fill area
+    qWarning("ToDo: draw polygon as outline of fill area");
 
-        QLinearGradient linearGrad( pointStart, pointStop );
-        // linearGrad.setColorAt(0, Qt::black);
-        // linearGrad.setColorAt(1, Qt::white);
-
-    }
-    else
-    {
-        pPainter->drawPolyline( polygon );                         
-    }
+    // draw line between start/stop points
+    QPen pen( Qt::darkGray );
+    pen.setStyle( Qt::DashLine );
+    pPainter->setPen( pen );
+    pPainter->drawLine( pointStart, pointStop );
 }
 
 void PFillGradientLinear::doDrawState( const QPoint &point )
 {
     Q_ASSERT( nState == StateIdle );
 
-    polygon.append( point );    // begin
-    polygon.append( point );    // current
-
+    pointStart = pointStop = pointSeed = point;
+    qWarning("ToDo: fill polygon with outline of fill area");
     nState = StateDraw;
-    update();
-    emit signalChangedState();
+    doManipulateState();
 }
 
 void PFillGradientLinear::doManipulateState()
@@ -187,18 +166,11 @@ void PFillGradientLinear::doManipulateState()
 
 void PFillGradientLinear::doIdleState()
 {
-    Q_ASSERT( nState == StateDraw || nState == StateManipulate );
+    Q_ASSERT( nState == StateManipulate );
 
-    if ( nState == StateDraw )
-    {
-        nState = StateIdle;
-    }
-    else if ( nState == StateManipulate )
-    {
-        doDeleteHandles();
-        polygon.clear();
-        nState = StateIdle;
-    }
+    doDeleteHandles();
+    polygon.clear();
+    nState = StateIdle;
     update();
     emit signalChangedState();
 }
@@ -209,91 +181,56 @@ void PFillGradientLinear::doIdleState()
  *  
  * Order matters when handles share a position. Last handle will be found first. 
  *  
- * It would be easiest to append the move handle at the end as this would mean there would 
- * be a direct correspondence between point indexs and handle indexs - but this would make 
- * the move handle the default when all handles happened to be stacked upon each other. 
- * This would make resizing a very small polygon difficult - so we have the move handle 
- * first (at bottom). 
- *  
- * \author pharvey (2/1/23)
  */
 void PFillGradientLinear::doCreateHandles()
 {
     Q_ASSERT( vectorHandles.count() == 0 );
 
-    // their parent will be the viewport so...
-    QPolygon polygonView = pView->mapFromScene( polygon );
-
     // Order matters when handles share a position. Last handle will be found first.
     PHandle *pHandle;
 
-    // move handle is always vectorHandles[0]
-    pHandle = new PHandle( pView, PHandle::TypeDrag, polygonView.boundingRect().center() );
+    // seed handle is always vectorHandles[0]
+    pHandle = new PHandle( pView, PHandle::TypeFillSeed, pView->mapFromScene( pointSeed ) );
     vectorHandles.append( pHandle );
     pHandle->show();
 
-    // add a handle for each point
-    for ( QPoint point : polygonView )
-    {
-        pHandle = new PHandle( pView, PHandle::TypeMovePoint, point );
-        vectorHandles.append( pHandle );
-        pHandle->show();
-    }
+    // start handle is always vectorHandles[1]
+    pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( pointStart ) );
+    vectorHandles.append( pHandle );
+    pHandle->show();
+
+    // stop handle is always vectorHandles[2]
+    pHandle = new PHandle( pView, PHandle::TypeFillStop, pView->mapFromScene( pointStop ) );
+    vectorHandles.append( pHandle );
+    pHandle->show();
+
 }
 
 void PFillGradientLinear::doSyncHandles()
 {
-    QPolygon polygonView = pView->mapFromScene( polygon );
-
-    vectorHandles[0]->setCenter( polygonView.boundingRect().center() );
-    for ( int n = 0; n < polygonView.count(); n++ )
-    {
-        vectorHandles[n+1]->setCenter( polygonView[n] );
-    }
 }
 
-
-/*!
- * \brief Move current handle.
- *  
- * Only used during manipulation mode. 
- *  
- * The polygon will be moved if move handle otherwise we will move handle/point and 
- * adjust move handle so its center. 
- * 
- * \author pharvey (2/1/23)
- * 
- * \param pointPos 
- */
 void PFillGradientLinear::doMoveHandle( const QPoint &pointPos )
 {
     Q_ASSERT( pHandle );
 
-    // their parent will be the viewport so...
-    QPolygon    polygonView     = pView->mapFromScene( polygon );
-    QPoint      pointViewPos    = pView->mapFromScene( pointPos );
+    QPoint pointViewPos = pView->mapFromScene( pointPos );
 
-    // move handle?
-    if ( pHandle == vectorHandles[0] )
+    if ( pHandle == vectorHandles[PFillGradientLinearSeed] )
     {
-        QPoint pointDelta = pointPos - pView->mapToScene( pHandle->getCenter() ).toPoint();
-        // move points
-        for ( int n = 0; n < polygon.count(); n++ )
-        {
-            polygon.replace( n, polygon.at( n ) + pointDelta );
-            vectorHandles.at( n + 1 )->doMoveBy( pointDelta );
-        }
-        // move self
-        vectorHandles.at( 0 )->doMoveBy( pointDelta );
-        update();
-        return;
     }
-
-    // just a single point handle
-    pHandle->setCenter( pointViewPos );
-    polygon.replace( vectorHandles.indexOf( pHandle ) - 1, pointPos );
-    vectorHandles.at( 0 )->setCenter( polygonView.boundingRect().center() );
-    update();
+    else if ( pHandle == vectorHandles[PFillGradientLinearStart] )
+    {
+        pHandle->setCenter( pointViewPos );
+        pointStart = pointPos;
+        update();
+    }
+    else if ( pHandle == vectorHandles[PFillGradientLinearStop] )
+    {
+        pHandle->setCenter( pointViewPos );
+        pointStop = pointPos;
+        update();
+    }
 }
 
 PFillGradientToolBar::PFillGradientToolBar( QWidget *p )

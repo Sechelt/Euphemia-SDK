@@ -36,7 +36,11 @@ public:
         TypeSizeTopRight,
         TypeSizeTopLeft,
         TypeSizeBottomRight,
-        TypeSizeBottomLeft
+        TypeSizeBottomLeft,
+        TypeFillSeed,
+        TypeFillStart,
+        TypeFillStop,
+        TypeFillPoint
     };
 
     PHandle( PGraphicsView *pView, Type nType, const QPoint &pointCenter );
