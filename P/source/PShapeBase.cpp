@@ -6,6 +6,7 @@
 PShapeBase::PShapeBase( PCanvas *pCanvas )
     : QGraphicsObject()
 {
+    nState = StateIdle;
     this->pCanvas = pCanvas;
     pView = pCanvas->getView();
 }

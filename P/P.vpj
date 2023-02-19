@@ -74,6 +74,10 @@
             <F N="source/PFillBase.cpp"/>
             <F N="source/PFillFlood.cpp"/>
             <F N="source/PFillGradient.cpp"/>
+            <F N="source/PFillGradientConical.cpp"/>
+            <F N="source/PFillGradientLinear.cpp"/>
+            <F N="source/PFillGradientPreset.cpp"/>
+            <F N="source/PFillGradientRadial.cpp"/>
             <F N="source/PFontToolBar.cpp"/>
             <F N="source/PFreeBase.cpp"/>
             <F N="source/PGraphicsScene.cpp"/>
@@ -111,6 +115,10 @@
             <F N="include/PFillBase.h"/>
             <F N="include/PFillFlood.h"/>
             <F N="include/PFillGradient.h"/>
+            <F N="include/PFillGradientConical.h"/>
+            <F N="include/PFillGradientLinear.h"/>
+            <F N="include/PFillGradientPreset.h"/>
+            <F N="include/PFillGradientRadial.h"/>
             <F N="include/PFontToolBar.h"/>
             <F N="include/PFreeBase.h"/>
             <F N="include/PGraphicsScene.h"/>

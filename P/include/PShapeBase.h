@@ -54,14 +54,14 @@ protected:
     QVector<PHandle*>   vectorHandles;              /*!< Handles are children of canvas widget and are shown on top of shape due to z-order.    */
     PHandle *           pHandle = nullptr;          /*!< Handle being moved.                                                                    */
 
+    virtual void doPaint( QPainter *pPainter ) = 0;
+
     virtual PHandle *   getHandle( const QPoint &pointPos );
     virtual PHandle *   getHandleUnder( PHandle *pHandle, PHandle::Type n );
     virtual PHandle *   getHandleNext( PHandle *pHandle, PHandle::Type n );
     virtual PHandle *   getHandlePrev( PHandle *pHandle, PHandle::Type n );
     virtual QImage      getMask() { return QImage();  }
     virtual QImage      getTrimmed( const QRect &r, QImage &image, const QImage &imageMask, bool bErase = false );
-
-    virtual void doPaint( QPainter *pPainter ) = 0;
 
     // state changes
     virtual void doDrawState( const QPoint & ) = 0;

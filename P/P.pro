@@ -41,6 +41,10 @@ HEADERS += \
         include/PDrawText.h \
         include/PFillFlood.h \
         include/PFillGradient.h \
+#        include/PFillGradientConical.h \
+#        include/PFillGradientLinear.h \
+#        include/PFillGradientPreset.h \
+#        include/PFillGradientRadial.h \
         include/PFontToolBar.h \
         include/PFreeBase.h \
         include/PGraphicsScene.h \
@@ -74,6 +78,10 @@ SOURCES += \
         source/PDrawText.cpp \
         source/PFillFlood.cpp \
         source/PFillGradient.cpp \
+#        source/PFillGradientConical.cpp \
+#        source/PFillGradientLinear.cpp \
+#        source/PFillGradientPreset.cpp \
+#        source/PFillGradientRadial.cpp \
         source/PFontToolBar.cpp \
         source/PFreeBase.cpp \
         source/PGraphicsScene.cpp \

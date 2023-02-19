@@ -5,6 +5,75 @@
 
 #include "P.h"
 
+class PContextGradient
+{
+public:
+    /*!< put these into a QComboBox with QGradient::Preset's to combine selecting for a preset or other supported gradient                              */
+    /*!< this works because presets start at 0 and this is not likley to change                                                                         */
+    enum StandardGradient       
+    {
+        StandardGradientLinear = -1,
+        StandardGradientRadial = -2,
+        StandardGradientConical = -3
+    };
+
+   int nType = StandardGradientLinear;                  /*!< value will be either a QGradient::Preset or PContextGradient::StandardGradient               */
+
+    inline bool operator==( const PContextGradient &t ) 
+    {
+        if ( t.nType != nType ) return false;
+        return true;
+    }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
+};
+
+class PContextGradientLinear
+{
+public:
+    QLinearGradient gradient;
+
+    inline bool operator==( const PContextGradientLinear &t ) 
+    {
+        if ( t.gradient != gradient ) return false;
+        return true;
+    }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
+};
+
+class PContextGradientRadial
+{
+public:
+    QRadialGradient gradient;
+
+    inline bool operator==( const PContextGradientRadial &t ) 
+    {
+        if ( t.gradient != gradient ) return false;
+        return true;
+    }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
+};
+
+class PContextGradientConical
+{
+public:
+    QConicalGradient gradient;
+
+    inline bool operator==( const PContextGradientConical &t ) 
+    {
+        if ( t.gradient != gradient ) return false;
+        return true;
+    }
+
+    void doSave( QDomDocument *pdomDoc, QDomElement *pdomElem );
+    void doLoad( QDomElement *pdomElem );
+};
+
 class PContextFreeHand
 {
 public:
@@ -170,10 +239,10 @@ public:
     void setPen( const QPen & );
     void setBrush( const QBrush & );
     void setFont( const QFont & );
-    void setGradient( QGradient::Type );
-    void setGradientLinear( const QLinearGradient & );
-    void setGradientRadial( const QRadialGradient & );
-    void setGradientConical( const QConicalGradient & );
+    void setGradient( const PContextGradient & );
+    void setGradientLinear( const PContextGradientLinear & );
+    void setGradientRadial( const PContextGradientRadial & );
+    void setGradientConical( const PContextGradientConical & );
     void setFreeHand( const PContextFreeHand & );
     void setErase( const PContextErase & );
     void setSpray( const PContextSpray & );
@@ -186,10 +255,10 @@ public:
     QPen                    getPen()            { return pen;               }
     QBrush                  getBrush()          { return brush;             }
     QFont                   getFont()           { return font;              }
-    QGradient::Type         getGradient()       { return nGradientType;     }
-    QLinearGradient         getGradientLinear() { return gradientlinear;    }   
-    QRadialGradient         getGradientRadial() { return gradientradial;    }   
-    QConicalGradient        getGradientConical(){ return gradientconical;   }   
+    PContextGradient        getGradient()       { return gradient;          }
+    PContextGradientLinear  getGradientLinear() { return gradientlinear;    }   
+    PContextGradientRadial  getGradientRadial() { return gradientradial;    }   
+    PContextGradientConical getGradientConical(){ return gradientconical;   }   
     PContextFreeHand        getFreeHand()       { return freehand;          }
     PContextErase           getErase()          { return erase;             }
     PContextSpray           getSpray()          { return spray;             }
@@ -205,10 +274,10 @@ signals:
     void signalModified( const QPen & );
     void signalModified( const QBrush & );
     void signalModified( const QFont & );
-    void signalModified( QGradient::Type );
-    void signalModified( const QLinearGradient & );
-    void signalModified( const QRadialGradient & );
-    void signalModified( const QConicalGradient & );
+    void signalModified( const PContextGradient & );
+    void signalModified( const PContextGradientLinear & );
+    void signalModified( const PContextGradientRadial & );
+    void signalModified( const PContextGradientConical & );
     void signalModified( const PContextFreeHand & );
     void signalModified( const PContextSpray & );
     void signalModified( const PContextErase & );
@@ -222,10 +291,10 @@ public slots:
     void slotPen( const QPen &t );
     void slotBrush( const QBrush &t );
     void slotFont( const QFont &t );
-    void slotGradient( QGradient::Type n );
-    void slotGradientLinear( const QLinearGradient &t );
-    void slotGradientRadial( const QRadialGradient &t );
-    void slotGradientConical( const QConicalGradient &t );
+    void slotGradient( const PContextGradient &t );
+    void slotGradientLinear( const PContextGradientLinear &t );
+    void slotGradientRadial( const PContextGradientRadial &t );
+    void slotGradientConical( const PContextGradientConical &t );
     void slotFreeHand( const PContextFreeHand &t );
     void slotErase( const PContextErase &t );
     void slotSpray( const PContextSpray &t );
@@ -240,10 +309,10 @@ protected:
     QPen                    pen;                        /*!< defines lines and outlines             */
     QBrush                  brush;                      /*!< defines fill details                   */
     QFont                   font;                       /*!< defines font details for drawing text  */
-    QGradient::Type         nGradientType = QGradient::LinearGradient;
-    QLinearGradient         gradientlinear;             /*!< used by gradient fill tool             */
-    QRadialGradient         gradientradial;             /*!< used by gradient fill tool             */
-    QConicalGradient        gradientconical;            /*!< used by gradient fill tool             */
+    PContextGradient        gradient;
+    PContextGradientLinear  gradientlinear;             /*!< used by gradient fill tool             */
+    PContextGradientRadial  gradientradial;             /*!< used by gradient fill tool             */
+    PContextGradientConical gradientconical;            /*!< used by gradient fill tool             */
     PContextFreeHand        freehand;                   /*!< used by free hand tool                 */
     PContextSpray           spray;                      /*!< used by spray tool                     */
     PContextErase           erase;                      /*!< used by erase tool                     */

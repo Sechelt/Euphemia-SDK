@@ -3,6 +3,38 @@
 
 #define PCONTEXT_DOC_CLASS "PContext"
 
+void PContextGradient::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+}
+
+void PContextGradient::doLoad( QDomElement *pdomElem )
+{
+}
+
+void PContextGradientLinear::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+}
+
+void PContextGradientLinear::doLoad( QDomElement *pdomElem )
+{
+}
+
+void PContextGradientRadial::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+}
+
+void PContextGradientRadial::doLoad( QDomElement *pdomElem )
+{
+}
+
+void PContextGradientConical::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
+{
+}
+
+void PContextGradientConical::doLoad( QDomElement *pdomElem )
+{
+}
+
 void PContextFreeHand::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
 {
     pdomElem->setAttribute( "Shape", nShape );
@@ -207,28 +239,28 @@ void PContext::setFont( const QFont &t )
     emit signalModified( font );
 }
 
-void PContext::setGradient( QGradient::Type n )
+void PContext::setGradient( const PContextGradient &t )
 {
-    if ( nGradientType == n ) return;
-    nGradientType = n;
-    emit signalModified( nGradientType );
+    if ( gradient == t ) return;
+    gradient = t;
+    emit signalModified( gradient );
 }
 
-void PContext::setGradientLinear( const QLinearGradient &t )
+void PContext::setGradientLinear( const PContextGradientLinear &t )
 {
     if ( gradientlinear == t ) return;
     gradientlinear = t;
     emit signalModified( gradientlinear );
 }
 
-void PContext::setGradientRadial( const QRadialGradient &t )
+void PContext::setGradientRadial( const PContextGradientRadial &t )
 {
     if ( gradientradial == t ) return;
     gradientradial = t;
     emit signalModified( gradientradial );
 }
 
-void PContext::setGradientConical( const QConicalGradient &t )
+void PContext::setGradientConical( const PContextGradientConical &t )
 {
     if ( gradientconical == t ) return;
     gradientconical = t;
@@ -473,22 +505,22 @@ void PContext::slotFont( const QFont &t )
     setFont( t );
 }
 
-void PContext::slotGradient( QGradient::Type n )
+void PContext::slotGradient( const PContextGradient &t )
 {
-    setGradient( n );
+    setGradient( t );
 }
 
-void PContext::slotGradientLinear( const QLinearGradient &t )
+void PContext::slotGradientLinear( const PContextGradientLinear &t )
 {
     setGradientLinear( t );
 }
 
-void PContext::slotGradientRadial( const QRadialGradient &t )
+void PContext::slotGradientRadial( const PContextGradientRadial &t )
 {
     setGradientRadial( t );
 }
 
-void PContext::slotGradientConical( const QConicalGradient &t )
+void PContext::slotGradientConical( const PContextGradientConical &t )
 {
     setGradientConical( t );
 }

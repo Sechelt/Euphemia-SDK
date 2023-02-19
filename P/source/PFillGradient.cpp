@@ -4,16 +4,29 @@
 #include "PContext.h"
 #include "PCanvas.h"
 
-#define PFillGradientLinearSeed 0
+#define PFillGradientSeed 0
+
 #define PFillGradientLinearStart 1
 #define PFillGradientLinearStop 2
 
-PFillGradientLinear::PFillGradientLinear( PCanvas *pCanvas )
+#define PFillGradientRadialRadius 1
+#define PFillGradientRadialFocal 2
+
+#define PFillGradientConicalAngle 1
+
+//
+//
+//
+PFillGradient::PFillGradient( PCanvas *pCanvas )
     : PShapeBase( pCanvas )
 {
+    connect( g_Context, SIGNAL(signalModified(const PContextGradient &)), SLOT(slotRefresh(const PContextGradient &)) );
+    connect( g_Context, SIGNAL(signalModified(const PContextGradientLinear &)), SLOT(slotRefresh(const PContextGradientLinear &)) );
+    connect( g_Context, SIGNAL(signalModified(const PContextGradientRadial &)), SLOT(slotRefresh(const PContextGradientRadial &)) );
+    connect( g_Context, SIGNAL(signalModified(const PContextGradientConical &)), SLOT(slotRefresh(const PContextGradientConical &)) );
 }
 
-PFillGradientLinear::~PFillGradientLinear()
+PFillGradient::~PFillGradient()
 {
     doCancel();
 }
@@ -28,7 +41,7 @@ PFillGradientLinear::~PFillGradientLinear()
  * 
  * \return QImage 
  */
-QImage PFillGradientLinear::getCopy()
+QImage PFillGradient::getCopy()
 {
     QImage image( g_Context->getImage()->size(), QImage::Format_ARGB32 );
     image.fill( Qt::transparent );
@@ -47,7 +60,7 @@ QImage PFillGradientLinear::getCopy()
  * 
  * \return QRect 
  */
-void PFillGradientLinear::doDoubleClick( PMouseEvent *pEvent )
+void PFillGradient::doDoubleClick( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 }
@@ -61,7 +74,7 @@ void PFillGradientLinear::doDoubleClick( PMouseEvent *pEvent )
  * 
  * \return bool 
  */
-void PFillGradientLinear::doPress( PMouseEvent *pEvent )
+void PFillGradient::doPress( PMouseEvent *pEvent )
 {
     if ( pEvent->button() != Qt::LeftButton ) return;
 
@@ -79,7 +92,7 @@ void PFillGradientLinear::doPress( PMouseEvent *pEvent )
     }
 }
 
-void PFillGradientLinear::doMove( PMouseEvent *pEvent ) 
+void PFillGradient::doMove( PMouseEvent *pEvent ) 
 {
     switch ( nState )
     {
@@ -93,7 +106,7 @@ void PFillGradientLinear::doMove( PMouseEvent *pEvent )
     }
 }
 
-void PFillGradientLinear::doRelease( PMouseEvent *pEvent )
+void PFillGradient::doRelease( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
 
@@ -111,52 +124,130 @@ void PFillGradientLinear::doRelease( PMouseEvent *pEvent )
     }
 }
 
-void PFillGradientLinear::doCommit()
+void PFillGradient::doCommit()
 {
     Q_ASSERT( nState == StateManipulate );
 
-    QLinearGradient gradient( pointStart, pointStop );
-    gradient.setColorAt( 0, Qt::black );
-    gradient.setColorAt( 1, Qt::white );
-
-    QPainter painter( g_Context->getImage());
-    QBrush brush( gradient );
-    painter.setBrush( brush );
-
-    QRect r( pointStart, pointStop );
-
-    painter.drawRect( r );
-
+    QPainter painter( g_Context->getImage() );
+    doPaint( &painter );
 
     emit signalCommitted();
     doIdleState();
 }
 
-void PFillGradientLinear::doPaint( QPainter *pPainter )
+void PFillGradient::slotRefresh( const PContextGradient &t )
 {
     if ( nState != StateManipulate ) return;
 
-    // draw outline of fill area
-    qWarning("ToDo: draw polygon as outline of fill area");
-
-    // draw line between start/stop points
-    QPen pen( Qt::darkGray );
-    pen.setStyle( Qt::DashLine );
-    pPainter->setPen( pen );
-    pPainter->drawLine( pointStart, pointStop );
+    if ( t.nType != nType )
+    {
+        doCancel();
+        return;
+    }
 }
 
-void PFillGradientLinear::doDrawState( const QPoint &point )
+void PFillGradient::slotRefresh( const PContextGradientLinear &t )
+{
+}
+
+void PFillGradient::slotRefresh( const PContextGradientRadial &t )
+{
+}
+
+void PFillGradient::slotRefresh( const PContextGradientConical &t )
+{
+}
+
+
+void PFillGradient::doPaint( QPainter *pPainter )
+{
+    if ( nState != StateManipulate ) return;
+
+    if ( pGradientPreset )
+    {
+        pPainter->setBrush( QBrush( *pGradientPreset ) );
+        pPainter->setPen( QPen( Qt::NoPen ) );
+        pPainter->drawPolygon( polygon );
+    }
+    else if ( pGradientLinear )
+    {
+        pGradientLinear->setStart( linear.pointStart );
+        pGradientLinear->setFinalStop( linear.pointStop );
+//        gradient.setColorAt( 0, Qt::black );                                         
+//        gradient.setColorAt( 0.5, Qt::yellow );                                      
+//        gradient.setColorAt( 0.75, Qt::blue );                                       
+//        gradient.setColorAt( 1, Qt::white );                                         
+//        gradient.setSpread( QGradient::ReflectSpread ); // for linear and radial only
+        pPainter->setBrush( QBrush( *pGradientLinear ) );
+        pPainter->setPen( QPen( Qt::NoPen ) );
+        pPainter->drawPolygon( polygon );
+
+        // paint line between start/stop points
+/*
+        {                                               
+            QPen pen( Qt::darkGray );                   
+            pen.setStyle( Qt::DashLine );               
+            pen.setWidth( 2 );                          
+            pPainter->setPen( pen );                    
+            pPainter->setBrush( Qt::NoBrush );          
+            pPainter->drawLine( pointStart, pointStop );
+        }                                               
+*/
+    }
+    else if ( pGradientRadial )
+    {
+        pGradientRadial->setRadius( radial.nRadius );
+        pGradientRadial->setFocalPoint( radial.pointFocalPoint );
+        pPainter->setBrush( QBrush( *pGradientRadial ) );
+        pPainter->setPen( QPen( Qt::NoPen ) );
+        pPainter->drawPolygon( polygon );
+    }
+    else if ( pGradientConical )
+    {
+        pGradientConical->setAngle( conical.nStartAngle );
+        pPainter->setBrush( QBrush( *pGradientConical ) );
+        pPainter->setPen( QPen( Qt::NoPen ) );
+        pPainter->drawPolygon( polygon );
+    }
+}
+
+void PFillGradient::doDrawState( const QPoint &point )
 {
     Q_ASSERT( nState == StateIdle );
 
-    pointStart = pointStop = pointSeed = point;
-    qWarning("ToDo: fill polygon with outline of fill area");
+    nType = g_Context->getGradient().nType;
+    if ( nType >= 0 )
+    {
+        pGradientPreset = new QGradient( (QGradient::Preset)nType );
+    }
+    else if ( nType == PContextGradient::StandardGradientLinear )
+    {
+        linear.pointStart = linear.pointStop = point;
+        pGradientLinear = new QLinearGradient( linear.pointStart, linear.pointStop );
+    }
+    else if ( nType == PContextGradient::StandardGradientRadial )
+    {
+        radial.nRadius = 10;
+        radial.pointFocalPoint = point;
+        pGradientRadial = new QRadialGradient( point, radial.nRadius, radial.pointFocalPoint );
+    }
+    else if ( nType == PContextGradient::StandardGradientConical )
+    {
+        conical.nStartAngle = 10;
+        pGradientConical = new QConicalGradient( point, conical.nStartAngle );
+    }
+    else
+    {
+        Q_ASSERT( 1==0 );
+    }
+
+    pointSeed = point;
+    polygon = getPolygon( pointSeed );
     nState = StateDraw;
     doManipulateState();
 }
 
-void PFillGradientLinear::doManipulateState()
+void PFillGradient::doManipulateState()
 {
     Q_ASSERT( nState == StateDraw );
     doCreateHandles();
@@ -164,11 +255,32 @@ void PFillGradientLinear::doManipulateState()
     emit signalChangedState();
 }
 
-void PFillGradientLinear::doIdleState()
+void PFillGradient::doIdleState()
 {
     Q_ASSERT( nState == StateManipulate );
 
     doDeleteHandles();
+    if ( pGradientPreset ) 
+    {
+        delete pGradientPreset;
+        pGradientPreset = nullptr;
+    }
+    if ( pGradientLinear ) 
+    {
+        delete pGradientLinear;
+        pGradientLinear = nullptr;
+    }
+    if ( pGradientRadial ) 
+    {
+        delete pGradientRadial;
+        pGradientRadial = nullptr;
+    }
+    if ( pGradientConical ) 
+    {
+        delete pGradientConical;
+        pGradientConical = nullptr;
+    }
+    nType = 0;
     polygon.clear();
     nState = StateIdle;
     update();
@@ -182,7 +294,7 @@ void PFillGradientLinear::doIdleState()
  * Order matters when handles share a position. Last handle will be found first. 
  *  
  */
-void PFillGradientLinear::doCreateHandles()
+void PFillGradient::doCreateHandles()
 {
     Q_ASSERT( vectorHandles.count() == 0 );
 
@@ -194,258 +306,421 @@ void PFillGradientLinear::doCreateHandles()
     vectorHandles.append( pHandle );
     pHandle->show();
 
-    // start handle is always vectorHandles[1]
-    pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( pointStart ) );
-    vectorHandles.append( pHandle );
-    pHandle->show();
+    if ( pGradientLinear )
+    {
+        // start handle is always vectorHandles[1]
+        pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( linear.pointStart ) );
+        vectorHandles.append( pHandle );
+        pHandle->show();
 
-    // stop handle is always vectorHandles[2]
-    pHandle = new PHandle( pView, PHandle::TypeFillStop, pView->mapFromScene( pointStop ) );
-    vectorHandles.append( pHandle );
-    pHandle->show();
+        // stop handle is always vectorHandles[2]
+        pHandle = new PHandle( pView, PHandle::TypeFillStop, pView->mapFromScene( linear.pointStop ) );
+        vectorHandles.append( pHandle );
+        pHandle->show();
+    }
+    else if ( pGradientRadial )
+    {
+        QPoint point( pointSeed.x() + radial.nRadius, pointSeed.y() );
+        pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( point ) );
+        vectorHandles.append( pHandle );
+        pHandle->show();
 
+        pHandle = new PHandle( pView, PHandle::TypeFillStop, pView->mapFromScene( radial.pointFocalPoint ) );
+        vectorHandles.append( pHandle );
+        pHandle->show();
+    }
+    else if ( pGradientConical )
+    {
+        pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( pointSeed + getPolarToCartesian( conical.nRadius, conical.nStartAngle ).toPoint() ) );
+        vectorHandles.append( pHandle );
+        pHandle->show();
+    }
 }
 
-void PFillGradientLinear::doSyncHandles()
+
+// react to zoom
+void PFillGradient::doSyncHandles()
 {
+    if ( pGradientLinear )
+    {
+    }
+    else if ( pGradientRadial )
+    {
+    }
+    else if ( pGradientConical )
+    {
+    }
 }
 
-void PFillGradientLinear::doMoveHandle( const QPoint &pointPos )
+void PFillGradient::doMoveHandle( const QPoint &pointPos )
 {
     Q_ASSERT( pHandle );
 
     QPoint pointViewPos = pView->mapFromScene( pointPos );
 
-    if ( pHandle == vectorHandles[PFillGradientLinearSeed] )
+    if ( pGradientLinear )
     {
+        if ( pHandle == vectorHandles[PFillGradientLinearStart] )
+        {
+            pHandle->setCenter( pointViewPos );
+            linear.pointStart = pointPos;
+            update();
+        }
+        else if ( pHandle == vectorHandles[PFillGradientLinearStop] )
+        {
+            pHandle->setCenter( pointViewPos );
+            linear.pointStop = pointPos;
+            update();
+        }
     }
-    else if ( pHandle == vectorHandles[PFillGradientLinearStart] )
+    else if ( pGradientRadial )
     {
-        pHandle->setCenter( pointViewPos );
-        pointStart = pointPos;
-        update();
+        if ( pHandle == vectorHandles[PFillGradientRadialRadius] )
+        {
+            pHandle->setCenter( pointViewPos );
+            radial.nRadius = qAbs( pointSeed.x() - pointPos.x() );
+            update();
+        }
+        else if ( pHandle == vectorHandles[PFillGradientRadialFocal] )
+        {
+            pHandle->setCenter( pointViewPos );
+            radial.pointFocalPoint = pointPos;
+            update();
+        }
     }
-    else if ( pHandle == vectorHandles[PFillGradientLinearStop] )
+    else if ( pGradientConical )
     {
-        pHandle->setCenter( pointViewPos );
-        pointStop = pointPos;
-        update();
+        if ( pHandle == vectorHandles[PFillGradientConicalAngle] )
+        {
+            pHandle->setCenter( pointViewPos );
+            Polar polar = getCartesianToPolar( pointPos.x(), pointPos.y() );
+            conical.nRadius = polar.radius;
+            conical.nStartAngle = polar.angle;
+            update();
+        }
     }
 }
 
+/*!
+ * \brief Returns a polygon representing a boundary. 
+ *  
+ * The boundary is defined by not being the color at pointSeed starting at pointSeed. 
+ *  
+ * Uses the 'Square tracing algorithm'. 
+ *  
+ * \author pharvey (2/17/23)
+ * 
+ * \param point  
+ * 
+ * \return QPolygon The inside of the polygon is the area outlined.
+ */
+QPolygon PFillGradient::getPolygon( const QPoint &pointSeed )
+{
+    QImage *    pImage      = g_Context->getImage();
+    int         nX          = pointSeed.x();
+    int         nY          = pointSeed.y();
+    QColor      colorSeed   = pImage->pixelColor( pointSeed );
+    QPolygon    polygon;
+
+    // go west until we hit a boundary (or go off image)
+    do
+    {
+        nX--;
+        if ( isBoundary( pImage, colorSeed, QPoint( nX, nY ) ) ) break; 
+    } while ( 1 );
+
+    // start point
+    QPoint pointStart( nX, nY );
+    polygon.append( pointStart );
+
+    //
+    QPoint pointStep = getLeft( QPoint( 0, 1 ) );               
+    QPoint point = pointStart + pointStep;
+    while ( point != pointStart )
+    {
+        if ( isBoundary( pImage, colorSeed, point ) )
+        {
+            polygon.append( point );
+            pointStep = getLeft( pointStep );
+            point = point + pointStep;
+        }
+        else
+        {
+            point = point - pointStep;
+            pointStep = getRight( pointStep );
+            point = point + pointStep;
+        }
+    }
+
+    return polygon;
+}
+
+QPointF PFillGradient::getPolarToCartesian( qreal nRadius, qreal nAngle )
+{
+    return QPointF( nRadius * qCos( nAngle ), nRadius * qSin( nAngle ) );
+}
+
+PFillGradient::Polar PFillGradient::getCartesianToPolar( qreal x, qreal y )
+{
+    // θ = tan-1 ( y / x )
+    qreal nAngle = qAtan2( y, x );
+    if ( nAngle < 0 )
+    {
+        nAngle += (2* M_PI);
+    }
+
+    // r = √ ( x2 + y2 )
+    qreal nRadius = qSqrt( (x*x) + (y*y) );
+    Polar p;
+    p.angle = nAngle;
+    p.radius = nRadius;
+
+    return p;
+}
+
+
+//
+// PFillGradientToolBar
+//
 PFillGradientToolBar::PFillGradientToolBar( QWidget *p )
     : QWidget( p )
 {
     QHBoxLayout *pLayout = new QHBoxLayout( this );
-    pPreset = new QComboBox( this );
-    pPreset->addItem( "WarmFlame",        QGradient::WarmFlame );                          
-    pPreset->addItem( "NightFade",        QGradient::NightFade );                          
-    pPreset->addItem( "SpringWarmth",     QGradient::SpringWarmth );                       
-    pPreset->addItem( "JuicyPeach",       QGradient::JuicyPeach );                         
-    pPreset->addItem( "YoungPassion",     QGradient::YoungPassion );                       
-    pPreset->addItem( "LadyLips",         QGradient::LadyLips );                           
-    pPreset->addItem( "SunnyMorning",     QGradient::SunnyMorning );                       
-    pPreset->addItem( "RainyAshville",    QGradient::RainyAshville );                      
-    pPreset->addItem( "FrozenDreams",     QGradient::FrozenDreams );                       
-    pPreset->addItem( "WinterNeva",       QGradient::WinterNeva );                         
-    pPreset->addItem( "DustyGrass",       QGradient::DustyGrass );                         
-    pPreset->addItem( "TemptingAzure",    QGradient::TemptingAzure );                      
-    pPreset->addItem( "HeavyRain",        QGradient::HeavyRain );                          
-    pPreset->addItem( "AmyCrisp",         QGradient::AmyCrisp );                           
-    pPreset->addItem( "MeanFruit",        QGradient::MeanFruit );                          
-    pPreset->addItem( "DeepBlue",         QGradient::DeepBlue );                           
-    pPreset->addItem( "RipeMalinka",      QGradient::RipeMalinka );                        
-    pPreset->addItem( "CloudyKnoxville",  QGradient::CloudyKnoxville );                    
-    pPreset->addItem( "MalibuBeach",      QGradient::MalibuBeach );                        
-    pPreset->addItem( "NewLife",          QGradient::NewLife );                            
-    pPreset->addItem( "TrueSunset",       QGradient::TrueSunset );                         
-    pPreset->addItem( "MorpheusDen",      QGradient::MorpheusDen );                        
-    pPreset->addItem( "RareWind",         QGradient::RareWind );                           
-    pPreset->addItem( "NearMoon",         QGradient::NearMoon );                           
-    pPreset->addItem( "WildApple",        QGradient::WildApple );                          
-    pPreset->addItem( "SaintPetersburg",  QGradient::SaintPetersburg );                    
-    pPreset->addItem( "PlumPlate",        QGradient::PlumPlate );                          
-    pPreset->addItem( "EverlastingSky",   QGradient::EverlastingSky );                     
-    pPreset->addItem( "HappyFisher",      QGradient::HappyFisher );                        
-    pPreset->addItem( "Blessing",         QGradient::Blessing );                           
-    pPreset->addItem( "SharpeyeEagle",    QGradient::SharpeyeEagle );                      
-    pPreset->addItem( "LadogaBottom",     QGradient::LadogaBottom );                       
-    pPreset->addItem( "LemonGate",        QGradient::LemonGate );                          
-    pPreset->addItem( "ItmeoBranding",    QGradient::ItmeoBranding );                      
-    pPreset->addItem( "ZeusMiracle",      QGradient::ZeusMiracle );                        
-    pPreset->addItem( "OldHat",           QGradient::OldHat );                             
-    pPreset->addItem( "StarWine",         QGradient::StarWine );                           
-    pPreset->addItem( "HappyAcid",        QGradient::HappyAcid );                          
-    pPreset->addItem( "AwesomePine",      QGradient::AwesomePine );                        
-    pPreset->addItem( "NewYork",          QGradient::NewYork );                            
-    pPreset->addItem( "ShyRainbow",       QGradient::ShyRainbow );                         
-    pPreset->addItem( "MixedHopes",       QGradient::MixedHopes );                         
-    pPreset->addItem( "FlyHigh",          QGradient::FlyHigh );                            
-    pPreset->addItem( "StrongBliss",      QGradient::StrongBliss );                        
-    pPreset->addItem( "FreshMilk",        QGradient::FreshMilk );                          
-    pPreset->addItem( "SnowAgain",        QGradient::SnowAgain );                          
-    pPreset->addItem( "FebruaryInk",      QGradient::FebruaryInk );                        
-    pPreset->addItem( "KindSteel",        QGradient::KindSteel );                          
-    pPreset->addItem( "SoftGrass",        QGradient::SoftGrass );                          
-    pPreset->addItem( "GrownEarly",       QGradient::GrownEarly );                         
-    pPreset->addItem( "SharpBlues",       QGradient::SharpBlues );                         
-    pPreset->addItem( "ShadyWater",       QGradient::ShadyWater );                         
-    pPreset->addItem( "DirtyBeauty",      QGradient::DirtyBeauty );                        
-    pPreset->addItem( "GreatWhale",       QGradient::GreatWhale );                         
-    pPreset->addItem( "TeenNotebook",     QGradient::TeenNotebook );                       
-    pPreset->addItem( "PoliteRumors",     QGradient::PoliteRumors );                       
-    pPreset->addItem( "SweetPeriod",      QGradient::SweetPeriod );                        
-    pPreset->addItem( "WideMatrix",       QGradient::WideMatrix );                         
-    pPreset->addItem( "SoftCherish",      QGradient::SoftCherish );                        
-    pPreset->addItem( "RedSalvation",     QGradient::RedSalvation );                       
-    pPreset->addItem( "BurningSpring",    QGradient::BurningSpring );                      
-    pPreset->addItem( "NightParty",       QGradient::NightParty );                         
-    pPreset->addItem( "SkyGlider",        QGradient::SkyGlider );                          
-    pPreset->addItem( "HeavenPeach",      QGradient::HeavenPeach );                        
-    pPreset->addItem( "PurpleDivision",   QGradient::PurpleDivision );                     
-    pPreset->addItem( "AquaSplash",       QGradient::AquaSplash );                         
-    pPreset->addItem( "SpikyNaga",        QGradient::SpikyNaga );                          
-    pPreset->addItem( "LoveKiss",         QGradient::LoveKiss );                           
-    pPreset->addItem( "CleanMirror",      QGradient::CleanMirror );                        
-    pPreset->addItem( "PremiumDark",      QGradient::PremiumDark );                        
-    pPreset->addItem( "ColdEvening",      QGradient::ColdEvening );                        
-    pPreset->addItem( "CochitiLake",      QGradient::CochitiLake );                        
-    pPreset->addItem( "SummerGames",      QGradient::SummerGames );                        
-    pPreset->addItem( "PassionateBed",    QGradient::PassionateBed );                      
-    pPreset->addItem( "MountainRock",     QGradient::MountainRock );                       
-    pPreset->addItem( "DesertHump",       QGradient::DesertHump );                         
-    pPreset->addItem( "JungleDay",        QGradient::JungleDay );                          
-    pPreset->addItem( "PhoenixStart",     QGradient::PhoenixStart );                       
-    pPreset->addItem( "OctoberSilence",   QGradient::OctoberSilence );                     
-    pPreset->addItem( "FarawayRiver",     QGradient::FarawayRiver );                       
-    pPreset->addItem( "AlchemistLab",     QGradient::AlchemistLab );                       
-    pPreset->addItem( "OverSun",          QGradient::OverSun );                            
-    pPreset->addItem( "PremiumWhite",     QGradient::PremiumWhite );                       
-    pPreset->addItem( "MarsParty",        QGradient::MarsParty );                          
-    pPreset->addItem( "EternalConstance", QGradient::EternalConstance );                   
-    pPreset->addItem( "JapanBlush",       QGradient::JapanBlush );                         
-    pPreset->addItem( "SmilingRain",      QGradient::SmilingRain );                        
-    pPreset->addItem( "CloudyApple",      QGradient::CloudyApple );                        
-    pPreset->addItem( "BigMango",         QGradient::BigMango );                           
-    pPreset->addItem( "HealthyWater",     QGradient::HealthyWater );                       
-    pPreset->addItem( "AmourAmour",       QGradient::AmourAmour );                         
-    pPreset->addItem( "RiskyConcrete",    QGradient::RiskyConcrete );                      
-    pPreset->addItem( "StrongStick",      QGradient::StrongStick );                        
-    pPreset->addItem( "ViciousStance",    QGradient::ViciousStance );                      
-    pPreset->addItem( "PaloAlto",         QGradient::PaloAlto );                           
-    pPreset->addItem( "HappyMemories",    QGradient::HappyMemories );                      
-    pPreset->addItem( "MidnightBloom",    QGradient::MidnightBloom );                      
-    pPreset->addItem( "Crystalline",      QGradient::Crystalline );                        
-    pPreset->addItem( "PartyBliss",       QGradient::PartyBliss );                         
-    pPreset->addItem( "ConfidentCloud",   QGradient::ConfidentCloud );                     
-    pPreset->addItem( "LeCocktail",       QGradient::LeCocktail );                         
-    pPreset->addItem( "RiverCity",        QGradient::RiverCity );                          
-    pPreset->addItem( "FrozenBerry",      QGradient::FrozenBerry );                        
-    pPreset->addItem( "ChildCare",        QGradient::ChildCare );                          
-    pPreset->addItem( "FlyingLemon",      QGradient::FlyingLemon );                        
-    pPreset->addItem( "NewRetrowave",     QGradient::NewRetrowave );                       
-    pPreset->addItem( "HiddenJaguar",     QGradient::HiddenJaguar );                       
-    pPreset->addItem( "AboveTheSky",      QGradient::AboveTheSky );                        
-    pPreset->addItem( "Nega",             QGradient::Nega );                               
-    pPreset->addItem( "DenseWater",       QGradient::DenseWater );                         
-    pPreset->addItem( "Seashore",         QGradient::Seashore );                           
-    pPreset->addItem( "MarbleWall",       QGradient::MarbleWall );                         
-    pPreset->addItem( "CheerfulCaramel",  QGradient::CheerfulCaramel );                    
-    pPreset->addItem( "NightSky",         QGradient::NightSky );                           
-    pPreset->addItem( "MagicLake",        QGradient::MagicLake );                          
-    pPreset->addItem( "YoungGrass",       QGradient::YoungGrass );                         
-    pPreset->addItem( "ColorfulPeach",    QGradient::ColorfulPeach );                      
-    pPreset->addItem( "GentleCare",       QGradient::GentleCare );                         
-    pPreset->addItem( "PlumBath",         QGradient::PlumBath );                           
-    pPreset->addItem( "HappyUnicorn",     QGradient::HappyUnicorn );                       
-    pPreset->addItem( "AfricanField",     QGradient::AfricanField );                       
-    pPreset->addItem( "SolidStone",       QGradient::SolidStone );                         
-    pPreset->addItem( "OrangeJuice",      QGradient::OrangeJuice );                        
-    pPreset->addItem( "GlassWater",       QGradient::GlassWater );                         
-    pPreset->addItem( "NorthMiracle",     QGradient::NorthMiracle );                       
-    pPreset->addItem( "FruitBlend",       QGradient::FruitBlend );                         
-    pPreset->addItem( "MillenniumPine",   QGradient::MillenniumPine );                     
-    pPreset->addItem( "HighFlight",       QGradient::HighFlight );                         
-    pPreset->addItem( "MoleHall",         QGradient::MoleHall );                           
-    pPreset->addItem( "SpaceShift",       QGradient::SpaceShift );                         
-    pPreset->addItem( "ForestInei",       QGradient::ForestInei );                         
-    pPreset->addItem( "RoyalGarden",      QGradient::RoyalGarden );                        
-    pPreset->addItem( "RichMetal",        QGradient::RichMetal );                          
-    pPreset->addItem( "JuicyCake",        QGradient::JuicyCake );                          
-    pPreset->addItem( "SmartIndigo",      QGradient::SmartIndigo );                        
-    pPreset->addItem( "SandStrike",       QGradient::SandStrike );                         
-    pPreset->addItem( "NorseBeauty",      QGradient::NorseBeauty );                        
-    pPreset->addItem( "AquaGuidance",     QGradient::AquaGuidance );                       
-    pPreset->addItem( "SunVeggie",        QGradient::SunVeggie );                          
-    pPreset->addItem( "SeaLord",          QGradient::SeaLord );                            
-    pPreset->addItem( "BlackSea",         QGradient::BlackSea );                           
-    pPreset->addItem( "GrassShampoo",     QGradient::GrassShampoo );                       
-    pPreset->addItem( "LandingAircraft",  QGradient::LandingAircraft );                    
-    pPreset->addItem( "WitchDance",       QGradient::WitchDance );                         
-    pPreset->addItem( "SleeplessNight",   QGradient::SleeplessNight );                     
-    pPreset->addItem( "AngelCare",        QGradient::AngelCare );                          
-    pPreset->addItem( "CrystalRiver",     QGradient::CrystalRiver );                       
-    pPreset->addItem( "SoftLipstick",     QGradient::SoftLipstick );                       
-    pPreset->addItem( "SaltMountain",     QGradient::SaltMountain );                       
-    pPreset->addItem( "PerfectWhite",     QGradient::PerfectWhite );                       
-    pPreset->addItem( "FreshOasis",       QGradient::FreshOasis );                         
-    pPreset->addItem( "StrictNovember",   QGradient::StrictNovember );                     
-    pPreset->addItem( "MorningSalad",     QGradient::MorningSalad );                       
-    pPreset->addItem( "DeepRelief",       QGradient::DeepRelief );                         
-    pPreset->addItem( "SeaStrike",        QGradient::SeaStrike );                          
-    pPreset->addItem( "NightCall",        QGradient::NightCall );                          
-    pPreset->addItem( "SupremeSky",       QGradient::SupremeSky );                         
-    pPreset->addItem( "LightBlue",        QGradient::LightBlue );                          
-    pPreset->addItem( "MindCrawl",        QGradient::MindCrawl );                          
-    pPreset->addItem( "LilyMeadow",       QGradient::LilyMeadow );                         
-    pPreset->addItem( "SugarLollipop",    QGradient::SugarLollipop );                      
-    pPreset->addItem( "SweetDessert",     QGradient::SweetDessert );                       
-    pPreset->addItem( "MagicRay",         QGradient::MagicRay );                           
-    pPreset->addItem( "TeenParty",        QGradient::TeenParty );                          
-    pPreset->addItem( "FrozenHeat",       QGradient::FrozenHeat );                         
-    pPreset->addItem( "GagarinView",      QGradient::GagarinView );                        
-    pPreset->addItem( "FabledSunset",     QGradient::FabledSunset );                       
-    pPreset->addItem( "PerfectBlue",      QGradient::PerfectBlue );                        
-//    pPreset->setCurrentIndex( pPreset->findData( g_Context->getGradient() ) );
-    pLayout->addWidget( pPreset );
-//    connect( pPreset, SIGNAL(activated(int)), SLOT(slotPreset(int)) );
-
     pType = new QComboBox( this );
-    pType->addItem( "Linear", QGradient::LinearGradient );
-    pType->addItem( "Radial", QGradient::RadialGradient );
-    pType->addItem( "Conical", QGradient::ConicalGradient );
-    pType->addItem( "NoGradient", QGradient::NoGradient );
-    pType->setCurrentIndex( pType->findData( g_Context->getGradient() ) );
+    doAddType( "Linear",           PContextGradient::StandardGradientLinear );
+    doAddType( "Radial",           PContextGradient::StandardGradientRadial );
+    doAddType( "Conical",          PContextGradient::StandardGradientConical );
+    doAddType( "WarmFlame",        QGradient::WarmFlame );                          
+    doAddType( "NightFade",        QGradient::NightFade );                          
+    doAddType( "SpringWarmth",     QGradient::SpringWarmth );                       
+    doAddType( "JuicyPeach",       QGradient::JuicyPeach );                         
+    doAddType( "YoungPassion",     QGradient::YoungPassion );                       
+    doAddType( "LadyLips",         QGradient::LadyLips );                           
+    doAddType( "SunnyMorning",     QGradient::SunnyMorning );                       
+    doAddType( "RainyAshville",    QGradient::RainyAshville );                      
+    doAddType( "FrozenDreams",     QGradient::FrozenDreams );                       
+    doAddType( "WinterNeva",       QGradient::WinterNeva );                         
+    doAddType( "DustyGrass",       QGradient::DustyGrass );                         
+    doAddType( "TemptingAzure",    QGradient::TemptingAzure );                      
+    doAddType( "HeavyRain",        QGradient::HeavyRain );                          
+    doAddType( "AmyCrisp",         QGradient::AmyCrisp );                           
+    doAddType( "MeanFruit",        QGradient::MeanFruit );                          
+    doAddType( "DeepBlue",         QGradient::DeepBlue );                           
+    doAddType( "RipeMalinka",      QGradient::RipeMalinka );                        
+    doAddType( "CloudyKnoxville",  QGradient::CloudyKnoxville );                    
+    doAddType( "MalibuBeach",      QGradient::MalibuBeach );                        
+    doAddType( "NewLife",          QGradient::NewLife );                            
+    doAddType( "TrueSunset",       QGradient::TrueSunset );                         
+    doAddType( "MorpheusDen",      QGradient::MorpheusDen );                        
+    doAddType( "RareWind",         QGradient::RareWind );                           
+    doAddType( "NearMoon",         QGradient::NearMoon );                           
+    doAddType( "WildApple",        QGradient::WildApple );                          
+    doAddType( "SaintPetersburg",  QGradient::SaintPetersburg );                    
+    doAddType( "PlumPlate",        QGradient::PlumPlate );                          
+    doAddType( "EverlastingSky",   QGradient::EverlastingSky );                     
+    doAddType( "HappyFisher",      QGradient::HappyFisher );                        
+    doAddType( "Blessing",         QGradient::Blessing );                           
+    doAddType( "SharpeyeEagle",    QGradient::SharpeyeEagle );                      
+    doAddType( "LadogaBottom",     QGradient::LadogaBottom );                       
+    doAddType( "LemonGate",        QGradient::LemonGate );                          
+    doAddType( "ItmeoBranding",    QGradient::ItmeoBranding );                      
+    doAddType( "ZeusMiracle",      QGradient::ZeusMiracle );                        
+    doAddType( "OldHat",           QGradient::OldHat );                             
+    doAddType( "StarWine",         QGradient::StarWine );                           
+    doAddType( "HappyAcid",        QGradient::HappyAcid );                          
+    doAddType( "AwesomePine",      QGradient::AwesomePine );                        
+    doAddType( "NewYork",          QGradient::NewYork );                            
+    doAddType( "ShyRainbow",       QGradient::ShyRainbow );                         
+    doAddType( "MixedHopes",       QGradient::MixedHopes );                         
+    doAddType( "FlyHigh",          QGradient::FlyHigh );                            
+    doAddType( "StrongBliss",      QGradient::StrongBliss );                        
+    doAddType( "FreshMilk",        QGradient::FreshMilk );                          
+    doAddType( "SnowAgain",        QGradient::SnowAgain );                          
+    doAddType( "FebruaryInk",      QGradient::FebruaryInk );                        
+    doAddType( "KindSteel",        QGradient::KindSteel );                          
+    doAddType( "SoftGrass",        QGradient::SoftGrass );                          
+    doAddType( "GrownEarly",       QGradient::GrownEarly );                         
+    doAddType( "SharpBlues",       QGradient::SharpBlues );                         
+    doAddType( "ShadyWater",       QGradient::ShadyWater );                         
+    doAddType( "DirtyBeauty",      QGradient::DirtyBeauty );                        
+    doAddType( "GreatWhale",       QGradient::GreatWhale );                         
+    doAddType( "TeenNotebook",     QGradient::TeenNotebook );                       
+    doAddType( "PoliteRumors",     QGradient::PoliteRumors );                       
+    doAddType( "SweetPeriod",      QGradient::SweetPeriod );                        
+    doAddType( "WideMatrix",       QGradient::WideMatrix );                         
+    doAddType( "SoftCherish",      QGradient::SoftCherish );                        
+    doAddType( "RedSalvation",     QGradient::RedSalvation );                       
+    doAddType( "BurningSpring",    QGradient::BurningSpring );                      
+    doAddType( "NightParty",       QGradient::NightParty );                         
+    doAddType( "SkyGlider",        QGradient::SkyGlider );                          
+    doAddType( "HeavenPeach",      QGradient::HeavenPeach );                        
+    doAddType( "PurpleDivision",   QGradient::PurpleDivision );                     
+    doAddType( "AquaSplash",       QGradient::AquaSplash );                         
+    doAddType( "SpikyNaga",        QGradient::SpikyNaga );                          
+    doAddType( "LoveKiss",         QGradient::LoveKiss );                           
+    doAddType( "CleanMirror",      QGradient::CleanMirror );                        
+    doAddType( "PremiumDark",      QGradient::PremiumDark );                        
+    doAddType( "ColdEvening",      QGradient::ColdEvening );                        
+    doAddType( "CochitiLake",      QGradient::CochitiLake );                        
+    doAddType( "SummerGames",      QGradient::SummerGames );                        
+    doAddType( "PassionateBed",    QGradient::PassionateBed );                      
+    doAddType( "MountainRock",     QGradient::MountainRock );                       
+    doAddType( "DesertHump",       QGradient::DesertHump );                         
+    doAddType( "JungleDay",        QGradient::JungleDay );                          
+    doAddType( "PhoenixStart",     QGradient::PhoenixStart );                       
+    doAddType( "OctoberSilence",   QGradient::OctoberSilence );                     
+    doAddType( "FarawayRiver",     QGradient::FarawayRiver );                       
+    doAddType( "AlchemistLab",     QGradient::AlchemistLab );                       
+    doAddType( "OverSun",          QGradient::OverSun );                            
+    doAddType( "PremiumWhite",     QGradient::PremiumWhite );                       
+    doAddType( "MarsParty",        QGradient::MarsParty );                          
+    doAddType( "EternalConstance", QGradient::EternalConstance );                   
+    doAddType( "JapanBlush",       QGradient::JapanBlush );                         
+    doAddType( "SmilingRain",      QGradient::SmilingRain );                        
+    doAddType( "CloudyApple",      QGradient::CloudyApple );                        
+    doAddType( "BigMango",         QGradient::BigMango );                           
+    doAddType( "HealthyWater",     QGradient::HealthyWater );                       
+    doAddType( "AmourAmour",       QGradient::AmourAmour );                         
+    doAddType( "RiskyConcrete",    QGradient::RiskyConcrete );                      
+    doAddType( "StrongStick",      QGradient::StrongStick );                        
+    doAddType( "ViciousStance",    QGradient::ViciousStance );                      
+    doAddType( "PaloAlto",         QGradient::PaloAlto );                           
+    doAddType( "HappyMemories",    QGradient::HappyMemories );                      
+    doAddType( "MidnightBloom",    QGradient::MidnightBloom );                      
+    doAddType( "Crystalline",      QGradient::Crystalline );                        
+    doAddType( "PartyBliss",       QGradient::PartyBliss );                         
+    doAddType( "ConfidentCloud",   QGradient::ConfidentCloud );                     
+    doAddType( "LeCocktail",       QGradient::LeCocktail );                         
+    doAddType( "RiverCity",        QGradient::RiverCity );                          
+    doAddType( "FrozenBerry",      QGradient::FrozenBerry );                        
+    doAddType( "ChildCare",        QGradient::ChildCare );                          
+    doAddType( "FlyingLemon",      QGradient::FlyingLemon );                        
+    doAddType( "NewRetrowave",     QGradient::NewRetrowave );                       
+    doAddType( "HiddenJaguar",     QGradient::HiddenJaguar );                       
+    doAddType( "AboveTheSky",      QGradient::AboveTheSky );                        
+    doAddType( "Nega",             QGradient::Nega );                               
+    doAddType( "DenseWater",       QGradient::DenseWater );                         
+    doAddType( "Seashore",         QGradient::Seashore );                           
+    doAddType( "MarbleWall",       QGradient::MarbleWall );                         
+    doAddType( "CheerfulCaramel",  QGradient::CheerfulCaramel );                    
+    doAddType( "NightSky",         QGradient::NightSky );                           
+    doAddType( "MagicLake",        QGradient::MagicLake );                          
+    doAddType( "YoungGrass",       QGradient::YoungGrass );                         
+    doAddType( "ColorfulPeach",    QGradient::ColorfulPeach );                      
+    doAddType( "GentleCare",       QGradient::GentleCare );                         
+    doAddType( "PlumBath",         QGradient::PlumBath );                           
+    doAddType( "HappyUnicorn",     QGradient::HappyUnicorn );                       
+    doAddType( "AfricanField",     QGradient::AfricanField );                       
+    doAddType( "SolidStone",       QGradient::SolidStone );                         
+    doAddType( "OrangeJuice",      QGradient::OrangeJuice );                        
+    doAddType( "GlassWater",       QGradient::GlassWater );                         
+    doAddType( "NorthMiracle",     QGradient::NorthMiracle );                       
+    doAddType( "FruitBlend",       QGradient::FruitBlend );                         
+    doAddType( "MillenniumPine",   QGradient::MillenniumPine );                     
+    doAddType( "HighFlight",       QGradient::HighFlight );                         
+    doAddType( "MoleHall",         QGradient::MoleHall );                           
+    doAddType( "SpaceShift",       QGradient::SpaceShift );                         
+    doAddType( "ForestInei",       QGradient::ForestInei );                         
+    doAddType( "RoyalGarden",      QGradient::RoyalGarden );                        
+    doAddType( "RichMetal",        QGradient::RichMetal );                          
+    doAddType( "JuicyCake",        QGradient::JuicyCake );                          
+    doAddType( "SmartIndigo",      QGradient::SmartIndigo );                        
+    doAddType( "SandStrike",       QGradient::SandStrike );                         
+    doAddType( "NorseBeauty",      QGradient::NorseBeauty );                        
+    doAddType( "AquaGuidance",     QGradient::AquaGuidance );                       
+    doAddType( "SunVeggie",        QGradient::SunVeggie );                          
+    doAddType( "SeaLord",          QGradient::SeaLord );                            
+    doAddType( "BlackSea",         QGradient::BlackSea );                           
+    doAddType( "GrassShampoo",     QGradient::GrassShampoo );                       
+    doAddType( "LandingAircraft",  QGradient::LandingAircraft );                    
+    doAddType( "WitchDance",       QGradient::WitchDance );                         
+    doAddType( "SleeplessNight",   QGradient::SleeplessNight );                     
+    doAddType( "AngelCare",        QGradient::AngelCare );                          
+    doAddType( "CrystalRiver",     QGradient::CrystalRiver );                       
+    doAddType( "SoftLipstick",     QGradient::SoftLipstick );                       
+    doAddType( "SaltMountain",     QGradient::SaltMountain );                       
+    doAddType( "PerfectWhite",     QGradient::PerfectWhite );                       
+    doAddType( "FreshOasis",       QGradient::FreshOasis );                         
+    doAddType( "StrictNovember",   QGradient::StrictNovember );                     
+    doAddType( "MorningSalad",     QGradient::MorningSalad );                       
+    doAddType( "DeepRelief",       QGradient::DeepRelief );                         
+    doAddType( "SeaStrike",        QGradient::SeaStrike );                          
+    doAddType( "NightCall",        QGradient::NightCall );                          
+    doAddType( "SupremeSky",       QGradient::SupremeSky );                         
+    doAddType( "LightBlue",        QGradient::LightBlue );                          
+    doAddType( "MindCrawl",        QGradient::MindCrawl );                          
+    doAddType( "LilyMeadow",       QGradient::LilyMeadow );                         
+    doAddType( "SugarLollipop",    QGradient::SugarLollipop );                      
+    doAddType( "SweetDessert",     QGradient::SweetDessert );                       
+    doAddType( "MagicRay",         QGradient::MagicRay );                           
+    doAddType( "TeenParty",        QGradient::TeenParty );                          
+    doAddType( "FrozenHeat",       QGradient::FrozenHeat );                         
+    doAddType( "GagarinView",      QGradient::GagarinView );                        
+    doAddType( "FabledSunset",     QGradient::FabledSunset );                       
+    doAddType( "PerfectBlue",      QGradient::PerfectBlue );                        
+    pType->setCurrentIndex( pType->findData( g_Context->getGradient().nType ) );
     pLayout->addWidget( pType );
     connect( pType, SIGNAL(activated(int)), SLOT(slotType(int)) );
 
     pLayout->addStretch( 10 );
 
-    connect( g_Context, SIGNAL(signalModified(QGradient::Type)), SLOT(slotRefresh(QGradient::Type)) );
-    connect( g_Context, SIGNAL(signalModified(const QLinearGradient &)), SLOT(slotRefresh(const QLinearGradient &)) );
-    connect( g_Context, SIGNAL(signalModified(const QRadialGradient &)), SLOT(slotRefresh(const QRadialGradient &)) );
-    connect( g_Context, SIGNAL(signalModified(const QConicalGradient &)), SLOT(slotRefresh(const QConicalGradient &)) );
+    connect( g_Context, SIGNAL(signalModified(const PContextGradient &)), SLOT(slotRefresh(const PContextGradient &)) );
 }
 
-void PFillGradientToolBar::slotRefresh( QGradient::Type n )
+void PFillGradientToolBar::slotRefresh( const PContextGradient &t )
 {
-    pType->setCurrentIndex( pType->findData( n ) );
-}
-
-void PFillGradientToolBar::slotRefresh( const QLinearGradient &t )
-{
-}
-
-void PFillGradientToolBar::slotRefresh( const QRadialGradient &t )
-{
-}
-
-void PFillGradientToolBar::slotRefresh( const QConicalGradient &t )
-{
+    pType->setCurrentIndex( pType->findData( t.nType ) );
 }
 
 void PFillGradientToolBar::slotType( int n )
 {
-    g_Context->setGradient( (QGradient::Type)pType->itemData( n ).toInt() );
+    PContextGradient t = g_Context->getGradient();
+    t.nType = pType->itemData( n ).toInt();
+    g_Context->setGradient( t );
 }
+
+QPixmap PFillGradientToolBar::getSwatch( const QSize size, int nType )
+{
+    QPixmap pixmap( size );
+    QRect r( 0, 0, size.width(), size.height() );
+    pixmap.fill( Qt::white );
+    QPainter painter( &pixmap );
+
+    if ( nType >= 0 )
+    {
+        QGradient gradient( (QGradient::Preset)nType );
+        painter.setBrush( gradient );
+        painter.setPen( Qt::NoPen );
+        painter.drawRoundedRect( r, 2, 2 );
+    }
+    else if ( nType == PContextGradient::StandardGradientLinear )
+    {
+        QLinearGradient gradient( QPoint( r.left(), r.center().y() ), QPoint( r.right(),  r.center().y() )  );
+        painter.setBrush( gradient );
+        painter.setPen( Qt::NoPen );
+        painter.drawRoundedRect( r, 2, 2 );
+    }
+    else if ( nType == PContextGradient::StandardGradientRadial )
+    {
+        QRadialGradient gradient( r.center(), r.width() / 2 );
+        painter.setBrush( gradient );
+        painter.setPen( Qt::NoPen );
+        painter.drawRoundedRect( r, 2, 2 );
+    }
+    else if ( nType == PContextGradient::StandardGradientConical )
+    {
+        QConicalGradient gradient( r.center(), 0.0 );
+        painter.setBrush( gradient );
+        painter.setPen( Qt::NoPen );
+        painter.drawRoundedRect( r, 2, 2 );
+    }
+
+    return pixmap;
+}
+
+void PFillGradientToolBar::doAddType( const QString &stringText, int nType )
+{
+    pType->addItem( QIcon( getSwatch( QSize( 48, 48 ), nType ) ), stringText, nType );
+}
+
 

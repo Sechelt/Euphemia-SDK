@@ -180,8 +180,7 @@ void PCanvas::doPressEvent( QGraphicsSceneMouseEvent *pEvent )
                 break;
             case ToolFillGradient:       
                 g_Context->setImage( &image );
-                pShapeBase = new PFillGradientLinear( this );           
-                // doFillGradient( mouseEvent.pos() );
+                pShapeBase = new PFillGradient( this );           
                 break;
         }
         if ( pShapeBase ) 
