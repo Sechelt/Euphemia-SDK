@@ -107,6 +107,7 @@ public:
     void doRedo();
     void doSelectAll();
     void doSelectNone();
+    void doCrop();
     void doCommit();
     void doCancel();
 

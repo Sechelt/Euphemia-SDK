@@ -453,6 +453,18 @@ void PCanvas::doSelectNone()
     doCancel();
 }
 
+void PCanvas::doCrop()
+{
+    if ( !pShapeBase ) return;
+    if ( !pShapeBase->isSelector() ) return;
+
+    QImage i = pShapeBase->getCopy();
+    doCancel();
+    image = i;
+    scene()->setSceneRect( QRectF( 0, 0, image.size().width(), image.size().height() ) );
+    update();
+}
+
 // app calls here ie tool button clicked
 void PCanvas::doCommit()
 {

@@ -17,11 +17,13 @@ public:
         StandardGradientConical = -3
     };
 
-   int nType = StandardGradientLinear;                  /*!< value will be either a QGradient::Preset or PContextGradient::StandardGradient               */
+    int                 nType   = StandardGradientLinear;                  /*!< value will be either a QGradient::Preset or PContextGradient::StandardGradient               */
+    QGradient::Spread   nSpread = QGradient::PadSpread;
 
     inline bool operator==( const PContextGradient &t ) 
     {
         if ( t.nType != nType ) return false;
+        if ( t.nSpread != nSpread ) return false;
         return true;
     }
 

@@ -55,7 +55,7 @@ protected:
     struct Conical_t
     {
         qreal nRadius = 50;
-        qreal nStartAngle = 10;
+        qreal nStartAngle = 0; // 0=E
     };
     Conical_t conical;
 
@@ -99,9 +99,11 @@ public slots:
 
 protected slots:
     void slotType( int );
+    void slotSpread( int );
 
 protected:
     QComboBox *pType;
+    QComboBox *pSpread;
 
 private:
     QPixmap getSwatch( const QSize size, int nType );

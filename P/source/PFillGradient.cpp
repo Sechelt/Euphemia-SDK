@@ -165,12 +165,14 @@ void PFillGradient::doPaint( QPainter *pPainter )
 
     if ( pGradientPreset )
     {
+        pGradientPreset->setSpread( g_Context->getGradient().nSpread );
         pPainter->setBrush( QBrush( *pGradientPreset ) );
         pPainter->setPen( QPen( Qt::NoPen ) );
         pPainter->drawPolygon( polygon );
     }
     else if ( pGradientLinear )
     {
+        pGradientLinear->setSpread( g_Context->getGradient().nSpread );
         pGradientLinear->setStart( linear.pointStart );
         pGradientLinear->setFinalStop( linear.pointStop );
 //        gradient.setColorAt( 0, Qt::black );                                         
@@ -181,21 +183,10 @@ void PFillGradient::doPaint( QPainter *pPainter )
         pPainter->setBrush( QBrush( *pGradientLinear ) );
         pPainter->setPen( QPen( Qt::NoPen ) );
         pPainter->drawPolygon( polygon );
-
-        // paint line between start/stop points
-/*
-        {                                               
-            QPen pen( Qt::darkGray );                   
-            pen.setStyle( Qt::DashLine );               
-            pen.setWidth( 2 );                          
-            pPainter->setPen( pen );                    
-            pPainter->setBrush( Qt::NoBrush );          
-            pPainter->drawLine( pointStart, pointStop );
-        }                                               
-*/
     }
     else if ( pGradientRadial )
     {
+        pGradientRadial->setSpread( g_Context->getGradient().nSpread );
         pGradientRadial->setRadius( radial.nRadius );
         pGradientRadial->setFocalPoint( radial.pointFocalPoint );
         pPainter->setBrush( QBrush( *pGradientRadial ) );
@@ -204,6 +195,13 @@ void PFillGradient::doPaint( QPainter *pPainter )
     }
     else if ( pGradientConical )
     {
+        pGradientConical->setSpread( g_Context->getGradient().nSpread );
+        // 0=E
+        // 45=NE
+        // 90=N
+        // 180=W
+        // 270=S
+        // 360=E
         pGradientConical->setAngle( conical.nStartAngle );
         pPainter->setBrush( QBrush( *pGradientConical ) );
         pPainter->setPen( QPen( Qt::NoPen ) );
@@ -235,6 +233,7 @@ void PFillGradient::doDrawState( const QPoint &point )
     {
         conical.nStartAngle = 10;
         pGradientConical = new QConicalGradient( point, conical.nStartAngle );
+        // pGradientConical->setCoordinateMode( QGradient::StretchToDeviceMode );
     }
     else
     {
@@ -331,7 +330,9 @@ void PFillGradient::doCreateHandles()
     }
     else if ( pGradientConical )
     {
-        pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( pointSeed + getPolarToCartesian( conical.nRadius, conical.nStartAngle ).toPoint() ) );
+        QPointF pointCartesian = getPolarToCartesian( conical.nRadius, conical.nStartAngle );
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" << pointCartesian;
+        pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( pointSeed + pointCartesian.toPoint() ) );
         vectorHandles.append( pHandle );
         pHandle->show();
     }
@@ -393,9 +394,13 @@ void PFillGradient::doMoveHandle( const QPoint &pointPos )
         if ( pHandle == vectorHandles[PFillGradientConicalAngle] )
         {
             pHandle->setCenter( pointViewPos );
-            Polar polar = getCartesianToPolar( pointPos.x(), pointPos.y() );
+            QPoint pointCartesian = pointPos - pointSeed; // pointPos has origin at topLeft but we need it to be relative to the seed
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "] pointSeed:" << pointSeed << " pointPos:" << pointPos << " pointCartesian:" << pointCartesian;
+
+            Polar polar = getCartesianToPolar( pointCartesian.x(), pointCartesian.y() );
             conical.nRadius = polar.radius;
             conical.nStartAngle = polar.angle;
+// qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" << conical.nRadius << conical.nStartAngle;
             update();
         }
     }
@@ -462,18 +467,17 @@ QPointF PFillGradient::getPolarToCartesian( qreal nRadius, qreal nAngle )
 
 PFillGradient::Polar PFillGradient::getCartesianToPolar( qreal x, qreal y )
 {
+    Polar p;
+
     // θ = tan-1 ( y / x )
-    qreal nAngle = qAtan2( y, x );
-    if ( nAngle < 0 )
+    p.angle = qAtan2( y, x );
+    if ( p.angle < 0 )
     {
-        nAngle += (2* M_PI);
+        p.angle += (2* M_PI);
     }
 
     // r = √ ( x2 + y2 )
-    qreal nRadius = qSqrt( (x*x) + (y*y) );
-    Polar p;
-    p.angle = nAngle;
-    p.radius = nRadius;
+    p.radius = qSqrt( (x*x) + (y*y) );
 
     return p;
 }
@@ -662,6 +666,14 @@ PFillGradientToolBar::PFillGradientToolBar( QWidget *p )
     pLayout->addWidget( pType );
     connect( pType, SIGNAL(activated(int)), SLOT(slotType(int)) );
 
+    pSpread = new QComboBox( this );
+    pSpread->addItem( "PadSpread", QGradient::PadSpread ); 
+    pSpread->addItem( "RepeatSpread", QGradient::RepeatSpread ); 
+    pSpread->addItem( "ReflectSpread", QGradient::ReflectSpread ); 
+    pSpread->setCurrentIndex( pSpread->findData( g_Context->getGradient().nSpread ) );
+    pLayout->addWidget( pSpread );
+    connect( pSpread, SIGNAL(activated(int)), SLOT(slotSpread(int)) );
+
     pLayout->addStretch( 10 );
 
     connect( g_Context, SIGNAL(signalModified(const PContextGradient &)), SLOT(slotRefresh(const PContextGradient &)) );
@@ -676,6 +688,13 @@ void PFillGradientToolBar::slotType( int n )
 {
     PContextGradient t = g_Context->getGradient();
     t.nType = pType->itemData( n ).toInt();
+    g_Context->setGradient( t );
+}
+
+void PFillGradientToolBar::slotSpread( int n )
+{
+    PContextGradient t = g_Context->getGradient();
+    t.nSpread = QGradient::Spread(pSpread->itemData( n ).toInt());
     g_Context->setGradient( t );
 }
 
