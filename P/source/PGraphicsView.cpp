@@ -19,7 +19,11 @@ PGraphicsView::PGraphicsView( PGraphicsScene *pScene, QWidget *pParent )
 PGraphicsScene *PGraphicsView::getScene()
 {
     QGraphicsScene *p = scene();
-    Q_ASSERT( p );
+    if ( !p ) 
+    {
+        qWarning("View has no scene.");
+        return nullptr;
+    }
     Q_ASSERT( p->inherits( "PGraphicsScene" ) );
     return (PGraphicsScene*)p;
 }
@@ -27,7 +31,11 @@ PGraphicsScene *PGraphicsView::getScene()
 PCanvas *PGraphicsView::getCanvas()
 {
     PGraphicsScene *p = getScene();
-    Q_ASSERT( p );
+    if ( !p ) 
+    {
+        qWarning("View has no scene.");
+        return nullptr;
+    }
     return p->getCanvas();
 }
 

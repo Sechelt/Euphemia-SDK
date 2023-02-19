@@ -79,12 +79,14 @@ public:
     virtual void paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0 ) override;
     virtual QRectF boundingRect() const override;
 
+    void setImage( const QImage & );
     void setTool( Tools n );
     void setAutoCommit( bool ); 
     void setBackground( const QColor & ); // a default color for a new image - not the same as PBackground
 
     PGraphicsView *         getView();
     PGraphicsScene *        getScene();
+    QImage                  getImage() { return image; }
     QImage                  getCopy();
     bool                    getAutoCommit();
     QString                 getFileName() { return stringFileName; }
@@ -107,9 +109,13 @@ public:
     void doRedo();
     void doSelectAll();
     void doSelectNone();
-    void doCrop();
     void doCommit();
     void doCancel();
+    void doCrop();
+    void doScale( int nX, int nY );
+    void doFlipX();
+    void doFlipY();
+    void doRotate( int nDegrees );
 
     bool isModified() { return bModified; }
     bool isDrawing();
@@ -123,6 +129,7 @@ public:
     bool canPaste(); 
     bool canUndo(); 
     bool canRedo(); 
+    bool canCrop() { return canCopy(); } 
     bool canCommit(); 
     bool canCancel(); 
 

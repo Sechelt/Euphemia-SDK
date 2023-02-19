@@ -14,6 +14,16 @@ PCanvas::PCanvas()
 //    setBackground( QColor( Qt::cyan ) );
 }
 
+void PCanvas::setImage( const QImage &i )
+{
+    // sanity check
+    if ( isDrawing() ) doCancel();
+    image = i;
+    scene()->setSceneRect( QRectF( QPointF( 0, 0 ), image.size() ) );
+    update();
+    setModified();
+}
+
 void PCanvas::setTool( Tools n )
 {
     if ( isDrawing() ) doCancel();
@@ -455,14 +465,33 @@ void PCanvas::doSelectNone()
 
 void PCanvas::doCrop()
 {
-    if ( !pShapeBase ) return;
-    if ( !pShapeBase->isSelector() ) return;
+    if ( !canCopy() ) return;
 
     QImage i = pShapeBase->getCopy();
     doCancel();
     image = i;
     scene()->setSceneRect( QRectF( 0, 0, image.size().width(), image.size().height() ) );
     update();
+}
+
+void PCanvas::doScale( int nX, int nY )
+{
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" << nX << nY;
+}
+
+void PCanvas::doFlipX()
+{
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
+}
+
+void PCanvas::doFlipY()
+{
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
+}
+
+void PCanvas::doRotate( int nDegrees )
+{
+qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" << nDegrees;
 }
 
 // app calls here ie tool button clicked
