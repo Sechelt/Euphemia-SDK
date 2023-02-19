@@ -112,7 +112,7 @@ public:
     void doCommit();
     void doCancel();
     void doCrop();
-    void doScale( int nX, int nY );
+    void doScale( int nX, int nY, Qt::AspectRatioMode n = Qt::IgnoreAspectRatio );
     void doFlipX();
     void doFlipY();
     void doRotate( int nDegrees );

@@ -14,6 +14,7 @@ PGraphicsView::PGraphicsView( PGraphicsScene *pScene, QWidget *pParent )
 #else
     setRenderHints( QPainter::Antialiasing | QPainter::SmoothPixmapTransform );
 #endif
+    setAlignment( Qt::AlignLeft | Qt::AlignTop );
 }
 
 PGraphicsScene *PGraphicsView::getScene()

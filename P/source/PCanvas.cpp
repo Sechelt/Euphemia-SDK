@@ -472,26 +472,46 @@ void PCanvas::doCrop()
     image = i;
     scene()->setSceneRect( QRectF( 0, 0, image.size().width(), image.size().height() ) );
     update();
+    setModified();
 }
 
-void PCanvas::doScale( int nX, int nY )
+void PCanvas::doScale( int nX, int nY, Qt::AspectRatioMode n )
 {
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" << nX << nY;
+    // for now - just do the entire image not a selection
+    if ( isDrawing() ) doCancel();
+    image = image.scaled( nX, nY, n, Qt::SmoothTransformation );
+    scene()->setSceneRect( QRectF( 0, 0, image.size().width(), image.size().height() ) );
+    update();
+    setModified();
 }
 
 void PCanvas::doFlipX()
 {
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
+    // for now - just do the entire image not a selection
+    if ( isDrawing() ) doCancel();
+    image = image.mirrored( true, false );
+    update();
+    setModified();
 }
 
 void PCanvas::doFlipY()
 {
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]";
+    // for now - just do the entire image not a selection
+    if ( isDrawing() ) doCancel();
+    image = image.mirrored( false, true );
+    update();
+    setModified();
 }
 
 void PCanvas::doRotate( int nDegrees )
 {
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" << nDegrees;
+    // for now - just do the entire image not a selection
+    if ( isDrawing() ) doCancel();
+
+    image = image.transformed( QTransform().rotate( nDegrees ) );
+    scene()->setSceneRect( QRectF( 0, 0, image.size().width(), image.size().height() ) );
+    update();
+    setModified();
 }
 
 // app calls here ie tool button clicked
