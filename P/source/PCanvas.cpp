@@ -257,6 +257,11 @@ void PCanvas::doReleaseEvent( QGraphicsSceneMouseEvent *pEvent )
     }
 }
 
+void PCanvas::doZoomChanged()
+{
+    if ( pShapeBase ) pShapeBase->doZoom();
+}
+
 /*!
  * \brief Open/load an image from a file. 
  *  
@@ -613,11 +618,6 @@ void PCanvas::slotCommitted()
     setModified();
     // setModified may - or may not - have done this so we do it here to ensure it happens
     emit signalChangedState(); 
-}
-
-void PCanvas::slotZoomChanged()
-{
-    if ( pShapeBase ) pShapeBase->doZoom();
 }
 
 void PCanvas::paint( QPainter *pPainter, const QStyleOptionGraphicsItem *nOption, QWidget *pWidget )

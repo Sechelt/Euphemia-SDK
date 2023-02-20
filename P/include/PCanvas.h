@@ -96,6 +96,7 @@ public:
     void doPressEvent( QGraphicsSceneMouseEvent *pEvent );
     void doMoveEvent( QGraphicsSceneMouseEvent *pEvent );
     void doReleaseEvent( QGraphicsSceneMouseEvent *pEvent );
+    void doZoomChanged();
 
     bool doOpen( const QString &s = QString() );
     bool doSave();
@@ -143,7 +144,6 @@ signals:
 
 protected slots:
     void slotCommitted();
-    void slotZoomChanged();
 
 protected:
 

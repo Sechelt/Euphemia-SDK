@@ -1,6 +1,9 @@
 #include "LibInfo.h"
 #include "PGraphicsView.h"
 
+#include "PGraphicsScene.h"
+#include "PCanvas.h"
+
 PGraphicsView::PGraphicsView( PGraphicsScene *pScene, QWidget *pParent )
     : QGraphicsView( pScene, pParent )
 {
@@ -47,24 +50,29 @@ qreal PGraphicsView::getScale()
 
 void PGraphicsView::slotZoomChanged( WZoomWidget::FitTypes nFit, int n )
 {
+    if ( nFit == nZoomFit && n == nZoom ) return;
+
     nZoomFit    = nFit;
     nZoom       = n;
 
     // get scale
-    qreal nScale;
     switch ( nFit )
     {
     case WZoomWidget::FitWidth:
+        break;
     case WZoomWidget::FitHeight:
+        break;
     case WZoomWidget::FitAll:
-        // pView->fitInView( pView->getScene()->sceneRect() );
+        break;
     case WZoomWidget::FitIgnore:
-        nScale = qreal(nZoom) / 100;
         break;
     }
 
+    qreal nScale = qreal(nZoom) / 100;
+
     // apply scale
     setScale( nScale );
+    emit signalZoomChanged( nFit, nZoom );
 }
 
 void PGraphicsView::setScale( qreal n )
@@ -75,7 +83,7 @@ void PGraphicsView::setScale( qreal n )
     transform.scale( n, n );  
     setTransform( transform );
 
-    emit signalScaleChanged();
+    getScene()->getCanvas()->doZoomChanged();
 }
 
 

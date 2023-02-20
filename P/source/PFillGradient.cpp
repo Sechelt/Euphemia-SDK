@@ -342,14 +342,23 @@ qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" <<
 // react to zoom
 void PFillGradient::doSyncHandles()
 {
+    vectorHandles[PFillGradientSeed]->setCenter( pView->mapFromScene( pointSeed ) );
+
     if ( pGradientLinear )
     {
+        vectorHandles[PFillGradientLinearStart]->setCenter( pView->mapFromScene( linear.pointStart ) );
+        vectorHandles[PFillGradientLinearStop]->setCenter( pView->mapFromScene( linear.pointStop ) );
     }
     else if ( pGradientRadial )
     {
+        QPoint point( pointSeed.x() + radial.nRadius, pointSeed.y() );
+        vectorHandles[PFillGradientRadialRadius]->setCenter( pView->mapFromScene( point ) );
+        vectorHandles[PFillGradientRadialFocal]->setCenter( pView->mapFromScene( radial.pointFocalPoint ) );
     }
     else if ( pGradientConical )
     {
+        QPointF point = getPolarToCartesian( conical.nRadius, conical.nStartAngle );
+        vectorHandles[PFillGradientConicalAngle]->setCenter( pView->mapFromScene( point ) );
     }
 }
 

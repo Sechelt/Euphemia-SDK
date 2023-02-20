@@ -37,7 +37,7 @@ public:
     int                     getZoom()       { return nZoom;     }
 
 signals:
-    void signalScaleChanged();
+    void signalZoomChanged( WZoomWidget::FitTypes nFit, int nZoom );
 
 public slots:
     void slotZoomChanged( WZoomWidget::FitTypes nFit, int nZoom );
@@ -47,7 +47,6 @@ protected:
     int                     nZoom       = 100; // % inc/dec by 10
 
     void setScale( qreal n );
-
 };
 
 #endif
