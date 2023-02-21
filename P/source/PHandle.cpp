@@ -36,37 +36,17 @@ void PHandle::paintEvent( QPaintEvent *pEvent )
         case TypeGradientRadius:
         case TypeGradientFocal:
         case TypeGradientAngle:
+        case TypePointFactory:
             {
-                if ( nShape == ShapeSquare )
-                    painter.drawRect( rect() );
-                else
-                    painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
             }
             break;
         case TypeDrag:
             {
-                if ( nShape == ShapeSquare )
-                    painter.drawRect( rect() );
-                else
-                    painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/Drag" ).scaled( rect().size() ) );
-            }
-            break;
-        case TypePointFactory:
-            {
-                painter.setBrush( Qt::yellow );
-
-                QRect r;
-                r.setWidth( rect().center().x() );
-                r.setHeight( rect().center().y() );
-                r.moveCenter( rect().center() );
-
-                if ( nShape == ShapeSquare ) painter.drawRect( r );
-                else painter.drawEllipse( r );
-
-                painter.setPen( QPen( Qt::black ) );
-                painter.drawLine( r.center().x(), r.top(), r.center().x(), r.bottom() );
-                painter.drawLine( r.left(), r.center().y(), r.right(), r.center().y() );
             }
             break;
         case TypeSizeLeft:

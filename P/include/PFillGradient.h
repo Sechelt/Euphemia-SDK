@@ -97,11 +97,10 @@ protected:
     RadialExtended_t radialExtended;
 
     // conical
-    // - center is always the seed point
     struct Conical_t
     {
-        qreal nRadius = 50;
-        qreal nStartAngle = 0; // 0=E
+        QPointF pointCenter;            /*!< center (same as pointFactory and is fixed)                                         */
+        QPointF pointAngle;             /*!< start/stop angle                                                                   */
     };
     Conical_t conical;
 
@@ -122,7 +121,7 @@ private:
     struct Polar
     {
         qreal radius;
-        qreal angle;
+        qreal angle;        // radians
     };
 
     QPolygon getPolygon( const QPoint &point );
@@ -140,6 +139,7 @@ private:
 
     QPointF getNearestPointOnLine( const QPointF &pointBegin, const QPointF &pointEnd, const QPointF &point );
     qreal   getDistance( const QPointF &pointA, const QPointF &pointB );
+    qreal   getRadiansToDegrees( qreal nRadian );
 };
 
 class PFillGradientToolBar : public QWidget
