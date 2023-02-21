@@ -22,7 +22,7 @@ protected:
     QPoint pointBegin;
     QPoint pointEnd;
 
-    virtual void doPaint( QPainter * );
+    virtual void doPaint( QPainter *, bool bCommit = true );
 
     virtual void doDrawState( const QPoint & ) override;
     virtual void doManipulateState() override;

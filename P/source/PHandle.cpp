@@ -3,11 +3,13 @@
 
 #include "PCanvas.h"
 
-PHandle::PHandle( PGraphicsView *pView, Type nType, const QPoint &pointCenter )
+PHandle::PHandle( PGraphicsView *pView, Type nType, const QPoint &pointCenter, Shape nShape, const QColor &color )
     : QWidget( pView->viewport() )
 {
-    this->pView = pView;
-    this->nType = nType;
+    this->pView     = pView;
+    this->nType     = nType;
+    this->nShape    = nShape;
+    this->color     = color;
 
     resize( 12, 12 );
     setCenter( pointCenter ); 
@@ -19,36 +21,38 @@ void PHandle::paintEvent( QPaintEvent *pEvent )
 
     QPainter painter( this );
 
-    painter.setPen( QPen( Qt::NoPen ) );
-
-    QBrush brush( Qt::green );
-    brush.setStyle( Qt::SolidPattern );
-    painter.setBrush( brush );
+    // defaults
+    // - by default we draw a handle with the given pen/brush
+    // - in some cases this is the handle, in other cases this is used as the background, in other cases it is ignored
+    painter.setPen( QPen( Qt::black ) );
+    painter.setBrush( QBrush( color ) );
 
     switch ( nType )
     {
+        // these are default; shape, pen and brush and nothing more
+        // - the diff types are still useful
+        case TypeMovePoint:
+        case TypeGradientIntermediate:
+        case TypeGradientRadius:
+        case TypeGradientFocal:
+        case TypeGradientAngle:
+            {
+                if ( nShape == ShapeSquare )
+                    painter.drawRect( rect() );
+                else
+                    painter.drawEllipse( rect() );
+            }
+            break;
         case TypeDrag:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare )
+                    painter.drawRect( rect() );
+                else
+                    painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/Drag" ).scaled( rect().size() ) );
             }
             break;
-        case TypeMovePoint:
-            {
-                painter.drawEllipse( rect() );
-/*
-                brush.setColor( Qt::black );       
-                                                   
-                QRect r;                           
-                r.setWidth( rect().width() / 2 );  
-                r.setHeight( rect().height() / 2 );
-                r.moveCenter( rect().center() );   
-                                                   
-                painter.drawEllipse( r );          
-*/
-            }
-            break;
-        case TypeNewPoint:
+        case TypePointFactory:
             {
                 painter.setBrush( Qt::yellow );
 
@@ -57,7 +61,8 @@ void PHandle::paintEvent( QPaintEvent *pEvent )
                 r.setHeight( rect().center().y() );
                 r.moveCenter( rect().center() );
 
-                painter.drawEllipse( r );
+                if ( nShape == ShapeSquare ) painter.drawRect( r );
+                else painter.drawEllipse( r );
 
                 painter.setPen( QPen( Qt::black ) );
                 painter.drawLine( r.center().x(), r.top(), r.center().x(), r.bottom() );
@@ -66,49 +71,57 @@ void PHandle::paintEvent( QPaintEvent *pEvent )
             break;
         case TypeSizeLeft:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeHoriz" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeRight:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeHoriz" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeTop:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeVert" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeBottom:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeVert" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeTopRight:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopRight" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeTopLeft:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopLeft" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeBottomRight:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopLeft" ).scaled( rect().size() ) );
             }
             break;
         case TypeSizeBottomLeft:
             {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
                 painter.drawImage( rect().topLeft(), QImage( ":P/ResizeTopRight" ).scaled( rect().size() ) );
             }
             break;
@@ -116,28 +129,26 @@ void PHandle::paintEvent( QPaintEvent *pEvent )
             {
                 QRect r( 0, 0, 4, 4 );
                 r.moveCenter( rect().center() );
-                painter.drawEllipse( r );
+                if ( nShape == ShapeSquare ) painter.drawRect( r );
+                else painter.drawEllipse( r );
 
                 painter.setPen( QPen( Qt::black ) );
                 painter.drawLine( rect().topLeft(), rect().bottomRight() );
                 painter.drawLine( rect().bottomLeft(), rect().topRight() );
             }
             break;
-        case TypeFillStart:
+        case TypeGradientStart:
             {
                 painter.setBrush( QBrush( Qt::darkGreen ) );
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
             }
             break;
-        case TypeFillStop:
+        case TypeGradientStop:
             {
                 painter.setBrush( QBrush( Qt::darkRed ) );
-                painter.drawEllipse( rect() );
-            }
-            break;
-        case TypeFillPoint:
-            {
-                painter.drawEllipse( rect() );
+                if ( nShape == ShapeSquare ) painter.drawRect( rect() );
+                else painter.drawEllipse( rect() );
             }
             break;
     }

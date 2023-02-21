@@ -10,7 +10,7 @@ public:
     PDrawRectangleFilled( PCanvas *pCanvas );
 
 protected:
-    virtual void doPaint( QPainter * ) override;
+    virtual void doPaint( QPainter *, bool bCommit = true ) override;
 };
 
 #endif

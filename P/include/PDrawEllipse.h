@@ -10,7 +10,7 @@ public:
     PDrawEllipse( PCanvas *pCanvas );
 
 protected:
-    virtual void doPaint( QPainter * );
+    virtual void doPaint( QPainter *, bool bCommit = true );
 };
 
 

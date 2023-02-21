@@ -114,7 +114,7 @@ void PDrawLine::doCommit()
     doIdleState();
 }
 
-void PDrawLine::doPaint( QPainter *pPainter )
+void PDrawLine::doPaint( QPainter *pPainter, bool )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );

@@ -1,16 +1,21 @@
 #include "LibInfo.h"
 #include "PFillGradient.h"
 
+#include <WColorPickerDialog.h>
+
 #include "PContext.h"
 #include "PCanvas.h"
 
-#define PFillGradientSeed 0
+// constant index values for vectorHandles
+#define PFillGradientFactory 0                      /*!< indicates fill area, can create/delete intermediate handles, is center for radial gradient */
 
 #define PFillGradientLinearStart 1
 #define PFillGradientLinearStop 2
+#define PFillGradientLinearIntermediates 3          /*!< index of first (if any) intermediate stop point handle                                     */
 
 #define PFillGradientRadialRadius 1
 #define PFillGradientRadialFocal 2
+#define PFillGradientRadialIntermediates 3          /*!< index of first (if any) intermediate stop point handle                                     */
 
 #define PFillGradientConicalAngle 1
 
@@ -63,6 +68,80 @@ QImage PFillGradient::getCopy()
 void PFillGradient::doDoubleClick( PMouseEvent *pEvent )
 {
     Q_UNUSED( pEvent );
+    if ( nState != StateManipulate ) return;                                // does not make sense unless we are in manipulate state as there would be no handles
+    if ( nType >= 0 ) return;                                               // not relevant for a preset
+    PHandle *pHandle = getHandle( pEvent->pos() );
+    if ( !pHandle ) return;                                                 // we are only going to process a double click on a handle
+
+    if ( nType == PContextGradient::StandardGradientLinear )
+    {
+        if ( pHandle == vectorHandles[PFillGradientLinearStart] )
+        {
+            bool bOk = false;
+            QColor color = WColorPickerDialog::getColor( &bOk, stopStart.second, 0, true );
+            if ( !bOk ) return;
+            stopStart.second = color;
+            update();
+            return;
+        }
+        if ( pHandle == vectorHandles[PFillGradientLinearStop] )
+        {
+            bool bOk = false;
+            QColor color = WColorPickerDialog::getColor( &bOk, stopStop.second, 0, true );
+            if ( !bOk ) return;
+            stopStop.second = color;
+            update();
+            return;
+        }
+        // must be a stop point
+        {
+            int n = vectorHandles.indexOf( pHandle ) - PFillGradientLinearIntermediates;
+            bool bOk = false;
+            QColor color = WColorPickerDialog::getColor( &bOk, stops[n].second, 0, true );
+            if ( !bOk ) return;
+            stops[n].second = color;
+            update();
+            return;
+        }
+        return;
+    }
+
+    if ( nType == PContextGradient::StandardGradientRadial )
+    {
+        if ( pHandle == vectorHandles[PFillGradientFactory] )
+        {
+            bool bOk = false;
+            QColor color = WColorPickerDialog::getColor( &bOk, stopStart.second, 0, true );
+            if ( !bOk ) return;
+            stopStart.second = color;
+            update();
+            return;
+        }
+
+        if ( pHandle == vectorHandles[PFillGradientRadialRadius] )
+        {
+            bool bOk = false;
+            QColor color = WColorPickerDialog::getColor( &bOk, stopStop.second, 0, true );
+            if ( !bOk ) return;
+            stopStop.second = color;
+            update();
+            return;
+        }
+        if ( pHandle == vectorHandles[PFillGradientRadialFocal] )
+        {
+        }
+        // must be a stop point
+        {
+            int n = vectorHandles.indexOf( pHandle ) - PFillGradientLinearIntermediates;
+            bool bOk = false;
+            QColor color = WColorPickerDialog::getColor( &bOk, stops[n].second, 0, true );
+            if ( !bOk ) return;
+            stops[n].second = color;
+            update();
+            return;
+        }
+        return;
+    }
 }
 
 /*!
@@ -119,6 +198,14 @@ void PFillGradient::doRelease( PMouseEvent *pEvent )
     case StateDraw:
         break;
     case StateManipulate:
+        if ( pHandle )
+        {
+            if ( shouldRemoveStop() ) 
+            {
+                doRemoveStop();
+                update();
+            }
+        }
         pHandle = nullptr;
         break;
     }
@@ -137,8 +224,10 @@ void PFillGradient::doCommit()
 
 void PFillGradient::slotRefresh( const PContextGradient &t )
 {
+    // this should not happen but...
     if ( nState != StateManipulate ) return;
 
+    // changed gradient type so...
     if ( t.nType != nType )
     {
         doCancel();
@@ -159,53 +248,95 @@ void PFillGradient::slotRefresh( const PContextGradientConical &t )
 }
 
 
-void PFillGradient::doPaint( QPainter *pPainter )
+void PFillGradient::doPaint( QPainter *pPainter, bool bCommit )
 {
     if ( nState != StateManipulate ) return;
 
-    if ( pGradientPreset )
+    if ( nType >= 0 )
     {
-        pGradientPreset->setSpread( g_Context->getGradient().nSpread );
-        pPainter->setBrush( QBrush( *pGradientPreset ) );
+        QGradient   gradient( (QGradient::Preset)nType );
+        gradient.setSpread( g_Context->getGradient().nSpread );
+        pPainter->setBrush( QBrush( gradient ) );
         pPainter->setPen( QPen( Qt::NoPen ) );
         pPainter->drawPolygon( polygon );
+        return;
     }
-    else if ( pGradientLinear )
+
+    if ( nType == PContextGradient::StandardGradientLinear )
     {
-        pGradientLinear->setSpread( g_Context->getGradient().nSpread );
-        pGradientLinear->setStart( linear.pointStart );
-        pGradientLinear->setFinalStop( linear.pointStop );
-//        gradient.setColorAt( 0, Qt::black );                                         
-//        gradient.setColorAt( 0.5, Qt::yellow );                                      
-//        gradient.setColorAt( 0.75, Qt::blue );                                       
-//        gradient.setColorAt( 1, Qt::white );                                         
-//        gradient.setSpread( QGradient::ReflectSpread ); // for linear and radial only
-        pPainter->setBrush( QBrush( *pGradientLinear ) );
+        QLinearGradient gradient( linear.pointStart, linear.pointStop );
+        gradient.setSpread( g_Context->getGradient().nSpread );
+
+        // add intermediate stops
+        // - we do not use gradient.setStops( stops ); because that would have to be in asc order by qreal value
+        // - our stops are not sorted - their index position is important for our use here
+        // - so we add them one-at-a-time.
+        gradient.setColorAt( stopStart.first, stopStart.second );
+        for ( QGradientStop stop : stops )
+        {
+            gradient.setColorAt( stop.first, stop.second );
+        }
+        gradient.setColorAt( stopStop.first, stopStop.second );
+
+        pPainter->setBrush( QBrush( gradient ) );
         pPainter->setPen( QPen( Qt::NoPen ) );
         pPainter->drawPolygon( polygon );
+
+        if ( !bCommit )
+        {
+            QPen pen( Qt::darkGray );
+            pen.setStyle( Qt::DashLine );
+            pPainter->setPen( pen );
+            pPainter->drawLine( linear.pointStart, linear.pointStop );
+        }
+        return;
     }
-    else if ( pGradientRadial )
+
+    if ( nType == PContextGradient::StandardGradientRadial )
     {
-        pGradientRadial->setSpread( g_Context->getGradient().nSpread );
-        pGradientRadial->setRadius( radial.nRadius );
-        pGradientRadial->setFocalPoint( radial.pointFocalPoint );
-        pPainter->setBrush( QBrush( *pGradientRadial ) );
+        qreal nRadius = qAbs( pointFactory.x() - radialSimple.pointCenterRadius.x() );
+        QRadialGradient gradient( radialSimple.pointCenter, nRadius, radialSimple.pointFocal );
+        gradient.setSpread( g_Context->getGradient().nSpread );
+
+        // add intermediate stops
+        // - we do not use gradient.setStops( stops ); because that would have to be in asc order by qreal value
+        // - our stops are not sorted - their index position is important for our use here
+        // - so we add them one-at-a-time.
+        gradient.setColorAt( stopStart.first, stopStart.second );       // center
+        for ( QGradientStop stop : stops )
+        {
+            gradient.setColorAt( stop.first, stop.second );
+        }
+        gradient.setColorAt( stopStop.first, stopStop.second );         // focal point
+
+        pPainter->setBrush( QBrush( gradient ) );
         pPainter->setPen( QPen( Qt::NoPen ) );
         pPainter->drawPolygon( polygon );
+
+        if ( !bCommit )
+        {
+            QPen pen( Qt::darkGray );
+            pen.setStyle( Qt::DashLine );
+            pPainter->setPen( pen );
+            pPainter->drawLine( radialSimple.pointCenter, radialSimple.pointCenterRadius );
+        }
+        return;
     }
-    else if ( pGradientConical )
+
+    if ( nType == PContextGradient::StandardGradientConical )
     {
-        pGradientConical->setSpread( g_Context->getGradient().nSpread );
+        QConicalGradient gradient( pointFactory, conical.nStartAngle );
+        gradient.setSpread( g_Context->getGradient().nSpread );
         // 0=E
         // 45=NE
         // 90=N
         // 180=W
         // 270=S
         // 360=E
-        pGradientConical->setAngle( conical.nStartAngle );
-        pPainter->setBrush( QBrush( *pGradientConical ) );
+        pPainter->setBrush( QBrush( gradient ) );
         pPainter->setPen( QPen( Qt::NoPen ) );
         pPainter->drawPolygon( polygon );
+        return;
     }
 }
 
@@ -216,32 +347,48 @@ void PFillGradient::doDrawState( const QPoint &point )
     nType = g_Context->getGradient().nType;
     if ( nType >= 0 )
     {
-        pGradientPreset = new QGradient( (QGradient::Preset)nType );
     }
     else if ( nType == PContextGradient::StandardGradientLinear )
     {
+        // in this case a point is established for the factory handle and it can not be moved
+        // the factory handle is only used to create/delete intermediate points - has no affect on color
+        // start and stop are the two ends of the gradient
+        // start and stop have a color
+        // any intermediate points are between the start/stop
+        stopStart.first = 0;
+        stopStart.second = QColor( Qt::black );
+        stopStop.first = 1;
+        stopStop.second = QColor( Qt::white );
         linear.pointStart = linear.pointStop = point;
-        pGradientLinear = new QLinearGradient( linear.pointStart, linear.pointStop );
     }
     else if ( nType == PContextGradient::StandardGradientRadial )
     {
-        radial.nRadius = 10;
-        radial.pointFocalPoint = point;
-        pGradientRadial = new QRadialGradient( point, radial.nRadius, radial.pointFocalPoint );
+        // in this case a point is established for the factory handle and it can not be moved
+        // the factory handle is used to create/delete intermediate points and as the 'center' - has no affect on color
+        // stopStart will be used to represent a color for 'focal' point
+        // stopStop will be used to represent a color at 'radius' point
+        // intermediate points will be between these
+        stopStart.first = 0;
+        stopStart.second = QColor( Qt::black );
+        stopStop.first = 1;
+        stopStop.second = QColor( Qt::white );
+
+        radialSimple.pointCenter = point;
+        radialSimple.pointCenterRadius = point;
+        radialSimple.pointFocal = point;
     }
     else if ( nType == PContextGradient::StandardGradientConical )
     {
+        conical.nRadius = 10;
         conical.nStartAngle = 10;
-        pGradientConical = new QConicalGradient( point, conical.nStartAngle );
-        // pGradientConical->setCoordinateMode( QGradient::StretchToDeviceMode );
     }
     else
     {
         Q_ASSERT( 1==0 );
     }
 
-    pointSeed = point;
-    polygon = getPolygon( pointSeed );
+    pointFactory = point;
+    polygon = getPolygon( pointFactory );
     nState = StateDraw;
     doManipulateState();
 }
@@ -259,26 +406,9 @@ void PFillGradient::doIdleState()
     Q_ASSERT( nState == StateManipulate );
 
     doDeleteHandles();
-    if ( pGradientPreset ) 
-    {
-        delete pGradientPreset;
-        pGradientPreset = nullptr;
-    }
-    if ( pGradientLinear ) 
-    {
-        delete pGradientLinear;
-        pGradientLinear = nullptr;
-    }
-    if ( pGradientRadial ) 
-    {
-        delete pGradientRadial;
-        pGradientRadial = nullptr;
-    }
-    if ( pGradientConical ) 
-    {
-        delete pGradientConical;
-        pGradientConical = nullptr;
-    }
+    stops.clear();
+    vectorStopPoints.clear();
+    polygon.clear();
     nType = 0;
     polygon.clear();
     nState = StateIdle;
@@ -300,41 +430,57 @@ void PFillGradient::doCreateHandles()
     // Order matters when handles share a position. Last handle will be found first.
     PHandle *pHandle;
 
-    // seed handle is always vectorHandles[0]
-    pHandle = new PHandle( pView, PHandle::TypeFillSeed, pView->mapFromScene( pointSeed ) );
-    vectorHandles.append( pHandle );
-    pHandle->show();
-
-    if ( pGradientLinear )
+    if ( nType == PContextGradient::StandardGradientLinear )
     {
-        // start handle is always vectorHandles[1]
-        pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( linear.pointStart ) );
+        pHandle = new PHandle( pView, PHandle::TypePointFactory, pView->mapFromScene( pointFactory ) );
+        pHandle->setToolTip( tr("Drag to create a new point.") );
         vectorHandles.append( pHandle );
         pHandle->show();
 
-        // stop handle is always vectorHandles[2]
-        pHandle = new PHandle( pView, PHandle::TypeFillStop, pView->mapFromScene( linear.pointStop ) );
+        pHandle = new PHandle( pView, PHandle::TypeGradientStart, pView->mapFromScene( linear.pointStart ), PHandle::ShapeSquare, QColor( Qt::darkGreen ) );
+        pHandle->setToolTip( tr("Start point.\nDouble-Click to set color.\nDrop point here to remove.") );
         vectorHandles.append( pHandle );
         pHandle->show();
+
+        pHandle = new PHandle( pView, PHandle::TypeGradientStop, pView->mapFromScene( linear.pointStop ), PHandle::ShapeSquare, QColor( Qt::darkRed )  );
+        pHandle->setToolTip( tr("Stop point.\nDouble-Click to set color.\nDrop point here to remove.") );
+        vectorHandles.append( pHandle );
+        pHandle->show();
+        return;
     }
-    else if ( pGradientRadial )
+
+    if ( nType == PContextGradient::StandardGradientRadial )
     {
-        QPoint point( pointSeed.x() + radial.nRadius, pointSeed.y() );
-        pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( point ) );
+        pHandle = new PHandle( pView, PHandle::TypePointFactory, pView->mapFromScene( pointFactory ), PHandle::ShapeSquare, QColor( Qt::darkGreen ) );
+        pHandle->setToolTip( tr("Center\nDouble-Click to set color.\nDrag to create a new point.\nDrop point here to remove.") );
         vectorHandles.append( pHandle );
         pHandle->show();
 
-        pHandle = new PHandle( pView, PHandle::TypeFillStop, pView->mapFromScene( radial.pointFocalPoint ) );
+        pHandle = new PHandle( pView, PHandle::TypeGradientRadius, pView->mapFromScene( radialSimple.pointCenterRadius ), PHandle::ShapeSquare, QColor( Qt::darkRed ) );
+        pHandle->setToolTip( tr("Radius\nDouble-Click to set color.\nDrop point here to remove.") );
         vectorHandles.append( pHandle );
         pHandle->show();
+
+        pHandle = new PHandle( pView, PHandle::TypeGradientFocal, pView->mapFromScene( radialSimple.pointFocal ) );
+        pHandle->setToolTip( tr("Focal point") );
+        vectorHandles.append( pHandle );
+        pHandle->show();
+        return;
     }
-    else if ( pGradientConical )
+
+    if ( nType == PContextGradient::StandardGradientConical )
     {
+        pHandle = new PHandle( pView, PHandle::TypePointFactory, pView->mapFromScene( pointFactory ) );
+        pHandle->setToolTip( tr("Drag to create a new point.\nDrop point here to remove.") );
+        vectorHandles.append( pHandle );
+        pHandle->show();
+
         QPointF pointCartesian = getPolarToCartesian( conical.nRadius, conical.nStartAngle );
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" << pointCartesian;
-        pHandle = new PHandle( pView, PHandle::TypeFillStart, pView->mapFromScene( pointSeed + pointCartesian.toPoint() ) );
+        pHandle = new PHandle( pView, PHandle::TypeGradientAngle, pView->mapFromScene( pointFactory + pointCartesian.toPoint() ) );
+        pHandle->setToolTip( tr("Start/stop angle and radius") );
         vectorHandles.append( pHandle );
         pHandle->show();
+        return;
     }
 }
 
@@ -342,20 +488,29 @@ qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" <<
 // react to zoom
 void PFillGradient::doSyncHandles()
 {
-    vectorHandles[PFillGradientSeed]->setCenter( pView->mapFromScene( pointSeed ) );
+    vectorHandles[PFillGradientFactory]->setCenter( pView->mapFromScene( pointFactory ) );
 
-    if ( pGradientLinear )
+    if ( nType == PContextGradient::StandardGradientLinear )
     {
         vectorHandles[PFillGradientLinearStart]->setCenter( pView->mapFromScene( linear.pointStart ) );
         vectorHandles[PFillGradientLinearStop]->setCenter( pView->mapFromScene( linear.pointStop ) );
+
+        for ( int n = 0; n < vectorStopPoints.count(); n++ )
+        {
+            vectorHandles[PFillGradientLinearIntermediates + n]->setCenter( pView->mapFromScene( vectorStopPoints[n] ) );
+        }
     }
-    else if ( pGradientRadial )
+    else if ( nType == PContextGradient::StandardGradientRadial )
     {
-        QPoint point( pointSeed.x() + radial.nRadius, pointSeed.y() );
-        vectorHandles[PFillGradientRadialRadius]->setCenter( pView->mapFromScene( point ) );
-        vectorHandles[PFillGradientRadialFocal]->setCenter( pView->mapFromScene( radial.pointFocalPoint ) );
+        vectorHandles[PFillGradientRadialRadius]->setCenter( pView->mapFromScene( radialSimple.pointCenterRadius ) );
+        vectorHandles[PFillGradientRadialFocal]->setCenter( pView->mapFromScene( radialSimple.pointFocal ) );
+
+        for ( int n = 0; n < vectorStopPoints.count(); n++ )
+        {
+            vectorHandles[PFillGradientRadialIntermediates + n]->setCenter( pView->mapFromScene( vectorStopPoints[n] ) );
+        }
     }
-    else if ( pGradientConical )
+    else if ( nType == PContextGradient::StandardGradientConical )
     {
         QPointF point = getPolarToCartesian( conical.nRadius, conical.nStartAngle );
         vectorHandles[PFillGradientConicalAngle]->setCenter( pView->mapFromScene( point ) );
@@ -368,57 +523,221 @@ void PFillGradient::doMoveHandle( const QPoint &pointPos )
 
     QPoint pointViewPos = pView->mapFromScene( pointPos );
 
-    if ( pGradientLinear )
+    // standard handles
+    if ( nType == PContextGradient::StandardGradientLinear )
     {
         if ( pHandle == vectorHandles[PFillGradientLinearStart] )
         {
             pHandle->setCenter( pointViewPos );
             linear.pointStart = pointPos;
+            doUpdateStops();
             update();
+            return;
         }
-        else if ( pHandle == vectorHandles[PFillGradientLinearStop] )
+        if ( pHandle == vectorHandles[PFillGradientLinearStop] )
         {
             pHandle->setCenter( pointViewPos );
             linear.pointStop = pointPos;
+            doUpdateStops();
             update();
+            return;
         }
+        // create intermediate stop point
+        if ( pHandle == vectorHandles[PFillGradientFactory] )
+        {
+            // create handle
+            pHandle = new PHandle( pView, PHandle::TypeGradientIntermediate, pView->mapFromScene( pointFactory ) );
+            pHandle->setToolTip( tr("Color point.\nDouble-Click to set color.") );
+            pHandle->show();
+            // add point
+            vectorStopPoints.append( pointFactory );
+            // add stop
+            stops.append( QGradientStop() );
+            // add handle
+            vectorHandles.append( pHandle );
+            // ensure point and handle on line
+            // set qreal in stop
+            doUpdateStop( vectorStopPoints.count() - 1 );
+            update();
+            return;
+        }
+        // move intermediate stop point
+        {
+            int n = vectorHandles.indexOf( pHandle ) - PFillGradientLinearIntermediates;
+            vectorStopPoints[n] = pointPos;
+            doUpdateStop( n );
+            update();
+            return;
+        }
+        return;
     }
-    else if ( pGradientRadial )
+
+    if ( nType == PContextGradient::StandardGradientRadial )
     {
         if ( pHandle == vectorHandles[PFillGradientRadialRadius] )
         {
             pHandle->setCenter( pointViewPos );
-            radial.nRadius = qAbs( pointSeed.x() - pointPos.x() );
+            radialSimple.pointCenterRadius = pointPos;
+            doUpdateStops();
             update();
+            return;
         }
-        else if ( pHandle == vectorHandles[PFillGradientRadialFocal] )
+        if ( pHandle == vectorHandles[PFillGradientRadialFocal] )
         {
             pHandle->setCenter( pointViewPos );
-            radial.pointFocalPoint = pointPos;
+            radialSimple.pointFocal = pointPos;
+            doUpdateStops();
             update();
+            return;
         }
+        // create intermediate stop point
+        if ( pHandle == vectorHandles[PFillGradientFactory] )
+        {
+            // create handle
+            pHandle = new PHandle( pView, PHandle::TypeGradientIntermediate, pView->mapFromScene( pointFactory ) );
+            pHandle->setToolTip( tr("Color point.\nDouble-Click to set color.") );
+            pHandle->show();
+            // add point
+            vectorStopPoints.append( pointFactory );
+            // add stop
+            stops.append( QGradientStop() );
+            // add handle
+            vectorHandles.append( pHandle );
+            // ensure point and handle on line
+            // set qreal in stop
+            doUpdateStop( vectorStopPoints.count() - 1 );
+            update();
+            return;
+        }
+        // move intermediate stop point
+        {
+            int n = vectorHandles.indexOf( pHandle ) - PFillGradientRadialIntermediates;
+            vectorStopPoints[n] = pointPos;
+            doUpdateStop( n );
+            update();
+            return;
+        }
+        return;
     }
-    else if ( pGradientConical )
+
+    if ( nType == PContextGradient::StandardGradientConical )
     {
         if ( pHandle == vectorHandles[PFillGradientConicalAngle] )
         {
             pHandle->setCenter( pointViewPos );
-            QPoint pointCartesian = pointPos - pointSeed; // pointPos has origin at topLeft but we need it to be relative to the seed
-qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "] pointSeed:" << pointSeed << " pointPos:" << pointPos << " pointCartesian:" << pointCartesian;
-
+            QPoint pointCartesian = pointPos - pointFactory; // pointPos has origin at topLeft but we need it to be relative to the seed
             Polar polar = getCartesianToPolar( pointCartesian.x(), pointCartesian.y() );
             conical.nRadius = polar.radius;
             conical.nStartAngle = polar.angle;
-// qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "]" << conical.nRadius << conical.nStartAngle;
             update();
+            return;
         }
+        return;
     }
+}
+
+// assumes the vectorHandles, stops, and vectorStopPoints have point represented
+void PFillGradient::doUpdateStop( int n )
+{
+    // ensure that all of our vectors are in harmony
+    Q_ASSERT( n >= 0 );
+    Q_ASSERT( n < vectorStopPoints.count() );
+    Q_ASSERT( n < stops.count() );
+    Q_ASSERT( vectorStopPoints.count() == stops.count() );
+
+
+    if ( nType == PContextGradient::StandardGradientLinear )
+    {
+        Q_ASSERT( vectorHandles.count() - PFillGradientLinearIntermediates == stops.count() ); 
+
+        QPointF pointOnLine = getNearestPointOnLine( vectorStopPoints[n], linear.pointStart, linear.pointStop );
+
+        qreal nDistance             = getDistance( linear.pointStart, linear.pointStop );
+        qreal nDistanceFromStart    = getDistance( linear.pointStart, pointOnLine );
+        stops[n].first = nDistanceFromStart / nDistance; // value should always be 0-1
+        vectorStopPoints[n] = pointOnLine.toPoint();
+        vectorHandles[PFillGradientLinearIntermediates + n]->setCenter( pView->mapFromScene( pointOnLine ) );
+        return;
+    }
+
+    if ( nType == PContextGradient::StandardGradientRadial )
+    {
+        Q_ASSERT( vectorHandles.count() - PFillGradientRadialIntermediates == stops.count() ); 
+
+        QPointF pointOnLine = getNearestPointOnLine( vectorStopPoints[n], radialSimple.pointCenter, radialSimple.pointCenterRadius );
+
+        qreal nDistance             = getDistance( radialSimple.pointCenter, radialSimple.pointCenterRadius );
+        qreal nDistanceFromStart    = getDistance( radialSimple.pointCenter, pointOnLine );
+        stops[n].first = nDistanceFromStart / nDistance; // value should always be 0-1
+        vectorStopPoints[n] = pointOnLine.toPoint();
+        vectorHandles[PFillGradientRadialIntermediates + n]->setCenter( pView->mapFromScene( pointOnLine ) );
+        return;
+    }
+}
+
+// start or 'final' stop have moved so...
+// - assumes we are only doing linear at the moment
+void PFillGradient::doUpdateStops()
+{
+    for ( int n = 0; n < vectorStopPoints.count(); n++ )
+    {
+        doUpdateStop( n );
+    }
+}
+
+// call shouldRemoveStop() before calling here
+void PFillGradient::doRemoveStop()
+{
+    if ( nType == PContextGradient::StandardGradientLinear )
+    {
+        // this is based off of a handle being dropped so...
+        if ( !pHandle ) return;
+        // we can only remove TypeGradientIntermediate handles
+        if ( pHandle->getType() != PHandle::TypeGradientIntermediate ) return;
+
+        // remove handle
+        int nHandle = vectorHandles.indexOf( pHandle );
+        delete vectorHandles.takeAt( nHandle );
+        // remove from stops
+        stops.remove( nHandle - PFillGradientLinearIntermediates );
+        vectorStopPoints.remove( nHandle - PFillGradientLinearIntermediates );
+        return;
+    }
+
+    if ( nType == PContextGradient::StandardGradientRadial )
+    {
+        // this is based off of a handle being dropped so...
+        if ( !pHandle ) return;
+        // we can only remove TypeGradientIntermediate handles
+        if ( pHandle->getType() != PHandle::TypeGradientIntermediate ) return;
+
+        // remove handle
+        int nHandle = vectorHandles.indexOf( pHandle );
+        delete vectorHandles.takeAt( nHandle );
+        // remove from stops
+        stops.remove( nHandle - PFillGradientRadialIntermediates );
+        vectorStopPoints.remove( nHandle - PFillGradientRadialIntermediates );
+        return;
+    }
+}
+
+bool PFillGradient::shouldRemoveStop()
+{
+    // this is based off of a handle being dropped so...
+    if ( !pHandle ) return false;
+    // we can only remove TypeGradientIntermediate handles
+    if ( pHandle->getType() != PHandle::TypeGradientIntermediate ) return false;
+    // deleted by dropping handle on a TypePointFactory handle (same place it was created)
+    PHandle *p = getHandleUnder( pHandle, PHandle::TypePointFactory );
+    if ( !p ) return false;
+
+    return true;
 }
 
 /*!
  * \brief Returns a polygon representing a boundary. 
  *  
- * The boundary is defined by not being the color at pointSeed starting at pointSeed. 
+ * The boundary is defined by not being the color at pointFactory starting at pointFactory. 
  *  
  * Uses the 'Square tracing algorithm'. 
  *  
@@ -428,12 +747,12 @@ qInfo() << "[" << __FILE__ << "][" << __FUNCTION__ << "][" << __LINE__ << "] poi
  * 
  * \return QPolygon The inside of the polygon is the area outlined.
  */
-QPolygon PFillGradient::getPolygon( const QPoint &pointSeed )
+QPolygon PFillGradient::getPolygon( const QPoint &pointFactory )
 {
     QImage *    pImage      = g_Context->getImage();
-    int         nX          = pointSeed.x();
-    int         nY          = pointSeed.y();
-    QColor      colorSeed   = pImage->pixelColor( pointSeed );
+    int         nX          = pointFactory.x();
+    int         nY          = pointFactory.y();
+    QColor      colorSeed   = pImage->pixelColor( pointFactory );
     QPolygon    polygon;
 
     // go west until we hit a boundary (or go off image)
@@ -491,6 +810,42 @@ PFillGradient::Polar PFillGradient::getCartesianToPolar( qreal x, qreal y )
     return p;
 }
 
+QPointF PFillGradient::getNearestPointOnLine( const QPointF &P, const QPointF &A, const QPointF &B )
+{
+    QPointF a_to_p;
+    QPointF a_to_b;
+
+    a_to_p.setX( P.x() - A.x() );
+    a_to_p.setY( P.y() - A.y() ); //     # Storing vector A->P  
+    a_to_b.setX( B.x() - A.x() );
+    a_to_b.setY( B.y() - A.y() ); //     # Storing vector A->B
+
+    qreal atb2 = a_to_b.x() * a_to_b.x() + a_to_b.y() * a_to_b.y();
+    qreal atp_dot_atb = a_to_p.x() * a_to_b.x() + a_to_p.y() * a_to_b.y(); // The dot product of a_to_p and a_to_b
+    qreal t = atp_dot_atb / atb2;  //  # The normalized "distance" from a to the closest point
+
+    qreal nX = A.x() + a_to_b.x() * t;
+    qreal nY = A.y() + a_to_b.y() * t;
+
+    // on an infinite line so lets restrict to between A and B on that line
+    if (  A.x() >= B.x() )
+    {
+         if ( nX > A.x() ) nX = A.x();
+         if ( nX < B.x() ) nX = B.x();
+    }
+    if (  A.y() >= B.y() )
+    {
+         if ( nY > A.y() ) nY = A.y();
+         if ( nY < B.y() ) nY = B.y();
+    }
+     
+    return QPointF( nX, nY );
+}
+
+qreal PFillGradient::getDistance( const QPointF &pointA, const QPointF &pointB )
+{
+    return sqrt(pow(pointB.x() - pointA.x(), 2) + pow(pointB.y() - pointA.y(), 2) * 1.0);
+}
 
 //
 // PFillGradientToolBar

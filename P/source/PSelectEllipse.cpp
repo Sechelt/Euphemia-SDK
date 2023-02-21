@@ -51,7 +51,7 @@ QImage PSelectEllipse::getMask()
     return imageMask;
 }
 
-void PSelectEllipse::doPaint( QPainter *pPainter )
+void PSelectEllipse::doPaint( QPainter *pPainter, bool )
 {
     //
     pPainter->setPen( QPen( Qt::DashLine ) );

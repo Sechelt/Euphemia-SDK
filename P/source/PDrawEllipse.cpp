@@ -8,7 +8,7 @@ PDrawEllipse::PDrawEllipse( PCanvas *pCanvas )
 {
 }
 
-void PDrawEllipse::doPaint( QPainter *pPainter )
+void PDrawEllipse::doPaint( QPainter *pPainter, bool )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );

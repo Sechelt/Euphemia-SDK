@@ -8,7 +8,7 @@ PDrawPolygonFilled::PDrawPolygonFilled( PCanvas *pCanvas )
 {
 }
 
-void PDrawPolygonFilled::doPaint( QPainter *pPainter )
+void PDrawPolygonFilled::doPaint( QPainter *pPainter, bool )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );

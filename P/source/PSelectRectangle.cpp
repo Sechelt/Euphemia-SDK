@@ -79,7 +79,7 @@ void PSelectRectangle::doCut()
     }
 }
 
-void PSelectRectangle::doPaint( QPainter *pPainter )
+void PSelectRectangle::doPaint( QPainter *pPainter, bool )
 {
     //
     pPainter->setPen( QPen( Qt::DashLine ) );

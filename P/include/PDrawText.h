@@ -16,7 +16,7 @@ public:
     virtual void doCommit() override;
 
 protected:
-    virtual void doPaint( QPainter * );
+    virtual void doPaint( QPainter *, bool bCommit = true );
 };
 
 class PTextToolBar : public QWidget

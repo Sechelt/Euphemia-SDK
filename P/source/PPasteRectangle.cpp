@@ -52,7 +52,7 @@ bool PPasteRectangle::canCommit()
     return !image.isNull();
 }
 
-void PPasteRectangle::doPaint( QPainter *pPainter )
+void PPasteRectangle::doPaint( QPainter *pPainter, bool )
 {
     if ( g_Context->getPaste().nCompositionMode != QPainter::CompositionMode_SourceOver )
     {

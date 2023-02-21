@@ -21,7 +21,7 @@ public:
     virtual bool isSelector() override { return true; }
 
 protected:
-    virtual void doPaint( QPainter * ) override;
+    virtual void doPaint( QPainter *, bool bCommit = true ) override;
 };
 
 #endif

@@ -22,7 +22,7 @@ protected:
     QPolygon    polygon;
     QPoint      pointMouse;     /*!< when moving in draw state we have a temp line following the mouse from the last polygon point */
 
-    virtual void doPaint( QPainter * );
+    virtual void doPaint( QPainter *, bool bCommit = true );
     virtual void doDrawState( const QPoint & ) override;
     virtual void doManipulateState() override;
     virtual void doIdleState() override;

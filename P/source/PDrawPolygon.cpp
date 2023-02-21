@@ -17,7 +17,7 @@ PDrawPolygon::PDrawPolygon( PCanvas *pCanvas )
  * \param pPainter 
  * \param polygon 
  */
-void PDrawPolygon::doPaint( QPainter *pPainter )
+void PDrawPolygon::doPaint( QPainter *pPainter, bool )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );

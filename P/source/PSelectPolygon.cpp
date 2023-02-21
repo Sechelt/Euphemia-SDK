@@ -66,7 +66,7 @@ QImage PSelectPolygon::getMask()
     return imageMask;
 }
 
-void PSelectPolygon::doPaint( QPainter *pPainter )
+void PSelectPolygon::doPaint( QPainter *pPainter, bool )
 {
     //
     pPainter->setPen( QPen( Qt::DashLine ) );

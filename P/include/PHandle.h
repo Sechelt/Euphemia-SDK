@@ -28,7 +28,7 @@ public:
     {
         TypeDrag,
         TypeMovePoint,
-        TypeNewPoint,
+        TypePointFactory,
         TypeSizeLeft,
         TypeSizeRight,
         TypeSizeTop,
@@ -38,12 +38,22 @@ public:
         TypeSizeBottomRight,
         TypeSizeBottomLeft,
         TypeFillSeed,
-        TypeFillStart,
-        TypeFillStop,
-        TypeFillPoint
+        TypeGradientStart,
+        TypeGradientStop,
+        TypeGradientIntermediate,
+        TypeGradientRadius,
+        TypeGradientFocal,
+        TypeGradientAngle
     };
 
-    PHandle( PGraphicsView *pView, Type nType, const QPoint &pointCenter );
+    // mostly to set a background shape
+    enum Shape
+    {
+        ShapeCircle,
+        ShapeSquare
+    };
+
+    PHandle( PGraphicsView *pView, Type nType, const QPoint &pointCenter, Shape nShape = ShapeCircle, const QColor &color = QColor( Qt::green ) );
 
     void paintEvent( QPaintEvent *pEvent );
 
@@ -57,7 +67,9 @@ public:
     void doMoveBy( const QPoint & );
 
 protected:
-    Type            nType;
+    Type            nType   = TypeMovePoint;
+    Shape           nShape  = ShapeCircle;
+    QColor          color   = QColor( Qt::green );
     PGraphicsView * pView;
 };
 

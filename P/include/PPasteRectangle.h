@@ -18,7 +18,7 @@ public:
 protected:
     QImage image;
 
-    virtual void doPaint( QPainter * ) override;
+    virtual void doPaint( QPainter *, bool bCommit = true ) override;
     virtual void doDrawState( const QPoint &point ) override;
 };
 

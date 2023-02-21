@@ -112,7 +112,7 @@ void PDrawRectangle::doCommit()
     doIdleState();
 }
 
-void PDrawRectangle::doPaint( QPainter *pPainter )
+void PDrawRectangle::doPaint( QPainter *pPainter, bool )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );

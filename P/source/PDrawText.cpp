@@ -33,7 +33,7 @@ void PDrawText::doCommit()
     doIdleState();
 }
 
-void PDrawText::doPaint( QPainter *pPainter )
+void PDrawText::doPaint( QPainter *pPainter, bool )
 {
     // temp outline of rect area
     pPainter->setPen( QPen( Qt::DotLine ) );

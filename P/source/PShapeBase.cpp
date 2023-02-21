@@ -32,7 +32,7 @@ void PShapeBase::paint( QPainter *pPainter, const QStyleOptionGraphicsItem *nOpt
     Q_UNUSED( pWidget );
 
     if ( nState == StateIdle ) return;
-    doPaint( pPainter );
+    doPaint( pPainter, false );
 }
 
 /*!
@@ -86,6 +86,16 @@ PHandle *PShapeBase::getHandle( const QPoint &pointPos )
     return nullptr;
 }
 
+/*!
+ * \brief Return a handle of given type that is below the given handle.
+ * 
+ * \author pharvey (2/20/23)
+ * 
+ * \param pHandle 
+ * \param nType   
+ * 
+ * \return PHandle* 
+ */
 PHandle *PShapeBase::getHandleUnder( PHandle *pHandle, PHandle::Type nType )
 {
     QPoint point = pHandle->geometry().center();

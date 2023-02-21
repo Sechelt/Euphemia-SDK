@@ -23,7 +23,7 @@ public:
 protected:
     virtual QImage getMask() override;
 
-    virtual void doPaint( QPainter * ) override;
+    virtual void doPaint( QPainter *, bool bCommit = true ) override;
 
 };
 

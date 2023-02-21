@@ -6,7 +6,7 @@ PDrawRectangleFilled::PDrawRectangleFilled( PCanvas *pCanvas )
 {
 }
 
-void PDrawRectangleFilled::doPaint( QPainter *pPainter )
+void PDrawRectangleFilled::doPaint( QPainter *pPainter, bool )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );

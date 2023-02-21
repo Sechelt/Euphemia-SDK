@@ -10,7 +10,7 @@ public:
     PDrawPolygon( PCanvas *pCanvas );
 
 protected:
-    virtual void doPaint( QPainter * ) override;
+    virtual void doPaint( QPainter *, bool bCommit = true ) override;
 };
 
 class PPolygonToolBar : public QWidget

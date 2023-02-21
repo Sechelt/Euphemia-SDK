@@ -54,7 +54,7 @@ protected:
     QVector<PHandle*>   vectorHandles;              /*!< Handles are children of canvas widget and are shown on top of shape due to z-order.    */
     PHandle *           pHandle = nullptr;          /*!< Handle being moved.                                                                    */
 
-    virtual void doPaint( QPainter *pPainter ) = 0;
+    virtual void doPaint( QPainter *pPainter, bool bCommit = true ) = 0;
 
     virtual PHandle *   getHandle( const QPoint &pointPos );
     virtual PHandle *   getHandleUnder( PHandle *pHandle, PHandle::Type n );

@@ -153,7 +153,7 @@ void PDrawPolyline::doCommit()
     Q_ASSERT( !acceptHoverEvents() );
 }
 
-void PDrawPolyline::doPaint( QPainter *pPainter )
+void PDrawPolyline::doPaint( QPainter *pPainter, bool )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
@@ -242,7 +242,7 @@ void PDrawPolyline::doCreateHandles()
     // add a handle between each point (moving it will create a new point)
     for ( int n = 1; n < polygonView.count(); n++ )
     {
-        pHandle = new PHandle( pView, PHandle::TypeNewPoint, QRect( polygonView.at( n - 1 ), polygonView.at( n ) ).center() );
+        pHandle = new PHandle( pView, PHandle::TypePointFactory, QRect( polygonView.at( n - 1 ), polygonView.at( n ) ).center() );
         vectorHandles.append( pHandle );
         pHandle->show();
     }
@@ -315,7 +315,7 @@ void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
         // just a single point handle
         polygon.replace( vectorHandles.indexOf( pHandle ) - nFirstMovePointHandle, pointPos );
     }
-    else if ( pHandle->getType() == PHandle::TypeNewPoint )
+    else if ( pHandle->getType() == PHandle::TypePointFactory )
     {
         QPoint point            = pView->mapToScene( pHandle->getCenter() ).toPoint();
         int nHandleNewPoint     = vectorHandles.indexOf( pHandle );
@@ -327,7 +327,7 @@ void PDrawPolyline::doMoveHandle( const QPoint &pointPos )
         polygon.insert( nPointNext, pView->mapToScene( pHandle->getCenter() ).toPoint() );
 
         // insert another new point handle
-        pHandle = new PHandle( pView, PHandle::TypeNewPoint, point );
+        pHandle = new PHandle( pView, PHandle::TypePointFactory, point );
         vectorHandles.insert( nHandleNewPointNext, pHandle );
         pHandle->show();
         nHandlePointNext++; // we just shoved everything over by one

@@ -6,7 +6,7 @@ PDrawEllipseFilled::PDrawEllipseFilled( PCanvas *pCanvas )
 {
 }
 
-void PDrawEllipseFilled::doPaint( QPainter *pPainter )
+void PDrawEllipseFilled::doPaint( QPainter *pPainter, bool )
 {
     // apply context
     pPainter->setPen( g_Context->getPen() );
