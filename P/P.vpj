@@ -58,6 +58,7 @@
             <F N="source/PBackground.cpp"/>
             <F N="source/PBrushToolBar.cpp"/>
             <F N="source/PCanvas.cpp"/>
+            <F N="source/PColorControl.cpp"/>
             <F N="source/PContext.cpp"/>
             <F N="source/PDrawEllipse.cpp"/>
             <F N="source/PDrawEllipseFilled.cpp"/>
@@ -95,6 +96,7 @@
             <F N="include/PBackground.h"/>
             <F N="include/PBrushToolBar.h"/>
             <F N="include/PCanvas.h"/>
+            <F N="include/PColorControl.h"/>
             <F N="include/PContext.h"/>
             <F N="include/PDrawEllipse.h"/>
             <F N="include/PDrawEllipseFilled.h"/>

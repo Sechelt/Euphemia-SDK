@@ -3,16 +3,19 @@
 
 #include "PContext.h"
 
-PBrushToolBar::PBrushToolBar( QWidget *pParent )
+PBrushToolBar::PBrushToolBar( QWidget *pParent, bool bCompress )
     : QWidget( pParent )
 {
     setObjectName( "PBrushToolBar" );
 
     QHBoxLayout *pLayout = new QHBoxLayout( this );
 
-    pColor = new WColorButton( g_Context->getBrush().color(), this, WColorButton::Fill );
-    pLayout->addWidget( pColor );
-    connect( pColor, SIGNAL(signalChanged(const QColor &)), SLOT(slotColor(const QColor &)) );
+    if ( !bCompress )
+    {
+        pColor = new WColorButton( g_Context->getBrush().color(), this, WColorButton::Fill );
+        pLayout->addWidget( pColor );
+        connect( pColor, SIGNAL(signalChanged(const QColor &)), SLOT(slotColor(const QColor &)) );
+    }
 
     pStyle = new WBrushStyleComboBox( this, g_Context->getBrush().style() );
     pStyle->setToolTip( tr("brush style") );
@@ -20,9 +23,12 @@ PBrushToolBar::PBrushToolBar( QWidget *pParent )
     pLayout->addWidget( pStyle );
     connect( pStyle, SIGNAL(signalChanged(Qt::BrushStyle)), SLOT(slotStyle(Qt::BrushStyle)) );
 
-    pImage = new WImageButton( g_Context->getBrush().textureImage(), this );
-    pLayout->addWidget( pImage, 10 );
-    connect( pImage, SIGNAL(signalClick()), SLOT(slotImage()) );
+    if ( !bCompress )
+    {
+        pImage = new WImageButton( g_Context->getBrush().textureImage(), this );
+        pLayout->addWidget( pImage, 10 );
+        connect( pImage, SIGNAL(signalClick()), SLOT(slotImage()) );
+    }
 
     pMore = new QToolButton( this );
     pMore->setText( ":" );
@@ -36,9 +42,9 @@ PBrushToolBar::PBrushToolBar( QWidget *pParent )
 
 void PBrushToolBar::slotRefresh( const QBrush &t )
 {
-    pColor->setValue( t.color() );
+    if ( pColor ) pColor->setValue( t.color() );
     pStyle->setValue( t.style() );
-    pImage->setImage( t.textureImage() );
+    if ( pImage ) pImage->setImage( t.textureImage() );
 }
 
 void PBrushToolBar::slotColor( const QColor &color )

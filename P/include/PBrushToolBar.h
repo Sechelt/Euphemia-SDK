@@ -11,16 +11,16 @@ class PBrushToolBar : public QWidget
 {
     Q_OBJECT
 public:
-    PBrushToolBar( QWidget *pParent );
+    PBrushToolBar( QWidget *pParent, bool bCompress = false );
 
 public slots:
     void slotRefresh( const QBrush & );
 
 protected:
-    WColorButton *          pColor;
-    WBrushStyleComboBox *   pStyle;
-    WImageButton *          pImage;
-    QToolButton *           pMore;
+    WColorButton *          pColor  = nullptr;
+    WBrushStyleComboBox *   pStyle  = nullptr;
+    WImageButton *          pImage  = nullptr;
+    QToolButton *           pMore   = nullptr;
 
 protected slots:
     void slotColor( const QColor &color );

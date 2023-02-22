@@ -26,6 +26,7 @@ HEADERS += \
         include/PBackground.h \
         include/PBrushToolBar.h \
         include/PCanvas.h \
+        include/PColorControl.h \
         include/PContext.h \
         include/PDrawEllipse.h \
         include/PDrawEllipseFilled.h \
@@ -59,6 +60,7 @@ SOURCES += \
         source/PBackground.cpp \
         source/PBrushToolBar.cpp \
         source/PCanvas.cpp \
+        source/PColorControl.cpp \
         source/PContext.cpp \
         source/PDrawEllipse.cpp \
         source/PDrawEllipseFilled.cpp \

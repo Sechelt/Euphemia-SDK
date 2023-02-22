@@ -12,16 +12,16 @@ class PPenToolBar : public QWidget
 {
     Q_OBJECT
 public:
-    PPenToolBar( QWidget *pParent );
+    PPenToolBar( QWidget *pParent, bool bCompress = false );
 
 public slots:
     void slotRefresh( const QPen & );
 
 protected:
-    WColorButton *      pColor;
-    WLineStyleComboBox *pStyle;
-    QSpinBox *          pWidth;
-    QToolButton *       pMore;
+    WColorButton *      pColor  = nullptr;
+    WLineStyleComboBox *pStyle  = nullptr;
+    QSpinBox *          pWidth  = nullptr;
+    QToolButton *       pMore   = nullptr;
 
 protected slots:
     void slotColor( const QColor &color );

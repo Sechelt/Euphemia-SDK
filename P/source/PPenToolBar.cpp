@@ -6,16 +6,19 @@
 //
 // PPenToolBar
 //
-PPenToolBar::PPenToolBar( QWidget *pParent )
+PPenToolBar::PPenToolBar( QWidget *pParent, bool bCompress )
     : QWidget( pParent )
 {
     setObjectName( "PPenToolBar" );
 
     QHBoxLayout *pLayout = new QHBoxLayout( this );
 
-    pColor = new WColorButton( g_Context->getPen().color(), this, WColorButton::Pen );
-    pLayout->addWidget( pColor );
-    connect( pColor, SIGNAL(signalChanged(const QColor &)), SLOT(slotColor(const QColor &)) );
+    if ( !bCompress )
+    {
+        pColor = new WColorButton( g_Context->getPen().color(), this, WColorButton::Pen );
+        pLayout->addWidget( pColor );
+        connect( pColor, SIGNAL(signalChanged(const QColor &)), SLOT(slotColor(const QColor &)) );
+    }
 
     pStyle = new WLineStyleComboBox( g_Context->getPen().style(), this );
     pStyle->setToolTip( tr("pen style") );
@@ -42,7 +45,7 @@ PPenToolBar::PPenToolBar( QWidget *pParent )
 
 void PPenToolBar::slotRefresh( const QPen &pen )
 {
-    pColor->setValue( pen.color() );                
+    if ( pColor ) pColor->setValue( pen.color() );                
     pStyle->setValue( pen.style() );                
     pWidth->setValue( pen.width() );
 }

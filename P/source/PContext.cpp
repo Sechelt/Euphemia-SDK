@@ -1,8 +1,6 @@
 #include "LibInfo.h"
 #include "PContext.h"
 
-#define PCONTEXT_DOC_CLASS "PContext"
-
 void PContextGradient::doSave( QDomDocument *pdomDoc, QDomElement *pdomElem )
 {
 }
@@ -193,7 +191,7 @@ void PContextGeneral::doLoad( QDomElement *pdomElem )
 PContext::PContext()
 {
     QString stringDir = QStandardPaths::writableLocation( QStandardPaths::ConfigLocation );
-    stringDir += ("/" LIB_ORG);
+    stringDir += ("/" SDK_ORG);
 
     QDir dir;
     if ( !dir.exists( stringDir ) ) 
@@ -329,7 +327,7 @@ void PContext::doSave()
     // create an XML document with class name and document version...
     QDomDocument domDoc( PCONTEXT_DOC_CLASS );
     QDomElement domElementRoot = domDoc.createElement( PCONTEXT_DOC_CLASS );
-    domElementRoot.setAttribute( "DocVer", LIB_DOC_VER );
+    domElementRoot.setAttribute( "DocVer", SDK_DOC_VER );
 
     domDoc.appendChild( domElementRoot );
 
@@ -415,9 +413,9 @@ void PContext::doLoad()
         QMessageBox::information( qApp->activeWindow(), tr("Open Default Context"), tr("Invalid file format.\nFile does not appear to be a ") + PCONTEXT_DOC_CLASS + "\n\n" + stringFileName );
         return;
     }
-    if ( domElemRoot.attribute( "DocVer" ) != LIB_DOC_VER ) 
+    if ( domElemRoot.attribute( "DocVer" ) != SDK_DOC_VER ) 
     {
-        QMessageBox::information( qApp->activeWindow(), tr("Open Default Context"), tr("Invalid file format.\nFile is not Version ") + LIB_DOC_VER );
+        QMessageBox::information( qApp->activeWindow(), tr("Open Default Context"), tr("Invalid file format.\nFile is not Version ") + SDK_DOC_VER );
         return;
     }
 
