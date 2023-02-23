@@ -125,6 +125,10 @@ void PCanvas::doPressEvent( QGraphicsSceneMouseEvent *pEvent )
         // init 'tool'
         switch ( nTool )
         {
+            case ToolMagnifierSelection:
+                g_Context->setImage( &image );
+                pShapeBase = new PMagnifierSelection( this );           
+                break;
             case ToolSelectRectangle:    
                 g_Context->setImage( &image );
                 pShapeBase = new PSelectRectangle( this );           
@@ -199,6 +203,10 @@ void PCanvas::doPressEvent( QGraphicsSceneMouseEvent *pEvent )
             imagePreCommit = image;
             connect( pShapeBase, SIGNAL(signalChangedState()), SIGNAL(signalChangedState()) );
             connect( pShapeBase, SIGNAL(signalCommitted()), SLOT(slotCommitted()) );
+            if ( nTool == ToolMagnifierSelection )
+            {
+                connect( pShapeBase, SIGNAL( signalMoved() ), SIGNAL( signalMagnifierMoved() ) );
+            }
         }
         emit signalChangedState();
     }

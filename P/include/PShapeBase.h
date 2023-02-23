@@ -25,6 +25,7 @@ public:
 
     virtual States getState()   { return nState;    }
     virtual QImage getCopy()    { return QImage();  }
+    virtual QRect  getRect() = 0;                               /*!< the rect within boundingRect that we are actually using                    */
 
     virtual void doDoubleClick( PMouseEvent *pEvent ) = 0;      /*!< mouse press from canvas                                                    */
     virtual void doPress( PMouseEvent *pEvent ) = 0;            /*!< mouse press from pCanvas                                                   */

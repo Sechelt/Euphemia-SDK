@@ -1,17 +1,16 @@
-#ifndef H_PDrawLine
-#define H_PDrawLine
+#ifndef H_PMagnifierSelection
+#define H_PMagnifierSelection
 
 #include "PShapeBase.h"
 
-class PDrawLine : public PShapeBase
+class PMagnifierSelection : public PShapeBase
 {
     Q_OBJECT
 public:
-    PDrawLine( PCanvas *pCanvas );
-    virtual ~PDrawLine();
+    PMagnifierSelection( PCanvas *pCanvas );
+    virtual ~PMagnifierSelection();
 
-    virtual QRect  getRect() override { return QRect( pointBegin, pointEnd ).normalized(); }
-    virtual QImage getCopy() override;
+    virtual QRect  getRect() override { return r.normalized(); }
 
     virtual void doDoubleClick( PMouseEvent *pEvent ) override;
     virtual void doPress( PMouseEvent *pEvent ) override;
@@ -19,16 +18,20 @@ public:
     virtual void doRelease( PMouseEvent *pEvent ) override;
     virtual void doCommit() override;
 
+    virtual bool    canCommit() override { return false; }
+    virtual bool    canCut()    override { return false; }
+    virtual bool    canCopy()   override { return false; }
+
+signals:
+    void signalMoved();
+
 protected:
-    QPoint pointBegin;
-    QPoint pointEnd;
+    QRect r;
 
     virtual void doPaint( QPainter *, bool bCommit = true );
-
     virtual void doDrawState( const QPoint & ) override;
     virtual void doManipulateState() override;
     virtual void doIdleState() override;
-
     virtual void doCreateHandles() override;
     virtual void doSyncHandles() override;
     virtual void doMoveHandle( const QPoint &pointPos );

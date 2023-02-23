@@ -15,6 +15,7 @@
 	<file alias="Line90Auto">images/Line90Auto48x48.png</file>
 	<file alias="Pen">images/Pen.png</file>
 	<file alias="Polyline">images/Polyline48x48.png</file>
+	<file alias="MagnifierSelection">images/Microscope.png</file>
 	<file alias="SelectionRectangle">images/SelectionRectangle.png</file>
 	<file alias="Rectangle">images/Rectangle.png</file>
 	<file alias="RectangleManipulate">images/RectangleManipulate.png</file>

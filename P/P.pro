@@ -48,6 +48,8 @@ HEADERS += \
         include/PGraphicsView.h \
         include/PHandle.h \
 #        include/PLayers.h \
+        include/PMagnifierSelection.h \
+        include/PMagnifierWidget.h \
         include/PPasteRectangle.h \
         include/PPenToolBar.h \
         include/PSelectEllipse.h \
@@ -82,6 +84,8 @@ SOURCES += \
         source/PGraphicsView.cpp \
         source/PHandle.cpp \
 #        source/PLayers.cpp \
+        source/PMagnifierSelection.cpp \
+        source/PMagnifierWidget.cpp \
         source/PPasteRectangle.cpp \
         source/PPenToolBar.cpp \
         source/PSelectEllipse.cpp \

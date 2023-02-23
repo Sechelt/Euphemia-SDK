@@ -10,6 +10,7 @@ public:
     PDrawRectangle( PCanvas *pCanvas );
     virtual ~PDrawRectangle();
 
+    virtual QRect  getRect() override { return r.normalized(); }
     virtual QImage getCopy() override;
 
     virtual void doDoubleClick( PMouseEvent *pEvent ) override;

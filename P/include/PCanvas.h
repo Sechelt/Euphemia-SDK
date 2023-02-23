@@ -2,6 +2,7 @@
 #define H_PCanvas
 
 #include "PPasteRectangle.h"
+#include "PMagnifierSelection.h"
 #include "PSelectEllipse.h"
 #include "PSelectPolygon.h"
 #include "PSelectRectangle.h"
@@ -55,6 +56,7 @@ class PCanvas : public QGraphicsObject
 public:
     enum Tools
     {
+        ToolMagnifierSelection,         /*!< shape: select rectangle, can move but size set elsewhere*/ 
         ToolSelectRectangle,            /*!< shape: select using a rectangle                         */ 
         ToolSelectEllipse,              /*!< shape: select using an ellipse                          */ 
         ToolSelectPolygon,              /*!< shape: select using a polygon                           */ 
@@ -86,11 +88,13 @@ public:
 
     PGraphicsView *         getView();
     PGraphicsScene *        getScene();
+    PShapeBase *            getShape() { return pShapeBase; }
     QImage                  getImage() { return image; }
     QImage                  getCopy();
     bool                    getAutoCommit();
     QString                 getFileName() { return stringFileName; }
     QColor                  getBackground() { return colorBackground; }
+    Tools                   getTool() { return nTool; }
 
     void doDoubleClickEvent( QGraphicsSceneMouseEvent *pEvent );
     void doPressEvent( QGraphicsSceneMouseEvent *pEvent );
@@ -134,13 +138,14 @@ public:
     bool canCommit(); 
     bool canCancel(); 
 
-public slots:
-    void print();
-
 signals:
     void signalPos( const QPoint & );
     void signalChangedState();
     void signalChangedFileName( const QString & );
+    void signalMagnifierMoved();
+
+public slots:
+    void print();
 
 protected slots:
     void slotCommitted();

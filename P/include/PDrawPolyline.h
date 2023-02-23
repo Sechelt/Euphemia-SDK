@@ -10,6 +10,7 @@ public:
     PDrawPolyline( PCanvas *pCanvas );
     virtual ~PDrawPolyline();
 
+    virtual QRect  getRect() override { return polygon.boundingRect(); }
     virtual QImage getCopy() override;
 
     virtual void doDoubleClick( PMouseEvent * ) override;
