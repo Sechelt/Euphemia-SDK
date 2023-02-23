@@ -54,6 +54,7 @@
             Name="Source Files"
             Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.scala;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm;*.go;*.groovy;*.gsh"
             GUID="{509BF71A-C21F-4E3F-B639-6794BDAAB831}">
+            <F N="../Euphemia-SDK.h"/>
             <F N="source/LibInfo.h"/>
             <F N="source/PBackground.cpp"/>
             <F N="source/PBrushToolBar.cpp"/>
