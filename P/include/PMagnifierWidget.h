@@ -2,6 +2,7 @@
 #define H_PMagnifierWidget
 
 #include "PGraphicsView.h"
+#include "PShapeBase.h"
 
 class PMagnifierWidget : public QWidget
 {
@@ -12,9 +13,30 @@ public:
     void setView( PGraphicsView *p );
 
 protected:
-    PGraphicsView *pView = nullptr;
+    // set in setView()
+    PGraphicsView * pView   = nullptr;
+    PCanvas *       pCanvas = nullptr;
+    QImage *        pImage  = nullptr;
+    // set in paintEvent()
+    PShapeBase *    pShape  = nullptr;
+    int nXImage;
+    int nYImage;
+    int nSize       = 16;
+    int nXCells;
+    int nYCells;
+    // set in mouse events
+    QPen    pen;
 
-    void paintEvent( QPaintEvent *pEvent );
+    void mousePressEvent( QMouseEvent *pEvent ) override;
+    void mouseMoveEvent( QMouseEvent *pEvent ) override;
+    void mouseReleaseEvent( QMouseEvent *pEvent ) override;
+    void paintEvent( QPaintEvent *pEvent ) override;
+    void wheelEvent( QWheelEvent *pEvent ) override;
+
+    void doCalcMatrix();
+
+    QPoint mapCellToScene( const QPoint & );
+    QPoint mapWidgetToCell( const QPoint & );
 };
 
 #endif 
