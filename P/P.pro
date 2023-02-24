@@ -50,6 +50,7 @@ HEADERS += \
 #        include/PLayers.h \
         include/PMagnifierSelection.h \
         include/PMagnifierWidget.h \
+        include/PPanner.h \
         include/PPasteRectangle.h \
         include/PPenToolBar.h \
         include/PSelectEllipse.h \
@@ -86,6 +87,7 @@ SOURCES += \
 #        source/PLayers.cpp \
         source/PMagnifierSelection.cpp \
         source/PMagnifierWidget.cpp \
+        source/PPanner.cpp \
         source/PPasteRectangle.cpp \
         source/PPenToolBar.cpp \
         source/PSelectEllipse.cpp \

@@ -83,6 +83,7 @@
             <F N="source/PLayers.cpp"/>
             <F N="source/PMagnifierSelection.cpp"/>
             <F N="source/PMagnifierWidget.cpp"/>
+            <F N="source/PPanner.cpp"/>
             <F N="source/PPasteRectangle.cpp"/>
             <F N="source/PPenToolBar.cpp"/>
             <F N="source/PSelectEllipse.cpp"/>
@@ -124,6 +125,7 @@
             <F N="include/PLayers.h"/>
             <F N="include/PMagnifierSelection.h"/>
             <F N="include/PMagnifierWidget.h"/>
+            <F N="include/PPanner.h"/>
             <F N="include/PPasteRectangle.h"/>
             <F N="include/PPenToolBar.h"/>
             <F N="include/PSelectEllipse.h"/>
